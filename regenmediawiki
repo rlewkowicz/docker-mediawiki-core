@@ -77,7 +77,7 @@ pushToGit (){
 	git commit . -m "$(date)"
 	git branch --set-upstream-to=origin/REL1_28 REL1_28
 	git pull --rebase -X ours
-	git push --force
+	git push --force --set-upstream-to=origin/REL1_28 REL1_28
 }
 
 #Set Base directory
