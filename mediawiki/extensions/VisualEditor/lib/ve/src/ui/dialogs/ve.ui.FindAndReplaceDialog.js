@@ -27,6 +27,8 @@ OO.inheritClass( ve.ui.FindAndReplaceDialog, ve.ui.ToolbarDialog );
 
 ve.ui.FindAndReplaceDialog.static.name = 'findAndReplace';
 
+ve.ui.FindAndReplaceDialog.static.handlesSource = true;
+
 /**
  * Maximum number of results to render
  *
@@ -67,7 +69,7 @@ ve.ui.FindAndReplaceDialog.prototype.initialize = function () {
 			return function () {
 				return !dialog.invalidRegex;
 			};
-		} )( this ),
+		}( this ) ),
 		tabIndex: 1
 	} );
 	this.matchCaseToggle = new OO.ui.ToggleButtonWidget( {
@@ -116,13 +118,13 @@ ve.ui.FindAndReplaceDialog.prototype.initialize = function () {
 	} );
 
 	optionsGroup = new OO.ui.ButtonGroupWidget( {
-			classes: [ 've-ui-findAndReplaceDialog-cell' ],
-			items: [
-				this.matchCaseToggle,
-				this.regexToggle,
-				this.wordToggle
-			]
-		} );
+		classes: [ 've-ui-findAndReplaceDialog-cell' ],
+		items: [
+			this.matchCaseToggle,
+			this.regexToggle,
+			this.wordToggle
+		]
+	} );
 	navigateGroup = new OO.ui.ButtonGroupWidget( {
 		classes: [ 've-ui-findAndReplaceDialog-cell' ],
 		items: [
@@ -504,7 +506,7 @@ ve.ui.FindAndReplaceDialog.prototype.highlightFocused = function ( scrollIntoVie
 		windowScrollHeight = surfaceView.$window.height() - this.surface.toolbarHeight;
 
 		if ( offset < windowScrollTop || offset > windowScrollTop + windowScrollHeight ) {
-			$( 'body, html' ).animate( { scrollTop: offset - ( windowScrollHeight / 2  ) }, 'fast' );
+			$( 'body, html' ).animate( { scrollTop: offset - ( windowScrollHeight / 2 ) }, 'fast' );
 		}
 	}
 };

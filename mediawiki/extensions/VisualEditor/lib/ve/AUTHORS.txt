@@ -72,6 +72,16 @@ classList.js
    https://github.com/eligrey/classList.js/blob/master/LICENSE.md
  – Eli Grey, http://eligrey.com
 
+Diff Match and Patch
+ – https://code.google.com/p/google-diff-match-patch/
+ – Apache license 2.0
+ – Google, Inc.
+
+DOMPurify
+ – https://github.com/cure53/DOMPurify
+ – Apache license 2.0 (dual with MPL 2.0)
+ – Mario Heiderich and other contributors
+
 jQuery
  – https://jquery.com/
  – MIT license
@@ -116,6 +126,16 @@ RangeFix
  – https://github.com/edg2s/rangefix
  – MIT license
  – Ed Sanders and other contributors
+
+socket.io-client
+ — https://github.com/socketio/socket.io-client
+ – MIT License
+ – Guillermo Rauch and other contributors
+
+Tree Differ
+ – https://github.com/tchanders/treeDiffer.js
+ – MIT license
+ – Thalia Chan
 
 UnicodeJS
  – https://www.mediawiki.org/wiki/OOjs_UI

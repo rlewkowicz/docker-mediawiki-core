@@ -99,8 +99,15 @@ ve.dm.LinearSelection.prototype.isCollapsed = function () {
 /**
  * @inheritdoc
  */
-ve.dm.Selection.prototype.translateByTransaction = function ( tx, excludeInsertion ) {
+ve.dm.LinearSelection.prototype.translateByTransaction = function ( tx, excludeInsertion ) {
 	return new this.constructor( this.getDocument(), tx.translateRange( this.getRange(), excludeInsertion ) );
+};
+
+/**
+ * @inheritdoc
+ */
+ve.dm.LinearSelection.prototype.translateByTransactionWithAuthor = function ( tx, author ) {
+	return new this.constructor( this.getDocument(), tx.translateRangeWithAuthor( this.getRange(), author ) );
 };
 
 /**
@@ -130,9 +137,12 @@ ve.dm.LinearSelection.prototype.getRange = function () {
  * @inheritdoc
  */
 ve.dm.LinearSelection.prototype.equals = function ( other ) {
-	return other instanceof ve.dm.LinearSelection &&
+	return this === other || (
+		!!other &&
+		other.constructor === this.constructor &&
 		this.getDocument() === other.getDocument() &&
-		this.getRange().equals( other.getRange() );
+		this.getRange().equals( other.getRange() )
+	);
 };
 
 /* Registration */

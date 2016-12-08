@@ -4,10 +4,13 @@
  * @package VisualEditor
  */
 
-/*jshint node:true */
+/* eslint-env node */
+
 module.exports = function ( grunt ) {
 	var modules = grunt.file.readJSON( 'build/modules.json' ),
 		moduleUtils = require( './build/moduleUtils' ),
+		rebaserBuildFiles = moduleUtils.makeBuildList( modules, [ 'rebaser.build' ] ),
+		veRebaseFiles = moduleUtils.makeBuildList( modules, [ 'visualEditor.rebase.build' ] ),
 		coreBuildFiles = moduleUtils.makeBuildList( modules, [ 'visualEditor.build' ] ),
 		coreBuildFilesApex = moduleUtils.makeBuildList( modules, [ 'visualEditor.build.apex' ] ),
 		coreBuildFilesMediaWiki = moduleUtils.makeBuildList( modules, [ 'visualEditor.build.mediawiki' ] ),
@@ -23,18 +26,17 @@ module.exports = function ( grunt ) {
 				pages[ name ] = path;
 			} );
 			return pages;
-		} )();
+		}() );
 
 	grunt.loadNpmTasks( 'grunt-jsonlint' );
 	grunt.loadNpmTasks( 'grunt-banana-checker' );
 	grunt.loadNpmTasks( 'grunt-contrib-clean' );
 	grunt.loadNpmTasks( 'grunt-contrib-concat' );
 	grunt.loadNpmTasks( 'grunt-contrib-copy' );
-	grunt.loadNpmTasks( 'grunt-contrib-jshint' );
 	grunt.loadNpmTasks( 'grunt-contrib-watch' );
 	grunt.loadNpmTasks( 'grunt-css-url-embed' );
 	grunt.loadNpmTasks( 'grunt-cssjanus' );
-	grunt.loadNpmTasks( 'grunt-jscs' );
+	grunt.loadNpmTasks( 'grunt-eslint' );
 	grunt.loadNpmTasks( 'grunt-karma' );
 	grunt.loadNpmTasks( 'grunt-stylelint' );
 	grunt.loadNpmTasks( 'grunt-tyops' );
@@ -49,6 +51,21 @@ module.exports = function ( grunt ) {
 			dist: [ 'dist/*', 'coverage/*' ]
 		},
 		concat: {
+			'rebaser.build': {
+				options: {
+					banner: grunt.file.read( 'build/rebaser-banner.txt' ),
+					footer: grunt.file.read( 'build/rebaser-footer.txt' )
+				},
+				dest: 'dist/ve-rebaser.js',
+				src: rebaserBuildFiles.scripts
+			},
+			'visualEditor.rebase': {
+				options: {
+					banner: grunt.file.read( 'build/banner.txt' )
+				},
+				dest: 'dist/visualEditor-rebase.js',
+				src: veRebaseFiles.scripts
+			},
 			js: {
 				options: {
 					banner: grunt.file.read( 'build/banner.txt' )
@@ -244,24 +261,24 @@ module.exports = function ( grunt ) {
 				'!build/typos.json',
 				'!lib/**',
 				'!i18n/**',
-				'!{coverage,dist,docs,node_modules}/**',
+				'!{coverage,dist,docs,node_modules,rebaser/node_modules}/**',
 				'!.git/**'
 			]
 		},
-		jshint: {
-			options: {
-				jshintrc: true
-			},
-			all: '.'
-		},
-		jscs: {
+		eslint: {
 			fix: {
 				options: {
 					fix: true
 				},
-				src: '.'
+				src: [
+					'<%= eslint.main %>'
+				]
 			},
-			main: '.'
+			main: [
+				'*.js',
+				'{bin,build,demos,src,tests,rebaser}/**/*.js',
+				'!rebaser/node_modules/**'
+			]
 		},
 		stylelint: {
 			all: [
@@ -275,6 +292,7 @@ module.exports = function ( grunt ) {
 		},
 		jsonlint: {
 			all: [
+				'.eslintrc.json',
 				'**/*.json',
 				'!dist/**',
 				'!docs/**',
@@ -319,7 +337,7 @@ module.exports = function ( grunt ) {
 		},
 		runwatch: {
 			files: [
-				'.{stylelintrc,jscsrc,jshintignore,jshintrc}',
+				'.{stylelintrc,eslintrc.json}',
 				'**/*.js',
 				'!coverage/**',
 				'!dist/**',
@@ -352,18 +370,20 @@ module.exports = function ( grunt ) {
 	} );
 
 	grunt.registerTask( 'build', [ 'clean', 'concat', 'cssjanus', 'cssUrlEmbed', 'copy', 'buildloader' ] );
-	grunt.registerTask( 'lint', [ 'tyops', 'jshint', 'jscs:main', 'stylelint', 'jsonlint', 'banana' ] );
+	grunt.registerTask( 'lint', [ 'tyops', 'eslint:main', 'stylelint', 'jsonlint', 'banana' ] );
 	grunt.registerTask( 'unit', [ 'karma:main' ] );
-	grunt.registerTask( 'fix', [ 'jscs:fix' ] );
+	grunt.registerTask( 'fix', [ 'eslint:fix' ] );
 	grunt.registerTask( '_test', [ 'lint', 'git-build', 'build', 'unit' ] );
 	grunt.registerTask( 'ci', [ '_test', 'git-status' ] );
 	grunt.registerTask( 'watch', [ 'karma:bg:start', 'runwatch' ] );
 
+	/* eslint-disable no-process-env */
 	if ( process.env.JENKINS_HOME ) {
 		grunt.registerTask( 'test', 'ci' );
 	} else {
 		grunt.registerTask( 'test', '_test' );
 	}
+	/* eslint-enable no-process-env */
 
 	grunt.registerTask( 'default', 'test' );
 };

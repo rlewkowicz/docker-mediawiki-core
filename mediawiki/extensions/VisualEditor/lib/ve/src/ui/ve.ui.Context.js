@@ -106,6 +106,8 @@ ve.ui.Context.prototype.getSurface = function () {
 	return this.surface;
 };
 
+/* eslint-disable valid-jsdoc */
+
 /**
  * Toggle the menu.
  *
@@ -214,6 +216,8 @@ ve.ui.Context.prototype.updateDimensions = function () {
 
 /**
  * Destroy the context, removing all DOM elements.
+ *
+ * @chainable
  */
 ve.ui.Context.prototype.destroy = function () {
 	// Disconnect events

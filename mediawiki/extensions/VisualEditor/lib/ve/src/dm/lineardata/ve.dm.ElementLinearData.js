@@ -731,7 +731,6 @@ ve.dm.ElementLinearData.prototype.getText = function ( maintainIndices, range ) 
  * given initial argument of offset
  * @param {...Mixed} [args] Additional arguments to pass to the callback
  * @return {number} Relative valid offset or -1 if there are no valid offsets in data
- * @throws {Error} offset was inside an ignoreChildren node
  */
 ve.dm.ElementLinearData.prototype.getRelativeOffset = function ( offset, distance, callback ) {
 	var i, direction,
@@ -779,7 +778,7 @@ ve.dm.ElementLinearData.prototype.getRelativeOffset = function ( offset, distanc
 			} else {
 				ignoreChildrenDepth--;
 				if ( ignoreChildrenDepth < 0 ) {
-					throw new Error( 'offset was inside an ignoreChildren node' );
+					return -1;
 				}
 			}
 		}
@@ -1084,7 +1083,6 @@ ve.dm.ElementLinearData.prototype.sanitize = function ( rules ) {
 			type = this.getType( i );
 			canContainContent = ve.dm.nodeFactory.canNodeContainContent( type );
 			isOpen = this.isOpenElementData( i );
-
 			// Apply type conversions
 			if ( rules.conversions && rules.conversions[ type ] ) {
 				type = rules.conversions[ type ];
@@ -1105,33 +1103,45 @@ ve.dm.ElementLinearData.prototype.sanitize = function ( rules ) {
 				( rules.plainText && type !== 'paragraph' && type !== 'internalList' )
 			) {
 				this.splice( i, 1 );
+				len--;
 				// Make sure you haven't just unwrapped a wrapper paragraph
-				if ( ve.getProp( this.getData( i ), 'internal', 'generated' ) ) {
+				if ( isOpen && ve.getProp( this.getData( i ), 'internal', 'generated' ) ) {
 					delete this.getData( i ).internal.generated;
 					if ( ve.isEmptyObject( this.getData( i ).internal ) ) {
 						delete this.getData( i ).internal;
 					}
 				}
+				// Move pointer back and continue
 				i--;
-				len--;
 				continue;
 			}
 
 			// Split on breaks
 			if ( !rules.allowBreaks && type === 'break' && contentElement ) {
-				this.splice( i, 2, { type: '/' + contentElement.type }, ve.copy( contentElement ) );
+				if ( this.isOpenElementData( i - 1 ) && this.isCloseElementData( i + 1 ) ) {
+					// If the break is the only element in another element it was likely added
+					// to force it open, so remove it.
+					this.splice( i, 2 );
+					len -= 2;
+				} else {
+					this.splice( i, 2, { type: '/' + contentElement.type }, ve.copy( contentElement ) );
+				}
+				// Move pointer back and continue
+				i--;
+				continue;
 			}
 
 			// If a node is empty but can contain content, then just remove it
 			if (
 				!rules.keepEmptyContentBranches &&
-				i > 0 && !isOpen && this.isOpenElementData( i - 1 ) &&
-				!ve.getProp( this.getData( i - 1 ), 'internal', 'generated' ) &&
+				isOpen && this.isCloseElementData( i + 1 ) &&
+				!ve.getProp( this.getData( i ), 'internal', 'generated' ) &&
 				canContainContent
 			) {
-				this.splice( i - 1, 2 );
-				i -= 2;
+				this.splice( i, 2 );
 				len -= 2;
+				// Move pointer back and continue
+				i--;
 				continue;
 			}
 
@@ -1159,8 +1169,9 @@ ve.dm.ElementLinearData.prototype.sanitize = function ( rules ) {
 				if ( this.getCharacterData( i + 1 ).match( /\s/ ) || this.getCharacterData( i - 1 ).match( /\s/ ) ) {
 					// If whitespace-adjacent, remove the newline to avoid double spaces
 					this.splice( i, 1 );
-					i--;
 					len--;
+					// Move pointer back and continue
+					i--;
 					continue;
 				} else {
 					// ...otherwise replace it with a space

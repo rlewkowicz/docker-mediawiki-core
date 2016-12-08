@@ -856,46 +856,47 @@ QUnit.test( 'isContentData', 1, function ( assert ) {
 } );
 
 QUnit.test( 'getRelativeOffset', function ( assert ) {
-	var i, data, cases = [
-		{
-			msg: 'document without any valid offsets returns -1',
-			offset: 0,
-			distance: 1,
-			data: [],
-			callback: function () {
-				return false;
+	var i, data,
+		cases = [
+			{
+				msg: 'document without any valid offsets returns -1',
+				offset: 0,
+				distance: 1,
+				data: [],
+				callback: function () {
+					return false;
+				},
+				expected: -1
 			},
-			expected: -1
-		},
-		{
-			msg: 'document with all valid offsets returns offset + distance',
-			offset: 0,
-			distance: 2,
-			data: [ 'a', 'b' ],
-			callback: function () {
-				return true;
+			{
+				msg: 'document with all valid offsets returns offset + distance',
+				offset: 0,
+				distance: 2,
+				data: [ 'a', 'b' ],
+				callback: function () {
+					return true;
+				},
+				expected: 2
 			},
-			expected: 2
-		},
-		{
-			msg: 'document with invalid offset inside an ignoreChildren node throws',
-			offset: 7,
-			distance: 1,
-			data: [
-				'a',
-				{ type: 'blockImage', attributes: {} },
-				{ type: 'imageCaption' },
-				{ type: 'paragraph', internal: { generated: 'wrapper' } },
-				'a', 'b', 'c',
-				{ type: '/paragraph' },
-				{ type: '/imageCaption' },
-				{ type: '/blockImage' },
-				'b'
-			],
-			callback: ve.dm.ElementLinearData.prototype.isContentOffset,
-			exception: /offset was inside an ignoreChildren node/
-		}
-	];
+			{
+				msg: 'document with offset inside an ignoreChildren doesn\'t leave it and returns -1',
+				offset: 7,
+				distance: 1,
+				data: [
+					'a',
+					{ type: 'blockImage', attributes: {} },
+					{ type: 'imageCaption' },
+					{ type: 'paragraph', internal: { generated: 'wrapper' } },
+					'a', 'b', 'c',
+					{ type: '/paragraph' },
+					{ type: '/imageCaption' },
+					{ type: '/blockImage' },
+					'b'
+				],
+				callback: ve.dm.ElementLinearData.prototype.isContentOffset,
+				expected: -1
+			}
+		];
 
 	QUnit.expect( cases.length );
 
@@ -914,7 +915,7 @@ QUnit.test( 'getRelativeOffset', function ( assert ) {
 		} else if ( 'exception' in cases[ i ] ) {
 
 			assert.throws(
-				// jshint loopfunc:true
+				// eslint-disable-next-line no-loop-func
 				function () {
 					data.getRelativeOffset(
 						cases[ i ].offset,
@@ -924,7 +925,6 @@ QUnit.test( 'getRelativeOffset', function ( assert ) {
 				},
 				cases[ i ].exception,
 				cases[ i ].msg
-				// jshint loopfunc:false
 			);
 		}
 	}
@@ -1593,7 +1593,7 @@ QUnit.test( 'sanitize', function ( assert ) {
 					{ type: '/internalList' }
 				],
 				rules: { plainText: true },
-				msg: 'Headings converted to paragraph is plainText mode'
+				msg: 'Headings converted to paragraph in plainText mode'
 			},
 			{
 				html: '<h1>Bar</h1>',
@@ -1635,6 +1635,20 @@ QUnit.test( 'sanitize', function ( assert ) {
 					{ type: '/internalList' }
 				],
 				msg: 'Empty, but generated, content nodes are preserved'
+			},
+			{
+				html: '<ul><li><br></li></ul>',
+				data: [
+					{ type: 'list', attributes: { style: 'bullet' } },
+					{ type: 'listItem' },
+					{ type: 'paragraph', internal: { generated: 'wrapper' } },
+					{ type: '/paragraph' },
+					{ type: '/listItem' },
+					{ type: '/list' },
+					{ type: 'internalList' },
+					{ type: '/internalList' }
+				],
+				msg: 'Line breaks in wrapper paragraphs are discarded'
 			},
 			{
 				html: '<div>Foo</div>',

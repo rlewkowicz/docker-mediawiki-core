@@ -27,68 +27,69 @@ QUnit.module( 've' );
 // ve.extendObject: Tested upstream (jQuery)
 
 QUnit.test( 'compareClassLists', 1, function ( assert ) {
-	var i, cases = [
-		{
-			args: [ '', '' ],
-			expected: true
-		},
-		{
-			args: [ '', [] ],
-			expected: true
-		},
-		{
-			args: [ [], [] ],
-			expected: true
-		},
-		{
-			args: [ '', [ '' ] ],
-			expected: true
-		},
-		{
-			args: [ [], [ '' ] ],
-			expected: true
-		},
-		{
-			args: [ 'foo', '' ],
-			expected: false
-		},
-		{
-			args: [ 'foo', 'foo' ],
-			expected: true
-		},
-		{
-			args: [ 'foo', 'bar' ],
-			expected: false
-		},
-		{
-			args: [ 'foo', 'foo bar' ],
-			expected: false
-		},
-		{
-			args: [ 'foo', [ 'foo' ] ],
-			expected: true
-		},
-		{
-			args: [ [ 'foo' ], 'bar' ],
-			expected: false
-		},
-		{
-			args: [ 'foo', [ 'foo', 'bar' ] ],
-			expected: false
-		},
-		{
-			args: [ 'foo', [ 'foo', 'foo' ] ],
-			expected: true
-		},
-		{
-			args: [ [ 'foo' ], 'foo foo' ],
-			expected: true
-		},
-		{
-			args: [ 'foo bar foo', 'foo foo' ],
-			expected: false
-		}
-	];
+	var i,
+		cases = [
+			{
+				args: [ '', '' ],
+				expected: true
+			},
+			{
+				args: [ '', [] ],
+				expected: true
+			},
+			{
+				args: [ [], [] ],
+				expected: true
+			},
+			{
+				args: [ '', [ '' ] ],
+				expected: true
+			},
+			{
+				args: [ [], [ '' ] ],
+				expected: true
+			},
+			{
+				args: [ 'foo', '' ],
+				expected: false
+			},
+			{
+				args: [ 'foo', 'foo' ],
+				expected: true
+			},
+			{
+				args: [ 'foo', 'bar' ],
+				expected: false
+			},
+			{
+				args: [ 'foo', 'foo bar' ],
+				expected: false
+			},
+			{
+				args: [ 'foo', [ 'foo' ] ],
+				expected: true
+			},
+			{
+				args: [ [ 'foo' ], 'bar' ],
+				expected: false
+			},
+			{
+				args: [ 'foo', [ 'foo', 'bar' ] ],
+				expected: false
+			},
+			{
+				args: [ 'foo', [ 'foo', 'foo' ] ],
+				expected: true
+			},
+			{
+				args: [ [ 'foo' ], 'foo foo' ],
+				expected: true
+			},
+			{
+				args: [ 'foo bar foo', 'foo foo' ],
+				expected: false
+			}
+		];
 
 	QUnit.expect( cases.length );
 	for ( i = 0; i < cases.length; i++ ) {
@@ -295,9 +296,7 @@ QUnit.test( 'sparseSplice', function ( assert ) {
 		);
 	}
 	tests =	[
-		/*jshint elision:true */
-		// jscs:disable disallowTrailingComma
-		// jscs:disable disallowSpaceBeforeBinaryOperators
+		/* eslint-disable no-sparse-arrays */
 		// arr, offset, remove, data, expectedReturn, expectedArray, msg
 		[ [], 0, 0, [ , 3 ], [], [ , 3 ], 'insert empty, leading hole' ],
 		[ [], 0, 0, [ 1, , 3 ], [], [ 1, , 3 ], 'insert empty, middle hole' ],
@@ -318,17 +317,12 @@ QUnit.test( 'sparseSplice', function ( assert ) {
 		[ [ 4, , 5, , 6 ], 0, 3, [ 1, , 3 ], [ 4, , 5 ], [ 1, , 3, , 6 ], 'diff=0 start' ],
 		[ [ 4, , 5, , 6 ], 1, 3, [ 1, , 3 ], [ , 5, , ], [ 4, 1, , 3, 6 ], 'diff=0 mid' ],
 		[ [ 4, , 5, , 6 ], 2, 3, [ 1, , 3 ], [ 5, , 6 ], [ 4, , 1, , 3 ], 'diff=0 end' ]
-		// jscs:enable disallowSpaceBeforeBinaryOperators
-		// jscs:enable disallowTrailingComma
-		/*jshint elision:false */
+		/* eslint-enable no-sparse-arrays */
 	];
 	QUnit.expect( 2 * tests.length + 1 );
 	assert.notDeepEqual(
-		/*jshint elision:true */
-		// jscs:disable disallowTrailingComma
+		// eslint-disable-next-line no-sparse-arrays
 		mapToString( [ 1, , ] ),
-		// jscs:enable disallowTrailingComma
-		/*jshint elision:false */
 		mapToString( [ 1, undefined ] ),
 		'holes look different to undefined'
 	);
@@ -565,13 +559,19 @@ QUnit.test( 'resolveUrl', function ( assert ) {
 } );
 
 QUnit.test( 'resolveAttributes', function ( assert ) {
-	var i, doc, $html,
+	var i, doc, div,
 		cases = [
 			{
 				base: 'http://example.com',
 				html: '<div><a href="foo">foo</a></div><a href="bar">bar</a><img src="baz">',
 				resolved: '<div><a href="http://example.com/foo">foo</a></div><a href="http://example.com/bar">bar</a><img src="http://example.com/baz">',
 				msg: 'href and src resolved'
+			},
+			{
+				base: 'http://example.com',
+				html: '<a href="foo">foo</a>',
+				resolved: '<a href="http://example.com/foo">foo</a>',
+				msg: 'href resolved on self (unwrapped)'
 			}
 		];
 
@@ -580,10 +580,11 @@ QUnit.test( 'resolveAttributes', function ( assert ) {
 	for ( i = 0; i < cases.length; i++ ) {
 		doc = ve.createDocumentFromHtml( '' );
 		doc.head.appendChild( $( '<base>', doc ).attr( 'href', cases[ i ].base )[ 0 ] );
-		$html = $( '<div>' ).append( cases[ i ].html );
-		ve.resolveAttributes( $html, doc, ve.dm.Converter.static.computedAttributes );
+		div = document.createElement( 'div' );
+		div.innerHTML = cases[ i ].html;
+		ve.resolveAttributes( div.childNodes, doc, ve.dm.Converter.static.computedAttributes );
 		assert.strictEqual(
-			$html.html(),
+			div.innerHTML,
 			cases[ i ].resolved,
 			cases[ i ].msg
 		);
@@ -790,6 +791,8 @@ QUnit.test( 'transformStyleAttributes', function ( assert ) {
 			ve.normalizeAttributeValue = oldNormalizeAttributeValue;
 		}
 	}
+
+	ve.isStyleAttributeBroken = wasStyleAttributeBroken;
 } );
 
 QUnit.test( 'normalizeNode', function ( assert ) {

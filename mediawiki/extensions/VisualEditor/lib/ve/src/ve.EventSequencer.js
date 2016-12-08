@@ -124,6 +124,8 @@ ve.EventSequencer = function VeEventSequencer( eventNames ) {
 	this.afterLoopTimeoutId = null;
 };
 
+/* eslint-disable valid-jsdoc */
+
 /**
  * Attach to a node, to listen to its jQuery events
  *
@@ -382,7 +384,8 @@ ve.EventSequencer.prototype.resetAfterLoopTimeout = function () {
  */
 ve.EventSequencer.prototype.runPendingCalls = function ( eventName ) {
 	var i, pendingCall,
-	afterKeyDownCalls = [];
+		afterKeyDownCalls = [];
+
 	for ( i = 0; i < this.pendingCalls.length; i++ ) {
 		// Length cache not possible, as a pending call appends another pending call.
 		// It's important that this list remains mutable, in the case that this

@@ -56,8 +56,6 @@ pruneExtentions (){
 	git add -A
 	git commit . -m 'doot'
 	git submodule update --init --recursive --remote
-	cd $DIR/mediawiki-extensions/VisualEditor
-	git submodule update --init --recursive
 }
 
 mergeSkinsAndExtentions (){
@@ -68,7 +66,7 @@ mergeSkinsAndExtentions (){
 updateComposerDeps (){
 	cd $DIR/mediawiki
 	composer install --no-dev
-	for i in `find $DIR/mediawiki/extensions/ -maxdepth 1 -type d`;do cd "$i"; composer install --no-dev;done
+	for i in `find $DIR/mediawiki/extensions/ -maxdepth 1 -type d`;do cd "$i"; git submodule update --init --recursive; composer install --no-dev ;done
 	for i in `find $DIR/mediawiki/skins/ -maxdepth 1 -type d`;do cd "$i"; composer install --no-dev;done
 }
 

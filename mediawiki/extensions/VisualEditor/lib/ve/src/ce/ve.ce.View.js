@@ -70,6 +70,7 @@ OO.mixinClass( ve.ce.View, OO.EventEmitter );
 
 /* Static members */
 
+// eslint-disable-next-line valid-jsdoc
 /**
  * Allowed attributes for DOM elements, in the same format as ve.dm.Model#preserveHtmlAttributes
  *
@@ -82,7 +83,7 @@ OO.mixinClass( ve.ce.View, OO.EventEmitter );
  * sense for that view in particular.
  *
  * @static
- * @property {boolean|string|RegExp|Array|Object}
+ * @property {boolean|Function}
  * @inheritable
  */
 ve.ce.View.static.renderHtmlAttributes = function ( attribute ) {

@@ -38,7 +38,7 @@ QUnit.test( 'constructor', function ( assert ) {
 } );
 
 QUnit.test( 'onTransact', function ( assert ) {
-	var i, j, surface, tx, list,
+	var i, j, surface, txBuilder, tx, list,
 		doc = ve.dm.example.createExampleDocument( 'withMeta' ),
 		comment = { type: 'alienMeta', attributes: { style: 'comment', text: 'onTransact test' } },
 		heading = { type: 'heading', attributes: { level: 2 } },
@@ -135,10 +135,11 @@ QUnit.test( 'onTransact', function ( assert ) {
 	QUnit.expect( cases.length * ( 8 * doc.metadata.getTotalDataLength() + 2 ) );
 
 	for ( i = 0; i < cases.length; i++ ) {
-		tx = new ve.dm.Transaction();
+		txBuilder = new ve.dm.TransactionBuilder();
 		for ( j = 0; j < cases[ i ].calls.length; j++ ) {
-			tx[ cases[ i ].calls[ j ][ 0 ] ].apply( tx, cases[ i ].calls[ j ].slice( 1 ) );
+			txBuilder[ cases[ i ].calls[ j ][ 0 ] ].apply( txBuilder, cases[ i ].calls[ j ].slice( 1 ) );
 		}
+		tx = txBuilder.getTransaction();
 		doc = ve.dm.example.createExampleDocument( 'withMeta' );
 		surface = new ve.dm.Surface( doc );
 		list = new ve.dm.MetaList( surface );
@@ -194,7 +195,7 @@ QUnit.test( 'findItem', function ( assert ) {
 	}
 } );
 
-QUnit.test( 'insertMeta', 5, function ( assert ) {
+QUnit.test( 'insertMeta', 6, function ( assert ) {
 	var expected,
 		doc = ve.dm.example.createExampleDocument( 'withMeta' ),
 		surface = new ve.dm.Surface( doc ),
@@ -218,6 +219,9 @@ QUnit.test( 'insertMeta', 5, function ( assert ) {
 	expected.push( insert );
 	list.insertMeta( insert, 0 );
 	assert.deepEqual( doc.metadata.getData( 0 ), expected, 'Inserting metadata without passing an index adds to the end' );
+
+	list.insertMeta( insert );
+	assert.deepEqual( doc.metadata.getData( 11, 4 ), insert, 'Inserting metadata without passing an offset adds to the end of document' );
 
 	list.insertMeta( insert, 1 );
 	assert.deepEqual( doc.metadata.getData( 1 ), [ insert ], 'Inserting metadata without passing an index without pre-existing metadata' );

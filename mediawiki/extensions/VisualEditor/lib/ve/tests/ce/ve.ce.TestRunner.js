@@ -52,6 +52,10 @@ ve.ce.TestOffset.static = {};
  *
  * @private
  * @static
+ * @param {Node} node Node
+ * @param {number} n Offset
+ * @param {boolean} reversed Reversed
+ * @return {Object} Offset information
  */
 ve.ce.TestOffset.static.findTextOffset = function ( node, n, reversed ) {
 	var i, len, found, slice, offset, childNode, childNodes, consumed = 0;
@@ -114,13 +118,10 @@ ve.ce.TestOffset.static.findTextOffset = function ( node, n, reversed ) {
  * @param {ve.ce.Surface} surface The UI Surface
  */
 ve.ce.TestRunner = function VeCeTestRunner( surface ) {
-	var testRunner,
-		callId = 0;
 	this.view = surface;
 	this.model = surface.getModel();
 	this.doc = surface.getElementDocument();
 	this.nativeSelection = surface.nativeSelection;
-	this.postponedCalls = {};
 
 	// TODO: The code assumes that the document consists of exactly one paragraph
 	this.lastText = this.getParagraph().textContent;
@@ -129,14 +130,7 @@ ve.ce.TestRunner = function VeCeTestRunner( surface ) {
 	surface.surfaceObserver.pollInterval = null;
 
 	// Take control of eventSequencer 'setTimeouts'
-	testRunner = this;
-	this.view.eventSequencer.postpone = function ( f ) {
-		testRunner.postponedCalls[ ++callId ] = f;
-		return callId;
-	};
-	this.view.eventSequencer.cancelPostponed = function ( callId ) {
-		delete testRunner.postponedCalls[ callId ];
-	};
+	ve.test.utils.hijackEventSequencerTimeouts( this.view.eventSequencer );
 };
 
 /* Methods */
@@ -162,22 +156,10 @@ ve.ce.TestRunner.prototype.getParagraph = function () {
 /**
  * Run any pending postponed calls
  *
- * Exceptions thrown may leave this.postponedCalls in an inconsistent state
+ * Exceptions thrown will leave postponed calls in an inconsistent state
  */
 ve.ce.TestRunner.prototype.endLoop = function () {
-	var callId, postponedCalls,
-		check = true;
-
-	// postponed calls may add more postponed calls
-	while ( check ) {
-		postponedCalls = this.postponedCalls;
-		this.postponedCalls = {};
-		check = false;
-		for ( callId in postponedCalls ) {
-			check = true;
-			postponedCalls[ callId ]();
-		}
-	}
+	this.view.eventSequencer.endLoop();
 };
 
 /**

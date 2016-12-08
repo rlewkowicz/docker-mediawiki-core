@@ -192,7 +192,7 @@ ve.ui.Trigger.static.platformFilters = {
 			}
 			return explode ? keys : keys.join( '' );
 		};
-	} )()
+	}() )
 };
 
 /**
@@ -208,7 +208,7 @@ ve.ui.Trigger.static.keyAliases = {
 	apple: 'meta',
 	windows: 'meta',
 	option: 'alt',
-	return: 'enter',
+	'return': 'enter',
 	// Shorthand
 	esc: 'escape',
 	cmd: 'meta',

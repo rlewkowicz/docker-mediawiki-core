@@ -60,24 +60,34 @@ ve.ui.PreviewElement.prototype.setModel = function ( model ) {
 /**
  * Replace the content of the body with the model DOM
  *
+ * Doesn't use jQuery to avoid document switching performance bug
+ *
  * @fires render
  */
 ve.ui.PreviewElement.prototype.replaceWithModelDom = function () {
 	var htmlDocument = ve.dm.converter.getDomFromNode( this.model, true ),
-		$preview = $( htmlDocument.body );
+		body = htmlDocument.body,
+		element = this.$element[ 0 ];
 
 	// Resolve attributes
 	ve.resolveAttributes(
-		$preview,
+		body,
 		this.model.getDocument().getHtmlDocument(),
 		ve.dm.Converter.static.computedAttributes
 	);
 
 	// Make all links open in a new window (sync view)
-	$preview.find( 'a' ).attr( 'target', '_blank' );
+	Array.prototype.forEach.call( body.querySelectorAll( 'a[href]' ), function ( el ) {
+		el.setAttribute( 'target', '_blank' );
+	} );
 
-	// Replace content
-	this.$element.empty().append( $preview.contents() );
+	// Move content to element
+	element.innerHTML = '';
+	while ( body.childNodes.length ) {
+		element.appendChild(
+			element.ownerDocument.adoptNode( body.childNodes[ 0 ] )
+		);
+	}
 
 	// Cleanup
 	this.view.destroy();

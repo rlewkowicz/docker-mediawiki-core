@@ -17,7 +17,6 @@ class ReCaptcha extends SimpleCaptcha {
 	function getFormInformation( $tabIndex = 1 ) {
 		global $wgReCaptchaPublicKey, $wgReCaptchaTheme;
 
-		wfDeprecated( 'ConfirmEdit module ReCaptcha', '1.28' );
 		$useHttps = ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] == 'on' );
 		$js = 'var RecaptchaOptions = ' . Xml::encodeJsVar(
 			[ 'theme' => $wgReCaptchaTheme, 'tabindex' => $tabIndex ]

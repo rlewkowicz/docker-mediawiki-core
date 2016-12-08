@@ -209,7 +209,7 @@ ve.supportsSplice = ( function () {
 
 	// Splice is supported
 	return true;
-} )();
+}() );
 
 /**
  * Splice one array into another.
@@ -246,7 +246,7 @@ ve.batchSplice = function ( arr, offset, remove, data ) {
 			splice = Array.prototype.splice;
 		} else {
 			// Standard Array.prototype.splice() function implemented using .slice() and .push().
-			splice = function ( offset, remove/*, data... */ ) {
+			splice = function ( offset, remove /* , data... */ ) {
 				var data, begin, removed, end;
 
 				data = Array.prototype.slice.call( arguments, 2 );
@@ -776,7 +776,7 @@ ve.elementTypes = {
 		'hr', 'button', 'canvas', 'center', 'col', 'colgroup', 'embed',
 		'map', 'object', 'pre', 'progress', 'video'
 	],
-	void: [
+	'void': [
 		'area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img',
 		'input', 'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'
 	]
@@ -966,30 +966,48 @@ ve.resolveUrl = function ( url, base ) {
  *
  * This performs node.setAttribute( 'attr', nodeInDoc[attr] ); for every node.
  *
- * @param {jQuery} $elements Set of DOM elements to modify
+ * Doesn't use jQuery to avoid document switching performance bug
+ *
+ * @param {HTMLElement[]|jQuery} elementsOrJQuery Set of DOM elements to modify. Passing a jQuery selector is deprecated.
  * @param {HTMLDocument} doc Document to resolve against (different from $elements' .ownerDocument)
  * @param {string[]} attrs Attributes to resolve
  */
-ve.resolveAttributes = function ( $elements, doc, attrs ) {
-	var i, len, attr;
+ve.resolveAttributes = function ( elementsOrJQuery, doc, attrs ) {
+	var i, iLen, j, jLen, element, attr,
+		// Convert jQuery selections to plain arrays
+		elements = elementsOrJQuery.toArray ? elementsOrJQuery.toArray() : elementsOrJQuery;
 
 	/**
-	 * Callback for jQuery.fn.each that resolves the value of attr to the computed
-	 * property value. Called in the context of an HTMLElement.
+	 * Resolves the value of attr to the computed property value.
 	 *
 	 * @private
+	 * @param {HTMLElement} el Element
 	 */
-	function resolveAttribute() {
-		var nodeInDoc = doc.createElement( this.nodeName );
-		nodeInDoc.setAttribute( attr, this.getAttribute( attr ) );
-		if ( nodeInDoc[ attr ] ) {
-			this.setAttribute( attr, nodeInDoc[ attr ] );
+	function resolveAttribute( el ) {
+		var nodeInDoc = doc.createElement( el.nodeName );
+		nodeInDoc.setAttribute( attr, el.getAttribute( attr ) );
+		try {
+			if ( nodeInDoc[ attr ] ) {
+				el.setAttribute( attr, nodeInDoc[ attr ] );
+			}
+		} catch ( e ) {
+			// Support: IE
+			// IE can throw exceptions if the URL is malformed,
+			// so just leave them as is, as there's no way to
+			// resolve them and hopefully they are absolute
+			// URLs. T148858.
 		}
 	}
 
-	for ( i = 0, len = attrs.length; i < len; i++ ) {
-		attr = attrs[ i ];
-		$elements.find( '[' + attr + ']' ).addBack( '[' + attr + ']' ).each( resolveAttribute );
+	for ( i = 0, iLen = elements.length; i < iLen; i++ ) {
+		element = elements[ i ];
+		for ( j = 0, jLen = attrs.length; j < jLen; j++ ) {
+			attr = attrs[ j ];
+			if ( element.hasAttribute( attr ) ) {
+				resolveAttribute( element );
+			}
+			Array.prototype.forEach.call( element.querySelectorAll( '[' + attr + ']' ), resolveAttribute );
+		}
 	}
 };
 
@@ -1182,7 +1200,7 @@ ve.transformStyleAttributes = function ( html, unmask ) {
 	for ( i = 0, len = maskAttrs.length; i < len; i++ ) {
 		fromAttr = unmask ? 'data-ve-' + maskAttrs[ i ] : maskAttrs[ i ];
 		toAttr = unmask ? maskAttrs[ i ] : 'data-ve-' + maskAttrs[ i ];
-		/*jshint loopfunc:true */
+		// eslint-disable-next-line no-loop-func
 		$( xmlDoc ).find( '[' + fromAttr + ']' ).each( function () {
 			var toAttrValue, fromAttrNormalized,
 				fromAttrValue = this.getAttribute( fromAttr );
@@ -1789,7 +1807,7 @@ ve.countEdgeMatches = function ( before, after, equals ) {
  *
  * @param {string} str The string to repeat
  * @param {number} n The number of times to repeat
- * @param {string} The string, repeated n times
+ * @return {string} The string, repeated n times
  */
 ve.repeatString = function ( str, n ) {
 	return new Array( n + 1 ).join( str );

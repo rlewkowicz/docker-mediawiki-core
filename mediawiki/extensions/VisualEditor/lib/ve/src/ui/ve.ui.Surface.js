@@ -14,6 +14,7 @@
  * @constructor
  * @param {HTMLDocument|Array|ve.dm.LinearData|ve.dm.Document} dataOrDoc Document data to edit
  * @param {Object} [config] Configuration options
+ * @cfg {boolean} [mode] Editing mode
  * @cfg {jQuery} [$scrollContainer] The scroll container of the surface
  * @cfg {ve.ui.CommandRegistry} [commandRegistry] Command registry to use
  * @cfg {ve.ui.SequenceRegistry} [sequenceRegistry] Sequence registry to use
@@ -35,6 +36,7 @@ ve.ui.Surface = function VeUiSurface( dataOrDoc, config ) {
 	// Properties
 	this.$scrollContainer = config.$scrollContainer || $( this.getElementWindow() );
 	this.inDialog = config.inDialog || '';
+	this.mode = config.mode;
 	this.globalOverlay = new ve.ui.Overlay( { classes: [ 've-ui-overlay-global' ] } );
 	this.localOverlay = new ve.ui.Overlay( { classes: [ 've-ui-overlay-local' ] } );
 	this.$selections = $( '<div>' );
@@ -83,7 +85,10 @@ ve.ui.Surface = function VeUiSurface( dataOrDoc, config ) {
 	// Initialization
 	this.$menus.append( this.context.$element );
 	this.$element
-		.addClass( 've-ui-surface' )
+		// The following classes are used here:
+		// * ve-ui-surface-visual
+		// * ve-ui-surface-source
+		.addClass( 've-ui-surface ve-ui-surface-' + this.mode )
 		.append( this.view.$element );
 	this.view.$element.after( this.localOverlay.$element );
 	this.localOverlay.$element.append( this.$selections, this.$blockers, this.$controls, this.$menus );
@@ -120,6 +125,8 @@ OO.inheritClass( ve.ui.Surface, OO.ui.Widget );
 ve.ui.Surface.static.isMobile = false;
 
 /* Methods */
+
+/* eslint-disable valid-jsdoc */
 
 /**
  * Destroy the surface, releasing all memory and removing all DOM elements.
@@ -182,6 +189,23 @@ ve.ui.Surface.prototype.initialize = function () {
  * @return {HTMLDocument} HTML document
  */
 ve.ui.Surface.prototype.getDom = function () {
+	var i, l, text, data;
+
+	// Optimized converter for source mode, which contains only
+	// plain text or paragraphs.
+	if ( this.getMode() === 'source' ) {
+		text = '';
+		data = this.getModel().getDocument().data.data;
+		for ( i = 0, l = data.length; i < l; i++ ) {
+			if ( data[ i ].type === '/paragraph' && data[ i + 1 ].type === 'paragraph' ) {
+				text += '\n';
+			} else if ( !data[ i ].type ) {
+				text += data[ i ];
+			}
+		}
+
+		return text;
+	}
 	return ve.dm.converter.getDomFromModel( this.getModel().getDocument() );
 };
 
@@ -191,7 +215,18 @@ ve.ui.Surface.prototype.getDom = function () {
  * @return {string} HTML
  */
 ve.ui.Surface.prototype.getHtml = function () {
-	return ve.properInnerHtml( this.getDom().body );
+	return this.getMode() === 'source' ?
+		this.getDom() :
+		ve.properInnerHtml( this.getDom().body );
+};
+
+/**
+ * Get the surface's editing mode
+ *
+ * @return {string} Editing mode
+ */
+ve.ui.Surface.prototype.getMode = function () {
+	return this.mode;
 };
 
 /**
@@ -219,7 +254,7 @@ ve.ui.Surface.prototype.createDialogWindowManager = null;
  * @return {ve.dm.Surface} Surface model
  */
 ve.ui.Surface.prototype.createModel = function ( doc ) {
-	return new ve.dm.Surface( doc );
+	return new ve.dm.Surface( doc, { sourceMode: this.getMode() === 'source' } );
 };
 
 /**
@@ -407,6 +442,8 @@ ve.ui.Surface.prototype.disable = function () {
 ve.ui.Surface.prototype.enable = function () {
 	return this.setDisabled( false );
 };
+
+/* eslint-enable valid-jsdoc */
 
 /**
  * Handle transact events from the document model
@@ -599,9 +636,11 @@ ve.ui.Surface.prototype.createProgress = function ( progressCompletePromise, lab
 
 ve.ui.Surface.prototype.showProgress = function () {
 	var dialogs = this.dialogs,
-		progresses = this.progresses;
+		progresses = this.progresses,
+		// HACK: Allow $returnFocusTo to take null upstream
+		$noFocus = [ { focus: function () {} } ];
 
-	dialogs.openWindow( 'progress', { progresses: progresses } );
+	dialogs.openWindow( 'progress', { progresses: progresses, $returnFocusTo: $noFocus } );
 	this.progresses = [];
 };
 
