@@ -54,7 +54,7 @@ class FixDoubleRedirects extends Maintenance {
 			$title = null;
 		}
 
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 
 		// See also SpecialDoubleRedirects
 		$tables = [

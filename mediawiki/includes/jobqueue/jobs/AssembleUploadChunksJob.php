@@ -20,7 +20,6 @@
  * @file
  * @ingroup Upload
  */
-use Wikimedia\ScopedCallback;
 
 /**
  * Assemble the segments of a chunked upload.
@@ -34,6 +33,7 @@ class AssembleUploadChunksJob extends Job {
 	}
 
 	public function run() {
+		/** @noinspection PhpUnusedLocalVariableInspection */
 		$scope = RequestContext::importScopedSession( $this->params['session'] );
 		$this->addTeardownCallback( function () use ( &$scope ) {
 			ScopedCallback::consume( $scope ); // T126450
@@ -74,12 +74,8 @@ class AssembleUploadChunksJob extends Job {
 				return false;
 			}
 
-			// We can only get warnings like 'duplicate' after concatenating the chunks
-			$status = Status::newGood();
-			$status->value = [ 'warnings' => $upload->checkWarnings() ];
-
 			// We have a new filekey for the fully concatenated file
-			$newFileKey = $upload->getStashFile()->getFileKey();
+			$newFileKey = $upload->getLocalFile()->getFileKey();
 
 			// Remove the old stash file row and first chunk file
 			$upload->stash->removeFileNoAuth( $this->params['filekey'] );
@@ -100,7 +96,7 @@ class AssembleUploadChunksJob extends Job {
 					'stage' => 'assembling',
 					'filekey' => $newFileKey,
 					'imageinfo' => $imageInfo,
-					'status' => $status
+					'status' => Status::newGood()
 				]
 			);
 		} catch ( Exception $e ) {

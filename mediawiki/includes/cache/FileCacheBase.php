@@ -157,6 +157,12 @@ abstract class FileCacheBase {
 	 * @return string Compressed text
 	 */
 	public function saveText( $text ) {
+		global $wgUseFileCache;
+
+		if ( !$wgUseFileCache ) {
+			return false;
+		}
+
 		if ( $this->useGzip() ) {
 			$text = gzencode( $text );
 		}

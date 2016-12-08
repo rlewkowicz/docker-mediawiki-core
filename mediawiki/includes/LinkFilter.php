@@ -89,10 +89,10 @@ class LinkFilter {
 	 *
 	 * @param string $filterEntry Domainparts
 	 * @param string $protocol Protocol (default http://)
-	 * @return array|bool Array to be passed to Database::buildLike() or false on error
+	 * @return array Array to be passed to Database::buildLike() or false on error
 	 */
 	public static function makeLikeArray( $filterEntry, $protocol = 'http://' ) {
-		$db = wfGetDB( DB_REPLICA );
+		$db = wfGetDB( DB_SLAVE );
 
 		$target = $protocol . $filterEntry;
 		$bits = wfParseUrl( $target );

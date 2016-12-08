@@ -24,7 +24,7 @@ ve.ui.MWMediaResultWidget = function VeUiMWMediaResultWidget( config ) {
 	config = config || {};
 
 	// Parent constructor
-	ve.ui.MWMediaResultWidget.super.call( this, config );
+	OO.ui.OptionWidget.call( this, config );
 
 	// Properties
 	this.setRowHeight( config.rowHeight || 150 );

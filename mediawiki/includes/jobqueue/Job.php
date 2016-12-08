@@ -301,9 +301,7 @@ abstract class Job implements IJobSpecification {
 	}
 
 	/**
-	 * @param callable $callback A function with one parameter, the success status, which will be
-	 *   false if the job failed or it succeeded but the DB changes could not be committed or
-	 *   any deferred updates threw an exception. (This parameter was added in 1.28.)
+	 * @param callable $callback
 	 * @since 1.27
 	 */
 	protected function addTeardownCallback( $callback ) {
@@ -312,12 +310,12 @@ abstract class Job implements IJobSpecification {
 
 	/**
 	 * Do any final cleanup after run(), deferred updates, and all DB commits happen
-	 * @param bool $status Whether the job, its deferred updates, and DB commit all succeeded
+	 *
 	 * @since 1.27
 	 */
-	public function teardown( $status ) {
+	public function teardown() {
 		foreach ( $this->teardownCallbacks as $callback ) {
-			call_user_func( $callback, $status );
+			call_user_func( $callback );
 		}
 	}
 

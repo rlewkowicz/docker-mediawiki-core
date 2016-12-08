@@ -50,74 +50,19 @@
 	/**
 	 * Insert transclusion at the end of a surface fragment.
 	 *
-	 * If forceType is not specified and this is used in async mode, users of this method
-	 * should ensure the surface is not accessible while the type is being evaluated.
-	 *
-	 * @param {ve.dm.SurfaceFragment} surfaceFragment Surface fragment after which to insert.
-	 * @param {boolean|undefined} [forceType] Force the type to 'inline' or 'block'. If not
-	 *   specified it will be evaluated asynchronously.
-	 * @return {jQuery.Promise} Promise which resolves when the node has been inserted. If
-	 *   forceType was specified this will be instant.
+	 * @param {ve.dm.SurfaceFragment} surfaceFragment Surface fragment to insert at
 	 */
-	ve.dm.MWTransclusionModel.prototype.insertTransclusionNode = function ( surfaceFragment, forceType ) {
-		var model = this,
-			deferred = $.Deferred(),
-			nodeClass = ve.dm.MWTransclusionNode;
-
-		function insertNode( isInline ) {
-			var type = isInline ? nodeClass.static.inlineType : nodeClass.static.blockType,
-				range = surfaceFragment.getSelection().getCoveringRange(),
-				data = [
-					{
-						type: type,
-						attributes: {
-							mw: model.getPlainObject()
-						}
-					},
-					{ type: '/' + type }
-				];
-
-			if ( range.isCollapsed() ) {
-				surfaceFragment.insertContent( data );
-			} else {
-				// Generate a replacement transaction instead of using surfaceFragment.insertContent
-				// (which generates a removal and insertion) as blanking a reference triggers T135127.
-				// TODO: Once T135127 is fixed, revert to using surfaceFragment.insert.
-				surfaceFragment.getSurface().change(
-					ve.dm.Transaction.newFromReplacement( surfaceFragment.getDocument(), range, data )
-				);
-			}
-			deferred.resolve();
-		}
-
-		if ( forceType ) {
-			insertNode( forceType === 'inline' );
-		} else {
-			new mw.Api().post( {
-					action: 'visualeditor',
-					paction: 'parsefragment',
-					page: mw.config.get( 'wgRelevantPageName' ),
-					wikitext: nodeClass.static.getWikitext( this.getPlainObject() ),
-					pst: 1
-				} )
-				.then( function ( response ) {
-					var contentNodes;
-
-					if ( ve.getProp( response, 'visualeditor', 'result' ) === 'success' ) {
-						contentNodes = $.parseHTML( response.visualeditor.content, surfaceFragment.getDocument().getHtmlDocument() ) || [];
-						contentNodes = ve.ce.MWTransclusionNode.static.filterRendering( contentNodes );
-						insertNode(
-							nodeClass.static.isHybridInline( contentNodes, ve.dm.converter )
-						);
-					} else {
-						// Request failed - just assume inline
-						insertNode( true );
+	ve.dm.MWTransclusionModel.prototype.insertTransclusionNode = function ( surfaceFragment ) {
+		surfaceFragment
+			.insertContent( [
+				{
+					type: 'mwTransclusionInline',
+					attributes: {
+						mw: this.getPlainObject()
 					}
-				}, function () {
-					insertNode( true );
-				} );
-		}
-		return deferred.promise();
+				},
+				{ type: '/mwTransclusionInline' }
+			] );
 	};
 
 	/**
@@ -250,7 +195,6 @@
 	/** */
 	ve.dm.MWTransclusionModel.prototype.fetch = function () {
 		var i, len, item, title, queue,
-			templateNamespaceId = mw.config.get( 'wgNamespaceIds' ).template,
 			titles = [],
 			specs = {};
 
@@ -272,10 +216,7 @@
 					// Skip titles that don't have a resolvable href
 					title &&
 					// Skip titles outside the template namespace
-					mw.Title.newFromText(
-						title,
-						templateNamespaceId
-					).namespace === templateNamespaceId &&
+					title.charAt( 0 ) !== ':' &&
 					// Skip already cached data
 					!hasOwn.call( specCache, title ) &&
 					// Skip duplicate titles in the same batch
@@ -544,16 +485,6 @@
 			}
 		}
 		return -1;
-	};
-
-	/*
-	 * Add missing required and suggested parameters to each transclusion.
-	 */
-	ve.dm.MWTransclusionModel.prototype.addPromptedParameters = function () {
-		var i;
-		for ( i = 0; i < this.parts.length; i++ ) {
-			this.parts[ i ].addPromptedParameters();
-		}
 	};
 
 }() );

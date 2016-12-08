@@ -84,9 +84,11 @@ class DjVuImage {
 	function dump() {
 		$file = fopen( $this->mFilename, 'rb' );
 		$header = fread( $file, 12 );
-		$arr = unpack( 'a4magic/a4chunk/NchunkLength', $header );
-		$chunk = $arr['chunk'];
-		$chunkLength = $arr['chunkLength'];
+		// @todo FIXME: Would be good to replace this extract() call with
+		// something that explicitly initializes local variables.
+		extract( unpack( 'a4magic/a4chunk/NchunkLength', $header ) );
+		/** @var string $chunk
+		 * @var string $chunkLength */
 		echo "$chunk $chunkLength\n";
 		$this->dumpForm( $file, $chunkLength, 1 );
 		fclose( $file );
@@ -101,9 +103,11 @@ class DjVuImage {
 			if ( $chunkHeader == '' ) {
 				break;
 			}
-			$arr = unpack( 'a4chunk/NchunkLength', $chunkHeader );
-			$chunk = $arr['chunk'];
-			$chunkLength = $arr['chunkLength'];
+			// @todo FIXME: Would be good to replace this extract() call with
+			// something that explicitly initializes local variables.
+			extract( unpack( 'a4chunk/NchunkLength', $chunkHeader ) );
+			/** @var string $chunk
+			 * @var string $chunkLength */
 			echo str_repeat( ' ', $indent * 4 ) . "$chunk $chunkLength\n";
 
 			if ( $chunk == 'FORM' ) {
@@ -134,19 +138,24 @@ class DjVuImage {
 		if ( strlen( $header ) < 16 ) {
 			wfDebug( __METHOD__ . ": too short file header\n" );
 		} else {
-			$arr = unpack( 'a4magic/a4form/NformLength/a4subtype', $header );
+			// @todo FIXME: Would be good to replace this extract() call with
+			// something that explicitly initializes local variables.
+			extract( unpack( 'a4magic/a4form/NformLength/a4subtype', $header ) );
 
-			$subtype = $arr['subtype'];
-			if ( $arr['magic'] != 'AT&T' ) {
+			/** @var string $magic
+			 * @var string $subtype
+			 * @var string $formLength
+			 * @var string $formType */
+			if ( $magic != 'AT&T' ) {
 				wfDebug( __METHOD__ . ": not a DjVu file\n" );
 			} elseif ( $subtype == 'DJVU' ) {
 				// Single-page document
 				$info = $this->getPageInfo( $file );
 			} elseif ( $subtype == 'DJVM' ) {
 				// Multi-page document
-				$info = $this->getMultiPageInfo( $file, $arr['formLength'] );
+				$info = $this->getMultiPageInfo( $file, $formLength );
 			} else {
-				wfDebug( __METHOD__ . ": unrecognized DJVU file type '{$arr['subtype']}'\n" );
+				wfDebug( __METHOD__ . ": unrecognized DJVU file type '$formType'\n" );
 			}
 		}
 		fclose( $file );
@@ -159,9 +168,13 @@ class DjVuImage {
 		if ( strlen( $header ) < 8 ) {
 			return [ false, 0 ];
 		} else {
-			$arr = unpack( 'a4chunk/Nlength', $header );
+			// @todo FIXME: Would be good to replace this extract() call with
+			// something that explicitly initializes local variables.
+			extract( unpack( 'a4chunk/Nlength', $header ) );
 
-			return [ $arr['chunk'], $arr['length'] ];
+			/** @var string $chunk
+			 * @var string $length */
+			return [ $chunk, $length ];
 		}
 	}
 
@@ -223,22 +236,31 @@ class DjVuImage {
 			return false;
 		}
 
-		$arr = unpack(
+		// @todo FIXME: Would be good to replace this extract() call with
+		// something that explicitly initializes local variables.
+		extract( unpack(
 			'nwidth/' .
 			'nheight/' .
 			'Cminor/' .
 			'Cmajor/' .
 			'vresolution/' .
-			'Cgamma', $data );
+			'Cgamma', $data ) );
 
 		# Newer files have rotation info in byte 10, but we don't use it yet.
 
+		/** @var string $width
+		 * @var string $height
+		 * @var string $major
+		 * @var string $minor
+		 * @var string $resolution
+		 * @var string $length
+		 * @var string $gamma */
 		return [
-			'width' => $arr['width'],
-			'height' => $arr['height'],
-			'version' => "{$arr['major']}.{$arr['minor']}",
-			'resolution' => $arr['resolution'],
-			'gamma' => $arr['gamma'] / 10.0 ];
+			'width' => $width,
+			'height' => $height,
+			'version' => "$major.$minor",
+			'resolution' => $resolution,
+			'gamma' => $gamma / 10.0 ];
 	}
 
 	/**

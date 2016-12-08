@@ -176,7 +176,7 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 		}
 	} );
 	capsulePopupWidget.$element.css( 'vertical-align', 'middle' );
-	capsuleWithPopup = new OO.ui.CapsuleMultiselectWidget( {
+	capsuleWithPopup = new OO.ui.CapsuleMultiSelectWidget( {
 		allowArbitrary: true,
 		popup: { $content: capsulePopupWidget.$element }
 	} );
@@ -538,6 +538,16 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 						label: 'ButtonWidget (frameless, indicator)\u200E',
 						align: 'top'
 					}
+				),
+				new OO.ui.FieldLayout(
+					new OO.ui.ButtonWidget( {
+						label: 'AccessKeyed',
+						accessKey: 'k'
+					} ),
+					{
+						label: 'ButtonWidget (with accesskey k)\u200E',
+						align: 'top'
+					}
 				)
 			]
 		} ),
@@ -562,24 +572,6 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 					} ),
 					{
 						label: 'ButtonGroupWidget',
-						align: 'top'
-					}
-				),
-				new OO.ui.FieldLayout(
-					new OO.ui.ButtonGroupWidget( {
-						items: [
-							new OO.ui.ButtonWidget( {
-								label: 'One',
-								flags: [ 'destructive' ]
-							} ),
-							new OO.ui.ButtonWidget( {
-								label: 'Two',
-								flags: [ 'progressive' ]
-							} )
-						]
-					} ),
-					{
-						label: 'ButtonGroupWidget (feat. destructive and progressive ButtonWidget)',
 						align: 'top'
 					}
 				),
@@ -745,29 +737,6 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 					}
 				),
 				new OO.ui.FieldLayout(
-					new OO.ui.CheckboxMultiselectWidget( {
-						items: [
-							new OO.ui.CheckboxMultioptionWidget( {
-								data: 'cat',
-								label: 'Cat'
-							} ),
-							new OO.ui.CheckboxMultioptionWidget( {
-								data: 'dog',
-								label: 'Dog'
-							} ),
-							new OO.ui.CheckboxMultioptionWidget( {
-								data: 'goldfish',
-								label: 'Goldfish',
-								disabled: true
-							} )
-						]
-					} ),
-					{
-						align: 'top',
-						label: 'CheckboxMultiselectWidget'
-					}
-				),
-				new OO.ui.FieldLayout(
 					new OO.ui.RadioSelectInputWidget( {
 						value: 'dog',
 						options: [
@@ -788,29 +757,6 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 					{
 						align: 'top',
 						label: 'RadioSelectInputWidget'
-					}
-				),
-				new OO.ui.FieldLayout(
-					new OO.ui.CheckboxMultiselectInputWidget( {
-						value: [ 'dog', 'cat' ],
-						options: [
-							{
-								data: 'cat',
-								label: 'Cat'
-							},
-							{
-								data: 'dog',
-								label: 'Dog'
-							},
-							{
-								data: 'goldfish',
-								label: 'Goldfish'
-							}
-						]
-					} ),
-					{
-						align: 'top',
-						label: 'CheckboxMultiselectInputWidget'
 					}
 				),
 				new OO.ui.FieldLayout(
@@ -891,13 +837,6 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 					}
 				),
 				new OO.ui.FieldLayout(
-					new OO.ui.ToggleButtonWidget( { icon: 'next', value: true } ),
-					{
-						label: 'ToggleButtonWidget (icon only, initially active)\u200E',
-						align: 'top'
-					}
-				),
-				new OO.ui.FieldLayout(
 					new OO.ui.TextInputWidget( { value: 'Text input' } ),
 					{
 						label: 'TextInputWidget\u200E',
@@ -960,16 +899,6 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 					} ),
 					{
 						label: 'TextInputWidget (readonly)\u200E',
-						align: 'top'
-					}
-				),
-				new OO.ui.FieldLayout(
-					new OO.ui.TextInputWidget( {
-						value: 'Disabled',
-						disabled: true
-					} ),
-					{
-						label: 'TextInputWidget (disabled)\u200E',
 						align: 'top'
 					}
 				),
@@ -1063,6 +992,16 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 					} ),
 					{
 						label: 'TextInputWidget (with title)\u200E',
+						align: 'top'
+					}
+				),
+				new OO.ui.FieldLayout(
+					new OO.ui.TextInputWidget( {
+						value: 'Accesskey A',
+						accessKey: 'a'
+					} ),
+					{
+						label: 'TextInputWidget (with Accesskey)\u200E',
 						align: 'top'
 					}
 				),
@@ -1351,7 +1290,7 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 					}
 				),
 				new OO.ui.FieldLayout(
-					new OO.ui.CapsuleMultiselectWidget( {
+					new OO.ui.CapsuleMultiSelectWidget( {
 						menu: {
 							items: [
 								new OO.ui.MenuOptionWidget( { data: 'abc', label: 'Label for abc' } ),
@@ -1364,12 +1303,12 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 						}
 					} ),
 					{
-						label: 'CapsuleMultiselectWidget',
+						label: 'CapsuleMultiSelectWidget',
 						align: 'top'
 					}
 				),
 				new OO.ui.FieldLayout(
-					new OO.ui.CapsuleMultiselectWidget( {
+					new OO.ui.CapsuleMultiSelectWidget( {
 						allowArbitrary: true,
 						icon: 'tag',
 						indicator: 'required',
@@ -1385,12 +1324,12 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 						}
 					} ),
 					{
-						label: 'CapsuleMultiselectWidget (icon, indicator, arbitrary values allowed)',
+						label: 'CapsuleMultiSelectWidget (icon, indicator, arbitrary values allowed)',
 						align: 'top'
 					}
 				),
 				new OO.ui.FieldLayout(
-					new OO.ui.CapsuleMultiselectWidget( {
+					new OO.ui.CapsuleMultiSelectWidget( {
 						disabled: true,
 						icon: 'tag',
 						indicator: 'required',
@@ -1406,12 +1345,12 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 						}
 					} ),
 					{
-						label: 'CapsuleMultiselectWidget (disabled)\u200E',
+						label: 'CapsuleMultiSelectWidget (disabled)\u200E',
 						align: 'top'
 					}
 				),
 				new OO.ui.FieldLayout(
-					new OO.ui.CapsuleMultiselectWidget( {
+					new OO.ui.CapsuleMultiSelectWidget( {
 						disabled: true,
 						menu: {
 							items: [
@@ -1422,12 +1361,12 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 						}
 					} ).addItemsFromData( [ 'abc', 'asd' ] ),
 					{
-						label: 'CapsuleMultiselectWidget (disabled, initially selected)\u200E',
+						label: 'CapsuleMultiSelectWidget (disabled, initially selected)\u200E',
 						align: 'top'
 					}
 				),
 				new OO.ui.FieldLayout(
-					new OO.ui.CapsuleMultiselectWidget( {
+					new OO.ui.CapsuleMultiSelectWidget( {
 						menu: {
 							items: [
 								new OO.ui.MenuOptionWidget( { data: 'abc', label: 'Label for abc' } ),
@@ -1437,14 +1376,14 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 						}
 					} ).addItemsFromData( [ 'abc', 'asd' ] ),
 					{
-						label: 'CapsuleMultiselectWidget (initially selected)\u200E',
+						label: 'CapsuleMultiSelectWidget (initially selected)\u200E',
 						align: 'top'
 					}
 				),
 				new OO.ui.FieldLayout(
 					capsuleWithPopup,
 					{
-						label: 'CapsuleMultiselectWidget with NumberInputWidget popup\u200E',
+						label: 'CapsuleMultiSelectWidget with NumberInputWidget popup\u200E',
 						align: 'top'
 					}
 				),
@@ -1466,7 +1405,7 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 					} ),
 					{
 						align: 'top',
-						label: 'ButtonInputWidget (using <input>)\u200E'
+						label: 'ButtonInputWidget (using <input/>)\u200E'
 					}
 				),
 				new OO.ui.FieldLayout(
@@ -1489,77 +1428,7 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 					} ),
 					{
 						align: 'top',
-						label: 'ButtonInputWidget (frameless, using <input>)\u200E'
-					}
-				),
-				new OO.ui.FieldLayout(
-					new OO.ui.ButtonWidget( {
-						label: 'Accesskey: I',
-						accessKey: 'i'
-					} ),
-					{
-						label: 'ButtonWidget (with accesskey)\u200E',
-						align: 'top'
-					}
-				),
-				new OO.ui.FieldLayout(
-					new OO.ui.ButtonSelectWidget( {
-						items: [
-							new OO.ui.ButtonOptionWidget( {
-								data: 'a',
-								label: 'Accesskey: J',
-								accessKey: 'j'
-							} ),
-							new OO.ui.ButtonOptionWidget( {
-								data: 'b',
-								label: 'Accesskey: K',
-								accessKey: 'k'
-							} ),
-							new OO.ui.ButtonOptionWidget( {
-								data: 'c',
-								label: 'Accesskey: L',
-								accessKey: 'l'
-							} )
-						]
-					} ),
-					{
-						label: 'ButtonSelectWidget (with accesskeys)\u200E',
-						align: 'top'
-					}
-				),
-				new OO.ui.FieldLayout(
-					new OO.ui.RadioSelectWidget( {
-						items: [
-							new OO.ui.RadioOptionWidget( {
-								data: 'a',
-								label: 'Accesskey: M',
-								accessKey: 'm'
-							} ),
-							new OO.ui.RadioOptionWidget( {
-								data: 'b',
-								label: 'Accesskey: N',
-								accessKey: 'n'
-							} ),
-							new OO.ui.RadioOptionWidget( {
-								data: 'c',
-								label: 'Accesskey: O',
-								accessKey: 'o'
-							} )
-						]
-					} ),
-					{
-						align: 'top',
-						label: 'RadioSelectWidget (with accesskeys)\u200E'
-					}
-				),
-				new OO.ui.FieldLayout(
-					new OO.ui.TextInputWidget( {
-						value: 'Accesskey: P',
-						accessKey: 'p'
-					} ),
-					{
-						label: 'TextInputWidget (with accesskey)\u200E',
-						align: 'top'
+						label: 'ButtonInputWidget (frameless, using <input/>)\u200E'
 					}
 				)
 			]
@@ -2037,7 +1906,7 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 							}
 						),
 						new OO.ui.FieldLayout(
-							new OO.ui.CapsuleMultiselectWidget( {
+							new OO.ui.CapsuleMultiSelectWidget( {
 								menu: {
 									items: [
 										new OO.ui.MenuOptionWidget( { data: 'abc', label: 'Abc Label' } ),
@@ -2047,7 +1916,7 @@ OO.ui.Demo.static.pages.widgets = function ( demo ) {
 								}
 							} ).addItemsFromData( [ 'abc', 'def' ] ),
 							{
-								label: 'Select from multiple CapsuleMultiselectWidget items\u200E',
+								label: 'Select from multiple CapsuleMultiSelectWidget items\u200E',
 								align: 'top'
 							}
 						),

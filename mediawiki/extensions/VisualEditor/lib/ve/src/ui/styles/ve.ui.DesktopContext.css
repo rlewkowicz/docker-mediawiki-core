@@ -19,18 +19,18 @@
 
 .ve-ui-desktopContext-menu .oo-ui-toolbar-bar {
 	white-space: nowrap;
-	border: 0;
+	border: none;
 	background: none;
 }
 
 .ve-ui-desktopContext-menu .oo-ui-toolGroup {
-	border: 0;
+	border: none;
 	margin: 0;
 }
 
 .ve-ui-desktopContext-menu .oo-ui-tool,
 .ve-ui-desktopContext-menu .oo-ui-tool:hover {
-	border: 0;
+	border: none;
 }
 
 .ve-ui-desktopContext-menu .oo-ui-tool:active,
@@ -39,7 +39,7 @@
 }
 
 .ve-ui-desktopContext-floating {
-	position: fixed; /* stylelint-disable-line no-unsupported-browser-features */
+	position: fixed;
 }
 
 .ve-ui-desktopContext > .oo-ui-popupWidget:not( .oo-ui-popupWidget-anchored ) .oo-ui-popupWidget-popup {

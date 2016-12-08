@@ -9,9 +9,6 @@
 	 *     `options` to mw.Api constructor.
 	 * @property {Object} defaultOptions.parameters Default query parameters for API requests.
 	 * @property {Object} defaultOptions.ajax Default options for jQuery#ajax.
-	 * @property {boolean} defaultOptions.useUS Whether to use U+001F when joining multi-valued
-	 *     parameters (since 1.28). Default is true if ajax.url is not set, false otherwise for
-	 *     compatibility.
 	 * @private
 	 */
 	var defaultOptions = {
@@ -98,8 +95,6 @@
 			options.ajax.url = String( options.ajax.url );
 		}
 
-		options = $.extend( { useUS: !options.ajax || !options.ajax.url }, options );
-
 		options.parameters = $.extend( {}, defaultOptions.parameters, options.parameters );
 		options.ajax = $.extend( {}, defaultOptions.ajax, options.ajax );
 
@@ -152,19 +147,14 @@
 		 *
 		 * @private
 		 * @param {Object} parameters (modified in-place)
-		 * @param {boolean} useUS Whether to use U+001F when joining multi-valued parameters.
 		 */
-		preprocessParameters: function ( parameters, useUS ) {
+		preprocessParameters: function ( parameters ) {
 			var key;
 			// Handle common MediaWiki API idioms for passing parameters
 			for ( key in parameters ) {
 				// Multiple values are pipe-separated
 				if ( $.isArray( parameters[ key ] ) ) {
-					if ( !useUS || parameters[ key ].join( '' ).indexOf( '|' ) === -1 ) {
-						parameters[ key ] = parameters[ key ].join( '|' );
-					} else {
-						parameters[ key ] = '\x1f' + parameters[ key ].join( '\x1f' );
-					}
+					parameters[ key ] = parameters[ key ].join( '|' );
 				}
 				// Boolean values are only false when not given at all
 				if ( parameters[ key ] === false || parameters[ key ] === undefined ) {
@@ -196,7 +186,7 @@
 				delete parameters.token;
 			}
 
-			this.preprocessParameters( parameters, this.defaults.useUS );
+			this.preprocessParameters( parameters );
 
 			// If multipart/form-data has been requested and emulation is possible, emulate it
 			if (
@@ -298,22 +288,11 @@
 		 * @since 1.22
 		 */
 		postWithToken: function ( tokenType, params, ajaxOptions ) {
-			var api = this,
-				abortedPromise = $.Deferred().reject( 'http',
-					{ textStatus: 'abort', exception: 'abort' } ).promise(),
-				abortable,
-				aborted;
+			var api = this;
 
 			return api.getToken( tokenType, params.assert ).then( function ( token ) {
 				params.token = token;
-				// Request was aborted while token request was running, but we
-				// don't want to unnecessarily abort token requests, so abort
-				// a fake request instead
-				if ( aborted ) {
-					return abortedPromise;
-				}
-
-				return ( abortable = api.post( params, ajaxOptions ) ).then(
+				return api.post( params, ajaxOptions ).then(
 					// If no error, return to caller as-is
 					null,
 					// Error handler
@@ -322,14 +301,9 @@
 							api.badToken( tokenType );
 							// Try again, once
 							params.token = undefined;
-							abortable = null;
 							return api.getToken( tokenType, params.assert ).then( function ( token ) {
 								params.token = token;
-								if ( aborted ) {
-									return abortedPromise;
-								}
-
-								return ( abortable = api.post( params, ajaxOptions ) );
+								return api.post( params, ajaxOptions );
 							} );
 						}
 
@@ -337,13 +311,7 @@
 						return this;
 					}
 				);
-			} ).promise( { abort: function () {
-				if ( abortable ) {
-					abortable.abort();
-				} else {
-					aborted = true;
-				}
-			} } );
+			} );
 		},
 
 		/**

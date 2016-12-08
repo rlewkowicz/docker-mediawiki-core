@@ -83,10 +83,7 @@ class ListredirectsPage extends QueryPage {
 		$batch = new LinkBatch;
 		foreach ( $res as $row ) {
 			$batch->add( $row->namespace, $row->title );
-			$redirTarget = $this->getRedirectTarget( $row );
-			if ( $redirTarget ) {
-				$batch->addObj( $redirTarget );
-			}
+			$batch->addObj( $this->getRedirectTarget( $row ) );
 		}
 		$batch->execute();
 
@@ -94,10 +91,6 @@ class ListredirectsPage extends QueryPage {
 		$res->seek( 0 );
 	}
 
-	/**
-	 * @param stdClass $row
-	 * @return Title|null
-	 */
 	protected function getRedirectTarget( $row ) {
 		if ( isset( $row->rd_title ) ) {
 			return Title::makeTitle( $row->rd_namespace,
@@ -118,10 +111,9 @@ class ListredirectsPage extends QueryPage {
 	 * @return string
 	 */
 	function formatResult( $skin, $result ) {
-		$linkRenderer = $this->getLinkRenderer();
 		# Make a link to the redirect itself
 		$rd_title = Title::makeTitle( $result->namespace, $result->title );
-		$rd_link = $linkRenderer->makeLink(
+		$rd_link = Linker::link(
 			$rd_title,
 			null,
 			[],
@@ -134,7 +126,7 @@ class ListredirectsPage extends QueryPage {
 			# Make a link to the destination page
 			$lang = $this->getLanguage();
 			$arr = $lang->getArrow() . $lang->getDirMark();
-			$targetLink = $linkRenderer->makeLink( $target );
+			$targetLink = Linker::link( $target );
 
 			return "$rd_link $arr $targetLink";
 		} else {

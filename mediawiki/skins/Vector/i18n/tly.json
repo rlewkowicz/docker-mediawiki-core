@@ -1,8 +1,7 @@
 {
 	"@metadata": {
 		"authors": [
-			"Гусейн",
-			"Ganbarzada"
+			"Гусейн"
 		]
 	},
 	"vector-action-addsection": "Мывзу зијод кардеј",
@@ -15,6 +14,5 @@
 	"vector-view-edit": "Сәрост кардеј",
 	"vector-view-history": "Тарых",
 	"vector-view-view": "Һандемон",
-	"vector-view-viewsource": "Дијә кардеј",
-	"vector-more-actions": "həniyən"
+	"vector-view-viewsource": "Дијә кардеј"
 }

@@ -36,7 +36,7 @@ class MergeHistoryPager extends ReverseChronologicalPager {
 		$this->title = $source;
 		$this->articleID = $source->getArticleID();
 
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 		$maxtimestamp = $dbr->selectField(
 			'revision',
 			'MIN(rev_timestamp)',

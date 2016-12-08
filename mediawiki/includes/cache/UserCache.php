@@ -100,7 +100,7 @@ class UserCache {
 
 		// Lookup basic info for users not yet loaded...
 		if ( count( $usersToQuery ) ) {
-			$dbr = wfGetDB( DB_REPLICA );
+			$dbr = wfGetDB( DB_SLAVE );
 			$table = [ 'user' ];
 			$conds = [ 'user_id' => $usersToQuery ];
 			$fields = [ 'user_name', 'user_real_name', 'user_registration', 'user_id' ];

@@ -1,5 +1,4 @@
 <?php
-use MediaWiki\MediaWikiServices;
 
 /**
  * Gadgets repo powered by MediaWiki:Gadgets-definition
@@ -33,8 +32,7 @@ class MediaWikiGadgetsDefinitionRepo extends GadgetRepo {
 	 * was edited.
 	 */
 	public function purgeDefinitionCache() {
-		$cache = MediaWikiServices::getInstance()->getMainWANObjectCache();
-		$cache->touchCheckKey( $this->getCheckKey() );
+		ObjectCache::getMainWANInstance()->touchCheckKey( $this->getCheckKey() );
 	}
 
 	private function getCheckKey() {
@@ -53,8 +51,8 @@ class MediaWikiGadgetsDefinitionRepo extends GadgetRepo {
 		}
 
 		// Ideally $t1Cache is APC, and $wanCache is memcached
-		$t1Cache = ObjectCache::getLocalServerInstance( 'hash' );
-		$wanCache = MediaWikiServices::getInstance()->getMainWANObjectCache();
+		$t1Cache = ObjectCache::newAccelerator( array(), 'hash' );
+		$wanCache = ObjectCache::getMainWANInstance();
 
 		$key = $this->getCheckKey();
 
@@ -213,10 +211,6 @@ class MediaWikiGadgetsDefinitionRepo extends GadgetRepo {
 					break;
 				case 'top':
 					$info['position'] = 'top';
-					break;
-				case 'type':
-					// Single value, not a list
-					$info['type'] = isset( $params[0] ) ? $params[0] : '';
 					break;
 			}
 		}

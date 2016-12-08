@@ -37,7 +37,7 @@ require_once __DIR__ . '/Maintenance.php';
 class RefreshImageMetadata extends Maintenance {
 
 	/**
-	 * @var Database
+	 * @var DatabaseBase
 	 */
 	protected $dbw;
 
@@ -139,7 +139,6 @@ class RefreshImageMetadata extends Maintenance {
 			}
 
 			foreach ( $res as $row ) {
-				// LocalFile will upgrade immediately here if obsolete
 				$file = $repo->newFileFromRow( $row );
 				if ( $file->getUpgraded() ) {
 					// File was upgraded.
@@ -197,7 +196,7 @@ class RefreshImageMetadata extends Maintenance {
 	}
 
 	/**
-	 * @param Database $dbw
+	 * @param DatabaseBase $dbw
 	 * @return array
 	 */
 	function getConditions( $dbw ) {

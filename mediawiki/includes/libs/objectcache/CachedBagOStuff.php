@@ -42,12 +42,8 @@ class CachedBagOStuff extends HashBagOStuff {
 	 * @param array $params Parameters for HashBagOStuff
 	 */
 	function __construct( BagOStuff $backend, $params = [] ) {
-		unset( $params['reportDupes'] ); // useless here
-
-		parent::__construct( $params );
-
 		$this->backend = $backend;
-		$this->attrMap = $backend->attrMap;
+		parent::__construct( $params );
 	}
 
 	protected function doGet( $key, $flags = 0 ) {

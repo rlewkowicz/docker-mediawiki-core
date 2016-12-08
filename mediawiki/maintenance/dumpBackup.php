@@ -50,8 +50,6 @@ TEXT
 		$this->addOption( 'stable', 'Dump stable versions of pages' );
 		$this->addOption( 'revrange', 'Dump range of revisions specified by revstart and ' .
 			'revend parameters' );
-		$this->addOption( 'orderrevs', 'Dump revisions in ascending revision order ' .
-			'(implies dump of a range of pages)' );
 		$this->addOption( 'pagelist',
 			'Dump only pages included in the file', false, true );
 		// Options
@@ -129,7 +127,6 @@ TEXT
 		$this->skipFooter = $this->hasOption( 'skip-footer' );
 		$this->dumpUploads = $this->hasOption( 'uploads' );
 		$this->dumpUploadFileContents = $this->hasOption( 'include-files' );
-		$this->orderRevs = $this->hasOption( 'orderrevs' );
 	}
 }
 

@@ -124,7 +124,6 @@ OO.ui.Demo.static.themes = {
 		additionalSuffixes: [
 			'-icons-movement',
 			'-icons-content',
-			'-icons-alerts',
 			'-icons-interactions',
 			'-icons-moderation',
 			'-icons-editing-core',
@@ -194,7 +193,7 @@ OO.ui.Demo.prototype.initialize = function () {
 
 	// Helper function to get high resolution profiling data, where available.
 	function now() {
-		/* global performance */
+		/*global performance */
 		return ( typeof performance !== 'undefined' ) ? performance.now() :
 			Date.now ? Date.now() : new Date().getTime();
 	}
@@ -381,6 +380,7 @@ OO.ui.Demo.prototype.buildConsole = function ( item, layout, widget ) {
 
 	function exec( str ) {
 		var func, ret;
+		/*jshint evil:true */
 		if ( str.indexOf( 'return' ) !== 0 ) {
 			str = 'return ' + str;
 		}

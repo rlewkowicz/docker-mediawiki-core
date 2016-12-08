@@ -21,8 +21,6 @@
  * @ingroup SpecialPage
  */
 
-use MediaWiki\MediaWikiServices;
-
 /**
  * A special page that lists last changes made to the wiki
  *
@@ -159,9 +157,6 @@ class SpecialRecentChanges extends ChangesListSpecialPage {
 			if ( preg_match( '/^namespace=(\d+)$/', $bit, $m ) ) {
 				$opts['namespace'] = $m[1];
 			}
-			if ( preg_match( '/^tagfilter=(.*)$/', $bit, $m ) ) {
-				$opts['tagfilter'] = $m[1];
-			}
 		}
 	}
 
@@ -284,7 +279,7 @@ class SpecialRecentChanges extends ChangesListSpecialPage {
 	}
 
 	protected function getDB() {
-		return wfGetDB( DB_REPLICA, 'recentchanges' );
+		return wfGetDB( DB_SLAVE, 'recentchanges' );
 	}
 
 	public function outputFeedLinks() {
@@ -313,7 +308,7 @@ class SpecialRecentChanges extends ChangesListSpecialPage {
 	/**
 	 * Build and output the actual changes list.
 	 *
-	 * @param ResultWrapper $rows Database rows
+	 * @param array $rows Database rows
 	 * @param FormOptions $opts
 	 */
 	public function outputChangesList( $rows, $opts ) {
@@ -360,7 +355,7 @@ class SpecialRecentChanges extends ChangesListSpecialPage {
 			if ( $showWatcherCount && $obj->rc_namespace >= 0 ) {
 				if ( !isset( $watcherCache[$obj->rc_namespace][$obj->rc_title] ) ) {
 					$watcherCache[$obj->rc_namespace][$obj->rc_title] =
-						MediaWikiServices::getInstance()->getWatchedItemStore()->countWatchers(
+						WatchedItemStore::getDefaultInstance()->countWatchers(
 							new TitleValue( (int)$obj->rc_namespace, $obj->rc_title )
 						);
 				}
@@ -797,9 +792,4 @@ class SpecialRecentChanges extends ChangesListSpecialPage {
 	public function isIncludable() {
 		return true;
 	}
-
-	protected function getCacheTTL() {
-		return 60 * 5;
-	}
-
 }

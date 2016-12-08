@@ -10,20 +10,24 @@
 
 /* Login Button, following `ButtonWidget (progressive)‎` from OOjs UI */
 #mw-createaccount-join {
-	background-color: #f8f9fa;
-	color: #36c;
+	color: #347bff;
 }
 #mw-createaccount-join:hover {
-	background-color: #fff;
+	background-color: #ebf2ff; /* rgba(52, 123, 255, 0.1); */
 	border-color: #859ecc;
 	box-shadow: none;
 }
 #mw-createaccount-join:active {
-	background-color: #eff3fa;
-	color: #2a4b8d;
-	border-color: #2a4b8d;
+	background-color: #ebf2ff;
+	color: #1f4999;
+	border-color: #1f4999;
 }
 #mw-createaccount-join:focus {
-	border-color: #36c;
-	box-shadow: inset 0 0 0 1px #36c;
+	background-color: #fff;
+	color: #1f4999;
+	border-color: #1f4999;
+	box-shadow: inset 0 0 0 1px #1f4999;
+}
+#mw-createaccount-join:active:focus {
+	background-color: #ebf2ff;
 }

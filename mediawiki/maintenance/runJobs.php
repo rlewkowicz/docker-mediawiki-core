@@ -53,6 +53,8 @@ class RunJobs extends Maintenance {
 	}
 
 	public function execute() {
+		global $wgCommandLineMode;
+
 		if ( $this->hasOption( 'procs' ) ) {
 			$procs = intval( $this->getOption( 'procs' ) );
 			if ( $procs < 1 || $procs > 1000 ) {
@@ -67,6 +69,10 @@ class RunJobs extends Maintenance {
 
 		$outputJSON = ( $this->getOption( 'result' ) === 'json' );
 		$wait = $this->hasOption( 'wait' );
+
+		// Enable DBO_TRX for atomicity; JobRunner manages transactions
+		// and works well in web server mode already (@TODO: this is a hack)
+		$wgCommandLineMode = false;
 
 		$runner = new JobRunner( LoggerFactory::getInstance( 'runJobs' ) );
 		if ( !$outputJSON ) {
@@ -105,6 +111,8 @@ class RunJobs extends Maintenance {
 
 			sleep( 1 );
 		}
+
+		$wgCommandLineMode = true;
 	}
 
 	/**

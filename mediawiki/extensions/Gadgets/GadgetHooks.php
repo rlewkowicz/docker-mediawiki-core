@@ -24,14 +24,14 @@ use WrappedString\WrappedString;
 
 class GadgetHooks {
 	/**
-	 * PageContentSaveComplete hook handler.
+	 * ArticleSaveComplete hook handler.
 	 *
 	 * @param $article Article
 	 * @param $user User
-	 * @param $content Content New page content
+	 * @param $text String: New page text
 	 * @return bool
 	 */
-	public static function onPageContentSaveComplete( $article, $user, $content ) {
+	public static function articleSaveComplete( $article, $user, $text ) {
 		// update cache if MediaWiki:Gadgets-definition was edited
 		$title = $article->getTitle();
 		$repo = GadgetRepo::singleton();
@@ -170,7 +170,6 @@ class GadgetHooks {
 		$lb = new LinkBatch();
 		$lb->setCaller( __METHOD__ );
 		$enabledLegacyGadgets = array();
-		$typelessMixedGadgets = array();
 
 		/**
 		 * @var $gadget Gadget
@@ -184,15 +183,8 @@ class GadgetHooks {
 			}
 			if ( $gadget->isEnabled( $user ) && $gadget->isAllowed( $user ) ) {
 				if ( $gadget->hasModule() ) {
-					if ( $gadget->getType() === 'styles' ) {
-						$out->addModuleStyles( Gadget::getModuleName( $gadget->getName() ) );
-					} elseif ( $gadget->getType() === 'general' ) {
-						$out->addModules( Gadget::getModuleName( $gadget->getName() ) );
-					} else {
-						$out->addModuleStyles( Gadget::getModuleName( $gadget->getName() ) );
-						$out->addModules( Gadget::getModuleName( $gadget->getName() ) );
-						$typelessMixedGadgets[] = $id;
-					}
+					$out->addModuleStyles( Gadget::getModuleName( $gadget->getName() ) );
+					$out->addModules( Gadget::getModuleName( $gadget->getName() ) );
 				}
 
 				if ( $gadget->getLegacyScripts() ) {
@@ -205,9 +197,6 @@ class GadgetHooks {
 		foreach ( $enabledLegacyGadgets as $id ) {
 			$strings[] = self::makeLegacyWarning( $id );
 		}
-		foreach ( $typelessMixedGadgets as $id ) {
-			$strings[] = self::makeTypelessWarning( $id );
-		}
 		$out->addHTML( WrappedString::join( "\n", $strings ) );
 
 		return true;
@@ -219,17 +208,11 @@ class GadgetHooks {
 		return ResourceLoader::makeInlineScript(
 			Xml::encodeJsCall( 'mw.log.warn', array(
 				"Gadget \"$id\" was not loaded. Please migrate it to use ResourceLoader. " .
-				'See <' . $special->getCanonicalURL() . '>.'
+				' See <' . $special->getCanonicalURL() . '>.'
 			) )
 		);
 	}
 
-	private static function makeTypelessWarning( $id ) {
-		return ResourceLoader::makeInlineScript( Xml::encodeJsCall( 'mw.log.warn', array(
-			"Gadget \"$id\" styles loaded twice. Migrate to type=general. " .
-			'See <https://phabricator.wikimedia.org/T42284>.'
-		) ) );
-	}
 
 	/**
 	 * Valid gadget definition page after content is modified
@@ -316,6 +299,17 @@ class GadgetHooks {
 			return false;
 		}
 
+		return true;
+	}
+
+	/**
+	 * UnitTestsList hook handler
+	 * @param array $files
+	 * @return bool
+	 */
+	public static function onUnitTestsList( array &$files ) {
+		$testDir = __DIR__ . '/tests/';
+		$files = array_merge( $files, glob( "$testDir/*Test.php" ) );
 		return true;
 	}
 

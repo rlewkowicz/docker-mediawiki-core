@@ -332,7 +332,7 @@ class OldLocalFile extends LocalFile {
 	 * @param string $timestamp
 	 * @param string $comment
 	 * @param User $user
-	 * @return Status
+	 * @return FileRepoStatus
 	 */
 	function uploadOld( $srcPath, $archiveName, $timestamp, $comment, $user ) {
 		$this->lock();

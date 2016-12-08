@@ -28,13 +28,13 @@ use MediaWiki\Logger\LoggerFactory;
  *
  * Example config:
  *
- * $wgForeignFileRepos[] = [
+ * $wgForeignFileRepos[] = array(
  *   'class'                  => 'ForeignAPIRepo',
  *   'name'                   => 'shared',
  *   'apibase'                => 'https://en.wikipedia.org/w/api.php',
  *   'fetchDescription'       => true, // Optional
  *   'descriptionCacheExpiry' => 3600,
- * ];
+ * );
  *
  * @ingroup FileRepo
  */
@@ -63,8 +63,8 @@ class ForeignAPIRepo extends FileRepo {
 	/** @var array */
 	protected $mFileExists = [];
 
-	/** @var string */
-	private $mApiBase;
+	/** @var array */
+	private $mQueryCache = [];
 
 	/**
 	 * @param array|null $info
@@ -397,8 +397,7 @@ class ForeignAPIRepo extends FileRepo {
 			}
 			/* There is a new Commons file, or existing thumbnail older than a month */
 		}
-
-		$thumb = self::httpGet( $foreignUrl, 'default', [], $mtime );
+		$thumb = self::httpGet( $foreignUrl );
 		if ( !$thumb ) {
 			wfDebug( __METHOD__ . " Could not download thumb\n" );
 
@@ -414,11 +413,7 @@ class ForeignAPIRepo extends FileRepo {
 			return $foreignUrl;
 		}
 		$knownThumbUrls[$sizekey] = $localUrl;
-
-		$ttl = $mtime
-			? $cache->adaptiveTTL( $mtime, $this->apiThumbCacheExpiry )
-			: $this->apiThumbCacheExpiry;
-		$cache->set( $key, $knownThumbUrls, $ttl );
+		$cache->set( $key, $knownThumbUrls, $this->apiThumbCacheExpiry );
 		wfDebug( __METHOD__ . " got local thumb $localUrl, saving to cache \n" );
 
 		return $localUrl;
@@ -511,12 +506,9 @@ class ForeignAPIRepo extends FileRepo {
 	 * @param string $url
 	 * @param string $timeout
 	 * @param array $options
-	 * @param integer|bool &$mtime Resulting Last-Modified UNIX timestamp if received
 	 * @return bool|string
 	 */
-	public static function httpGet(
-		$url, $timeout = 'default', $options = [], &$mtime = false
-	) {
+	public static function httpGet( $url, $timeout = 'default', $options = [] ) {
 		$options['timeout'] = $timeout;
 		/* Http::get */
 		$url = wfExpandUrl( $url, PROTO_HTTP );
@@ -532,9 +524,6 @@ class ForeignAPIRepo extends FileRepo {
 		$status = $req->execute();
 
 		if ( $status->isOK() ) {
-			$lmod = $req->getResponseHeader( 'Last-Modified' );
-			$mtime = $lmod ? wfTimestamp( TS_UNIX, $lmod ) : false;
-
 			return $req->getContent();
 		} else {
 			$logger = LoggerFactory::getInstance( 'http' );
@@ -542,7 +531,6 @@ class ForeignAPIRepo extends FileRepo {
 				$status->getWikiText( false, false, 'en' ),
 				[ 'caller' => 'ForeignAPIRepo::httpGet' ]
 			);
-
 			return false;
 		}
 	}
@@ -560,7 +548,7 @@ class ForeignAPIRepo extends FileRepo {
 	 * @param string $target Used in cache key creation, mostly
 	 * @param array $query The query parameters for the API request
 	 * @param int $cacheTTL Time to live for the memcached caching
-	 * @return string|null
+	 * @return null
 	 */
 	public function httpGetCached( $target, $query, $cacheTTL = 3600 ) {
 		if ( $this->mApiBase ) {
@@ -569,23 +557,28 @@ class ForeignAPIRepo extends FileRepo {
 			$url = $this->makeUrl( $query, 'api' );
 		}
 
-		$cache = ObjectCache::getMainWANInstance();
-		return $cache->getWithSetCallback(
-			$this->getLocalCacheKey( get_class( $this ), $target, md5( $url ) ),
-			$cacheTTL,
-			function ( $curValue, &$ttl ) use ( $url, $cache ) {
-				$html = self::httpGet( $url, 'default', [], $mtime );
-				if ( $html !== false ) {
-					$ttl = $mtime ? $cache->adaptiveTTL( $mtime, $ttl ) : $ttl;
-				} else {
-					$ttl = $cache->adaptiveTTL( $mtime, $ttl );
-					$html = null; // caches negatives
+		if ( !isset( $this->mQueryCache[$url] ) ) {
+			$data = ObjectCache::getMainWANInstance()->getWithSetCallback(
+				$this->getLocalCacheKey( get_class( $this ), $target, md5( $url ) ),
+				$cacheTTL,
+				function () use ( $url ) {
+					return ForeignAPIRepo::httpGet( $url );
 				}
+			);
 
-				return $html;
-			},
-			[ 'pcTTL' => $cache::TTL_PROC_LONG ]
-		);
+			if ( !$data ) {
+				return null;
+			}
+
+			if ( count( $this->mQueryCache ) > 100 ) {
+				// Keep the cache from growing infinitely
+				$this->mQueryCache = [];
+			}
+
+			$this->mQueryCache[$url] = $data;
+		}
+
+		return $this->mQueryCache[$url];
 	}
 
 	/**

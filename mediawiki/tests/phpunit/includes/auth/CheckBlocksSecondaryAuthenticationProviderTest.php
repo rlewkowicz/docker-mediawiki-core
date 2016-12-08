@@ -152,7 +152,7 @@ class CheckBlocksSecondaryAuthenticationProviderTest extends \MediaWikiTestCase 
 		];
 		$block = new \Block( $blockOptions );
 		$block->insert();
-		$scopeVariable = new \Wikimedia\ScopedCallback( [ $block, 'delete' ] );
+		$scopeVariable = new \ScopedCallback( [ $block, 'delete' ] );
 
 		$user = \User::newFromName( 'UTNormalUser' );
 		if ( $user->getID() == 0 ) {

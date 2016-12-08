@@ -21,8 +21,6 @@
  *
  * @file
  */
-use MediaWiki\Linker\LinkRenderer;
-use MediaWiki\MediaWikiServices;
 
 class ChangesList extends ContextSource {
 	/**
@@ -42,11 +40,6 @@ class ChangesList extends ContextSource {
 	protected $watchMsgCache;
 
 	/**
-	 * @var LinkRenderer
-	 */
-	protected $linkRenderer;
-
-	/**
 	 * Changeslist constructor
 	 *
 	 * @param Skin|IContextSource $obj
@@ -61,7 +54,6 @@ class ChangesList extends ContextSource {
 		}
 		$this->preCacheMessages();
 		$this->watchMsgCache = new HashBagOStuff( [ 'maxKeys' => 50 ] );
-		$this->linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
 	}
 
 	/**
@@ -236,9 +228,6 @@ class ChangesList extends ContextSource {
 
 	/**
 	 * Show formatted char difference
-	 *
-	 * Needs the css module 'mediawiki.special.changeslist' to style output
-	 *
 	 * @param int $old Number of bytes
 	 * @param int $new Number of bytes
 	 * @param IContextSource $context
@@ -348,10 +337,8 @@ class ChangesList extends ContextSource {
 	 */
 	public function insertLog( &$s, $title, $logtype ) {
 		$page = new LogPage( $logtype );
-		$logname = $page->getName()->setContext( $this->getContext() )->text();
-		$s .= $this->msg( 'parentheses' )->rawParams(
-			$this->linkRenderer->makeKnownLink( $title, $logname )
-		)->escaped();
+		$logname = $page->getName()->setContext( $this->getContext() )->escaped();
+		$s .= $this->msg( 'parentheses' )->rawParams( Linker::linkKnown( $title, $logname ) )->escaped();
 	}
 
 	/**
@@ -376,10 +363,10 @@ class ChangesList extends ContextSource {
 				'oldid' => $rc->mAttribs['rc_last_oldid']
 			];
 
-			$diffLink = $this->linkRenderer->makeKnownLink(
+			$diffLink = Linker::linkKnown(
 				$rc->getTitle(),
-				new HtmlArmor( $this->message['diff'] ),
-				[],
+				$this->message['diff'],
+				[ 'tabindex' => $rc->counter ],
 				$query
 			);
 		}
@@ -388,9 +375,9 @@ class ChangesList extends ContextSource {
 		} else {
 			$diffhist = $diffLink . $this->message['pipe-separator'];
 			# History link
-			$diffhist .= $this->linkRenderer->makeKnownLink(
+			$diffhist .= Linker::linkKnown(
 				$rc->getTitle(),
-				new HtmlArmor( $this->message['hist'] ),
+				$this->message['hist'],
 				[],
 				[
 					'curid' => $rc->mAttribs['rc_cur_id'],
@@ -428,7 +415,7 @@ class ChangesList extends ContextSource {
 			$params = [ 'redirect' => 'no' ];
 		}
 
-		$articlelink = $this->linkRenderer->makeLink(
+		$articlelink = Linker::link(
 			$rc->getTitle(),
 			null,
 			[ 'class' => 'mw-changeslist-title' ],

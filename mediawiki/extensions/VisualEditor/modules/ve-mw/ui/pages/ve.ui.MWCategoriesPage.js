@@ -21,7 +21,7 @@ ve.ui.MWCategoriesPage = function VeUiMWCategoriesPage( name, config ) {
 	config = config || {};
 
 	// Parent constructor
-	ve.ui.MWCategoriesPage.super.apply( this, arguments );
+	OO.ui.PageLayout.call( this, name, config );
 
 	// Properties
 	this.metaList = null;
@@ -77,9 +77,9 @@ OO.inheritClass( ve.ui.MWCategoriesPage, OO.ui.PageLayout );
 /**
  * @inheritdoc
  */
-ve.ui.MWCategoriesPage.prototype.setOutlineItem = function () {
+ve.ui.MWCategoriesPage.prototype.setOutlineItem = function ( outlineItem ) {
 	// Parent method
-	ve.ui.MWCategoriesPage.super.prototype.setOutlineItem.apply( this, arguments );
+	OO.ui.PageLayout.prototype.setOutlineItem.call( this, outlineItem );
 
 	if ( this.outlineItem ) {
 		this.outlineItem
@@ -259,7 +259,7 @@ ve.ui.MWCategoriesPage.prototype.setup = function ( metaList ) {
 	// Update input position after transition
 	setTimeout( function () {
 		page.categoryWidget.fitInput();
-	}, OO.ui.theme.getDialogTransitionDuration() );
+	}, 250 );
 };
 
 /**
@@ -282,23 +282,26 @@ ve.ui.MWCategoriesPage.prototype.teardown = function ( data ) {
 			attributes: { content: newDefaultSortKey }
 		};
 
-	if ( data && data.action === 'apply' ) {
-		// Alter the default sort key iff it's been touched & is actually different
-		if ( this.defaultSortKeyTouched ) {
-			if ( newDefaultSortKey === '' ) {
-				if ( currentDefaultSortKeyItem ) {
-					currentDefaultSortKeyItem.remove();
-				}
-			} else {
-				if ( !currentDefaultSortKeyItem ) {
-					this.metaList.insertMeta( newDefaultSortKeyData );
-				} else if ( currentDefaultSortKeyItem.getAttribute( 'content' ) !== newDefaultSortKey ) {
-					currentDefaultSortKeyItem.replaceWith(
-						ve.extendObject( true, {},
-							currentDefaultSortKeyItem.getElement(),
-							newDefaultSortKeyData
-					) );
-				}
+	data = data || {};
+	if ( data.action !== 'apply' ) {
+		return;
+	}
+
+	// Alter the default sort key iff it's been touched & is actually different
+	if ( this.defaultSortKeyTouched ) {
+		if ( newDefaultSortKey === '' ) {
+			if ( currentDefaultSortKeyItem ) {
+				currentDefaultSortKeyItem.remove();
+			}
+		} else {
+			if ( !currentDefaultSortKeyItem ) {
+				this.metaList.insertMeta( newDefaultSortKeyData );
+			} else if ( currentDefaultSortKeyItem.getAttribute( 'content' ) !== newDefaultSortKey ) {
+				currentDefaultSortKeyItem.replaceWith(
+					ve.extendObject( true, {},
+						currentDefaultSortKeyItem.getElement(),
+						newDefaultSortKeyData
+				) );
 			}
 		}
 	}

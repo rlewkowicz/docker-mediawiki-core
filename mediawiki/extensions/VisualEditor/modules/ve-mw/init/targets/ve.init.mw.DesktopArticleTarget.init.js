@@ -20,15 +20,11 @@
  * @singleton
  */
 ( function () {
-	var conf, tabMessages, uri, pageExists, viewUri, veEditUri, veEditSourceUri, isViewPage, isEditPage,
+	var conf, tabMessages, uri, pageExists, viewUri, veEditUri, isViewPage, isEditPage,
 		pageCanLoadVE, init, targetPromise, enable, tempdisable, autodisable,
 		tabPreference, userPrefEnabled, userPrefPreferShow, initialWikitext, oldid,
-		onlyTabIsVE, isLoading,
-		editModes = {
-			edit: 'visual'
-		},
+		onlyTabIsVE,
 		active = false,
-		targetLoaded = false,
 		progressStep = 0,
 		progressSteps = [
 			[ 30, 3000 ],
@@ -37,18 +33,8 @@
 		],
 		plugins = [];
 
-	if ( mw.config.get( 'wgVisualEditorConfig' ).enableWikitext ) {
-		editModes.editsource = 'source';
-	}
-
 	function showLoading() {
 		var $content, contentRect, offsetTop, windowHeight, top, bottom, middle;
-
-		if ( isLoading ) {
-			return;
-		}
-
-		isLoading = true;
 
 		$( 'html' ).addClass( 've-activated ve-loading' );
 		if ( !init.$loading ) {
@@ -62,26 +48,23 @@
 			);
 		}
 
-		// Center within visible part of the target
 		$content = $( '#content' );
 		contentRect = $content[ 0 ].getBoundingClientRect();
+		offsetTop = $content.offset().top;
 		windowHeight = $( window ).height();
 		top = Math.max( contentRect.top, 0 );
 		bottom = Math.min( contentRect.bottom, windowHeight );
-		middle = ( bottom  - top ) / 2;
-		offsetTop = Math.max( -contentRect.top, 0 );
+		middle = ( top + bottom ) / 2;
 
-		init.$loading.css( 'top', middle + offsetTop );
+		init.$loading.css( 'top', middle - offsetTop );
 
 		$content.prepend( init.$loading );
 	}
 
 	function incrementLoadingProgress() {
 		var step = progressSteps[ progressStep ];
-		if ( step ) {
-			setLoadingProgress( step[ 0 ], step[ 1 ] );
-			progressStep++;
-		}
+		setLoadingProgress( step[ 0 ], step[ 1 ] );
+		progressStep++;
 	}
 
 	function resetLoadingProgress() {
@@ -98,7 +81,6 @@
 	}
 
 	function hideLoading() {
-		isLoading = false;
 		$( 'html' ).removeClass( 've-loading' );
 		if ( init.$loading ) {
 			init.$loading.detach();
@@ -119,10 +101,9 @@
 	 * Use deferreds to avoid loading and instantiating Target multiple times.
 	 *
 	 * @private
-	 * @param {string} mode Target mode: 'visual' or 'source'
 	 * @return {jQuery.Promise}
 	 */
-	function getTarget( mode ) {
+	function getTarget() {
 		if ( !targetPromise ) {
 			// The TargetLoader module is loaded in the bottom queue, so it should have been
 			// requested already but it might not have finished loading yet
@@ -156,48 +137,77 @@
 				.then( function () {
 					var target;
 
-					target = ve.init.mw.targetFactory.create(
-						conf.contentModels[ mw.config.get( 'wgPageContentModel' ) ]
-					);
-					target.setContainer( $( '#content' ) );
-					targetLoaded = true;
+					target = ve.init.mw.targetFactory.create( 'article' );
+					target.connect( this, {
+						transformPage: function () {
+							if ( onlyTabIsVE ) {
+								$( '#ca-edit' ).addClass( 'selected' );
+							}
+						},
+						restorePage: function () {
+							if ( onlyTabIsVE ) {
+								$( '#ca-edit' ).removeClass( 'selected' );
+							}
+						},
+						deactivate: function () {
+							if (
+								userPrefPreferShow &&
+								( !conf.singleEditTab || tabPreference === 'multi-tab' )
+							) {
+								init.setupSectionLinks();
+							}
+						}
+					} );
+					$( '#content' ).append( target.$element );
 					return target;
 				}, function ( e ) {
 					mw.log.warn( 'VisualEditor failed to load: ' + e );
 				} );
 		}
 
-		targetPromise.then( function ( target ) {
+		targetPromise.then( function () {
 			// Enqueue the loading of deferred modules (that is, modules which provide
 			// functionality that is not needed for loading the editor).
 			setTimeout( function () {
 				mw.loader.load( 'easy-deflate.deflate' );
 			}, 500 );
-			target.setMode( mode );
 		} );
 
 		return targetPromise;
 	}
 
-	function activatePageTarget( mode, modified ) {
+	function activatePageTarget( modified ) {
+		var key;
 		trackActivateStart( { type: 'page', mechanism: 'click' } );
 
 		if ( !active ) {
-			if ( uri.query.action !== 'edit' && !( uri.query.veaction in editModes ) ) {
+			if (
+				mw.config.get( 'wgVisualEditorConfig' ).singleEditTab &&
+				tabPreference === 'remember-last'
+			) {
+				key = pageExists ? 'edit' : 'create';
+				if ( $( '#ca-view-foreign' ).length ) {
+					key += '-local';
+				}
+
+				$( '#ca-edit a' ).text( mw.msg( key ) );
+			}
+
+			if ( uri.query.action !== 'edit' && uri.query.veaction !== 'edit' ) {
 				if ( history.pushState ) {
 					// Replace the current state with one that is tagged as ours, to prevent the
 					// back button from breaking when used to exit VE. FIXME: there should be a better
 					// way to do this. See also similar code in the DesktopArticleTarget constructor.
 					history.replaceState( { tag: 'visualeditor' }, document.title, uri );
 					// Set veaction to edit
-					history.pushState( { tag: 'visualeditor' }, document.title, mode === 'source' ? veEditSourceUri : veEditUri );
+					history.pushState( { tag: 'visualeditor' }, document.title, veEditUri );
 				}
 
 				// Update mw.Uri instance
 				uri = veEditUri;
 			}
 
-			activateTarget( mode, null, undefined, modified );
+			activateTarget( null, modified );
 		}
 	}
 
@@ -209,59 +219,39 @@
 	 * E.g. `activateTarget( getTarget().then( function( target ) { target.doAThing(); } ) );`
 	 *
 	 * @private
-	 * @param {string} mode Target mode: 'visual' or 'source'
-	 * @param {number} [section] Section to edit (currently just source mode)
 	 * @param {jQuery.Promise} [targetPromise] Promise that will be resolved with a ve.init.mw.DesktopArticleTarget
 	 * @param {boolean} [modified] The page was been modified before loading (e.g. in source mode)
 	 */
-	function activateTarget( mode, section, targetPromise, modified ) {
-		var dataPromise;
-		// Only call requestPageData early if the target object isn't there yet.
-		// If the target object is there, this is a second or subsequent load, and the
-		// internal state of the target object can influence the load request.
-		if ( !targetLoaded ) {
-			// The TargetLoader module is loaded in the bottom queue, so it should have been
-			// requested already but it might not have finished loading yet
-			dataPromise = mw.loader.using( 'ext.visualEditor.targetLoader' )
-				.then( function () {
-					return mw.libs.ve.targetLoader.requestPageData(
-						mode,
-						mw.config.get( 'wgRelevantPageName' ),
-						section,
-						oldid,
-						'mwTarget', // ve.init.mw.DesktopArticleTarget.static.name
-						modified
-					);
-				} )
-				.done( incrementLoadingProgress )
-				.fail( handleLoadFailure );
-		}
+	function activateTarget( targetPromise, modified ) {
+		// The TargetLoader module is loaded in the bottom queue, so it should have been
+		// requested already but it might not have finished loading yet
+		var dataPromise = mw.loader.using( 'ext.visualEditor.targetLoader' )
+			.then( function () {
+				return mw.libs.ve.targetLoader.requestPageData(
+					mw.config.get( 'wgRelevantPageName' ),
+					oldid,
+					'mwTarget', // ve.init.mw.DesktopArticleTarget.static.name
+					modified
+				);
+			} )
+			.done( incrementLoadingProgress )
+			.fail( handleLoadFailure );
 
-		if ( mode === 'visual' ) {
-			setEditorPreference( 'visualeditor' );
-		} else {
-			setEditorPreference( 'wikitext' );
-		}
+		setEditorPreference( 'visualeditor' );
 
 		showLoading();
 		incrementLoadingProgress();
 		active = true;
 
-		targetPromise = targetPromise || getTarget( mode );
+		targetPromise = targetPromise || getTarget();
 		targetPromise
 			.then( function ( target ) {
-				var activatePromise;
 				incrementLoadingProgress();
 				target.on( 'deactivate', function () {
 					active = false;
 				} );
 				target.on( 'loadError', handleLoadFailure );
-				// Detach the loading bar for activation so it doesn't get moved around
-				// and altered, re-attach immediately after
-				init.$loading.detach();
-				activatePromise = target.activate( dataPromise );
-				$( '#content' ).prepend( init.$loading );
-				return activatePromise;
+				return target.activate( dataPromise );
 			} )
 			.then( function () {
 				ve.track( 'mwedit.ready' );
@@ -279,27 +269,8 @@
 	}
 
 	function setEditorPreference( editor ) {
-		var key = pageExists ? 'edit' : 'create',
-			sectionKey = 'editsection';
-
 		if ( editor !== 'visualeditor' && editor !== 'wikitext' ) {
 			throw new Error( 'setEditorPreference called with invalid option: ', editor );
-		}
-
-		if (
-			mw.config.get( 'wgVisualEditorConfig' ).singleEditTab &&
-			tabPreference === 'remember-last'
-		) {
-			if ( $( '#ca-view-foreign' ).length ) {
-				key += 'localdescription';
-			}
-			if ( editor === 'wikitext' ) {
-				key += 'source';
-				sectionKey += 'source';
-			}
-
-			$( '#ca-edit a' ).text( mw.msg( tabMessages[ key ] || 'edit' ) );
-			$( '.mw-editsection a' ).text( mw.msg( tabMessages[ sectionKey ] || 'editsection' ) );
 		}
 
 		$.cookie( 'VEE', editor, { path: '/', expires: 30 } );
@@ -461,14 +432,11 @@
 			}
 
 			// If the edit tab is hidden, remove it.
-			if ( !( init.isVisualAvailable && userPrefPreferShow ) ) {
+			if ( !( init.isAvailable && userPrefPreferShow ) ) {
 				$caVeEdit.remove();
 			} else if ( pageCanLoadVE ) {
 				// Allow instant switching to edit mode, without refresh
-				$caVeEdit.on( 'click', init.onEditTabClick.bind( init, 'visual' ) );
-			}
-			if ( conf.enableWikitext && mw.user.options.get( 'visualeditor-newwikitext' ) ) {
-				$caEdit.on( 'click', init.onEditTabClick.bind( init, 'source' ) );
+				$caVeEdit.on( 'click', init.onEditTabClick );
 			}
 
 			// Alter the edit tab (#ca-edit)
@@ -482,7 +450,7 @@
 				}
 			}
 
-			if ( init.isVisualAvailable ) {
+			if ( init.isAvailable ) {
 				if ( conf.tabPosition === 'before' ) {
 					$caEdit.addClass( 'collapsible' );
 				} else {
@@ -532,7 +500,6 @@
 								} );
 							} )
 							.addClass( 'mw-editsection-visualeditor' );
-
 						if ( conf.tabPosition === 'before' ) {
 							$editSourceLink.before( $editLink, $divider );
 						} else {
@@ -550,51 +517,26 @@
 				// and would preserve the wrong DOM with a diff on top.
 				$editsections
 					.find( '.mw-editsection-visualeditor' )
-						.on( 'click', init.onEditSectionLinkClick.bind( init, 'visual' ) );
-				if ( conf.enableWikitext ) {
-					$editsections
-						// TOOD: Make this less fragile
-						.find( 'a:not( .mw-editsection-visualeditor )' )
-							.on( 'click', init.onEditSectionLinkClick.bind( init, 'source' ) );
-				}
+						.on( 'click', init.onEditSectionLinkClick )
+				;
 			}
 		},
 
-		/**
-		 * Check whether a jQuery event represents a plain left click, without
-		 * any modifiers
-		 *
-		 * This is a duplicate of a function in ve.utils, because this file runs
-		 * before any of VE core or OOui has been loaded.
-		 *
-		 * @param {jQuery.Event} e The jQuery event object
-		 * @return {boolean} Whether it was an unmodified left click
-		 */
-		isUnmodifiedLeftClick: function ( e ) {
-			return e && e.which && e.which === 1 && !( e.shiftKey || e.altKey || e.ctrlKey || e.metaKey );
-		},
-
-		onEditTabClick: function ( mode, e ) {
-			if ( !init.isUnmodifiedLeftClick( e ) ) {
+		onEditTabClick: function ( e ) {
+			// Default mouse button is normalised by jQuery to key code 1.
+			// Only do our handling if no keys are pressed, mouse button is 1
+			// (e.g. not middle click or right click) and no modifier keys
+			// (e.g. cmd-click to open in new tab).
+			if ( ( e.which && e.which !== 1 ) || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey ) {
 				return;
 			}
 			e.preventDefault();
-			if ( isLoading ) {
-				return;
-			}
-			if ( active ) {
-				targetPromise.done( function ( target ) {
-					if ( mode === 'visual' && target.mode === 'source' ) {
-						target.switchToVisualEditor();
-					}
-				} );
-			} else {
-				init.activateVe( mode );
-			}
+			init.activateVe();
 		},
 
-		activateVe: function ( mode ) {
-			var wikitext = $( '#wpTextbox1' ).textSelection( 'getContents' );
+		activateVe: function () {
+			var wikitext = $( '#wpTextbox1' ).val(),
+				wikitextModified = wikitext !== initialWikitext;
 
 			// Close any open jQuery.UI dialogs (e.g. WikiEditor's find and replace)
 			if ( $.fn.dialog ) {
@@ -603,10 +545,7 @@
 
 			if (
 				mw.config.get( 'wgAction' ) === 'submit' ||
-				(
-					mw.config.get( 'wgAction' ) === 'edit' &&
-					wikitext !== initialWikitext
-				) ||
+				( mw.config.get( 'wgAction' ) === 'edit' && wikitextModified ) ||
 				// switching from section editing must prompt because we can't
 				// keep changes from that (yet?)
 				$( 'input[name=wpSection]' ).val()
@@ -624,9 +563,8 @@
 						.then( function ( closing ) { return closing; } )
 						.then( function ( data ) {
 							var oldUri;
-							// TODO: windowManager.destroy()?
 							if ( data && data.action === 'keep' ) {
-								activatePageTarget( mode, true );
+								activatePageTarget( true );
 							} else if ( data && data.action === 'discard' ) {
 								setEditorPreference( 'visualeditor' );
 								oldUri = veEditUri.clone();
@@ -636,23 +574,19 @@
 						} );
 				} );
 			} else {
-				activatePageTarget( mode, false );
+				activatePageTarget( false );
 			}
 		},
 
-		onEditSectionLinkClick: function ( mode, e ) {
-			var section, targetPromise;
-			if ( !init.isUnmodifiedLeftClick( e ) ) {
-				return;
-			}
-			e.preventDefault();
-			if ( isLoading ) {
+		onEditSectionLinkClick: function ( e ) {
+			var targetPromise;
+			if ( ( e.which && e.which !== 1 ) || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey ) {
 				return;
 			}
 
 			trackActivateStart( { type: 'section', mechanism: 'click' } );
 
-			if ( history.pushState && !( uri.query.veaction in editModes ) ) {
+			if ( history.pushState && uri.query.veaction !== 'edit' ) {
 				// Replace the current state with one that is tagged as ours, to prevent the
 				// back button from breaking when used to exit VE. FIXME: there should be a better
 				// way to do this. See also similar code in the DesktopArticleTarget constructor.
@@ -662,20 +596,13 @@
 				history.pushState( { tag: 'visualeditor' }, document.title, this.href );
 			}
 
-			targetPromise = getTarget( mode );
-			if ( mode === 'visual' ) {
-				targetPromise = targetPromise.then( function ( target ) {
-					target.saveEditSection( $( e.target ).closest( 'h1, h2, h3, h4, h5, h6' ).get( 0 ) );
-					return target;
-				} );
-			} else {
-				section = +( new mw.Uri( e.target.href ).query.section );
-				targetPromise = targetPromise.then( function ( target ) {
-					target.section = section;
-					return target;
-				} );
-			}
-			activateTarget( mode, section, targetPromise );
+			e.preventDefault();
+
+			targetPromise = getTarget().then( function ( target ) {
+				target.saveEditSection( $( e.target ).closest( 'h1, h2, h3, h4, h5, h6' ).get( 0 ) );
+				return target;
+			} );
+			activateTarget( targetPromise );
 		}
 	};
 
@@ -698,9 +625,7 @@
 		delete veEditUri.query.veaction;
 	} else {
 		veEditUri = ( pageCanLoadVE ? uri : viewUri ).clone().extend( { veaction: 'edit' } );
-		veEditSourceUri = ( pageCanLoadVE ? uri : viewUri ).clone().extend( { veaction: 'editsource' } );
 		delete veEditUri.query.action;
-		delete veEditSourceUri.query.action;
 	}
 	if ( oldid ) {
 		veEditUri.extend( { oldid: oldid } );
@@ -734,20 +659,17 @@
 		// Only in supported skins
 		conf.skins.indexOf( mw.config.get( 'skin' ) ) !== -1 &&
 
-		// Not on pages like Special:RevisionDelete
-		mw.config.get( 'wgNamespaceNumber' ) !== -1
-	);
-	init.isVisualAvailable = (
-		init.isAvailable &&
-
 		// Only in enabled namespaces
 		conf.namespaces.indexOf( new mw.Title( mw.config.get( 'wgRelevantPageName' ) ).getNamespaceId() ) !== -1 &&
+
+		// Not on pages like Special:RevisionDelete
+		mw.config.get( 'wgNamespaceNumber' ) !== -1 &&
 
 		// Not on pages which are outputs of the Page Translation feature
 		mw.config.get( 'wgTranslatePageTranslation' ) !== 'translation' &&
 
-		// Only for pages with a supported content model
-		conf.contentModels.hasOwnProperty( mw.config.get( 'wgPageContentModel' ) )
+		// Only for pages with a wikitext content model
+		mw.config.get( 'wgPageContentModel' ) === 'wikitext'
 	);
 
 	// FIXME: We should do this more elegantly
@@ -760,12 +682,12 @@
 	// The VE global was once available always, but now that platform integration initialisation
 	// is properly separated, it doesn't exist until the platform loads VisualEditor core.
 	//
-	// Most of mw.libs.ve is considered subject to change and private.  An exception is that
-	// mw.libs.ve.isVisualAvailable is public, and indicates whether the VE editor itself can be loaded
+	// Most of mw.libs.ve is considered subject to change and private.  The exception is that
+	// mw.libs.ve.isAvailable is public, and indicates whether the VE editor itself can be loaded
 	// on this page. See above for why it may be false.
 	mw.libs.ve = $.extend( mw.libs.ve || {}, init );
 
-	if ( init.isVisualAvailable && userPrefPreferShow ) {
+	if ( init.isAvailable && userPrefPreferShow ) {
 		$( 'html' ).addClass( 've-available' );
 	} else {
 		$( 'html' ).addClass( 've-not-available' );
@@ -774,15 +696,8 @@
 	}
 
 	$( function () {
-		var showWikitextWelcome = true,
-			section = uri.query.vesection !== undefined ? uri.query.vesection : null,
-			isLoggedIn = !mw.user.isAnon(),
-			prefSaysShowWelcome = isLoggedIn && !mw.user.options.get( 'visualeditor-hidebetawelcome' ),
-			urlSaysHideWelcome = 'hidewelcomedialog' in new mw.Uri( location.href ).query,
-			action = 'edit';
-
 		if ( uri.query.action === 'edit' && $( '#wpTextbox1' ).length ) {
-			initialWikitext = $( '#wpTextbox1' ).textSelection( 'getContents' );
+			initialWikitext = $( '#wpTextbox1' ).val();
 		}
 
 		if ( init.isAvailable ) {
@@ -799,15 +714,8 @@
 				// TODO: other params too? See identical list in VisualEditor.hooks.php)
 			) {
 				if (
-					// … if on a ?veaction=edit/editsource page
-					(
-						isViewPage &&
-						uri.query.veaction in editModes &&
-						(
-							uri.query.veaction === 'editsource' ||
-							init.isVisualAvailable
-						)
-					) ||
+					// … if on a ?veaction=edit page
+					( isViewPage && uri.query.veaction === 'edit' ) ||
 					// … or if on ?action=edit in single edit mode and the user wants it
 					(
 						isEditPage &&
@@ -821,60 +729,23 @@
 								(
 									(
 										tabPreference === 'prefer-ve' &&
-										mw.config.get( 'wgAction' ) !== 'submit' &&
-										init.isVisualAvailable
-									) ||
-									(
-										tabPreference === 'prefer-wt' &&
-										conf.enableWikitext &&
-										mw.user.options.get( 'visualeditor-newwikitext' )
+										mw.config.get( 'wgAction' ) !== 'submit'
 									) ||
 									(
 										tabPreference === 'remember-last' &&
-										(
-											(
-												getLastEditor() !== 'wikitext' &&
-												init.isVisualAvailable
-											) ||
-											(
-												conf.enableWikitext &&
-												mw.user.options.get( 'visualeditor-newwikitext' )
-											)
-										)
+										getLastEditor() !== 'wikitext'
 									)
 								)
 							)
 						)
 					)
 				) {
-					showWikitextWelcome = false;
 					trackActivateStart( {
-						type: section === null ? 'page' : 'section',
+						type: uri.query.vesection === undefined ? 'page' : 'section',
 						mechanism: 'url'
 					} );
-					if ( isViewPage && uri.query.veaction in editModes ) {
-						activateTarget( editModes[ uri.query.veaction ], section );
-					} else {
-						if (
-							conf.enableWikitext &&
-							mw.user.options.get( 'visualeditor-newwikitext' ) &&
-							(
-								tabPreference === 'prefer-ve' ||
-								(
-									tabPreference === 'remember-last' &&
-									getLastEditor() === 'wikitext'
-								)
-							)
-						) {
-							action = 'editsource';
-						}
-						activateTarget( editModes[ action ], section );
-					}
-				} else if (
-					init.isVisualAvailable &&
-					pageCanLoadVE &&
-					userPrefEnabled
-				) {
+					activateTarget();
+				} else if ( pageCanLoadVE && userPrefEnabled ) {
 					// Page can be edited in VE, parameters are good, user prefs are mostly good
 					// but have visualeditor-tabs=prefer-wt? Add a keyboard shortcut to go to
 					// VE.
@@ -885,10 +756,7 @@
 			}
 
 			// Add the switch button to wikitext ?action=edit or ?action=submit pages
-			if (
-				init.isVisualAvailable &&
-				[ 'edit', 'submit' ].indexOf( mw.config.get( 'wgAction' ) ) !== -1
-			) {
+			if ( [ 'edit', 'submit' ].indexOf( mw.config.get( 'wgAction' ) ) !== -1 ) {
 				mw.loader.load( 'ext.visualEditor.switching' );
 				$( '#wpTextbox1' ).on( 'wikiEditor-toolbar-doneInitialSections', function () {
 					mw.loader.using( 'ext.visualEditor.switching' ).done( function () {
@@ -937,7 +805,7 @@
 							} );
 						}
 
-						switchButton.on( 'click', init.activateVe.bind( this, 'visual' ) );
+						switchButton.on( 'click', init.activateVe );
 
 						$( '.wikiEditor-ui-toolbar' ).prepend( switchButton.$element );
 
@@ -948,7 +816,6 @@
 
 						// Duplicate of this code in ve.init.mw.DesktopArticleTarget.js
 						if ( $( '#ca-edit' ).hasClass( 'visualeditor-showtabdialog' ) ) {
-							$( '#ca-edit' ).removeClass( 'visualeditor-showtabdialog' );
 							// Set up a temporary window manager
 							windowManager = new OO.ui.WindowManager();
 							$( 'body' ).append( windowManager.$element );
@@ -976,12 +843,12 @@
 			}
 
 			// Set up the tabs appropriately if the user has VE on
-			if ( init.isAvailable && userPrefPreferShow ) {
+			if ( userPrefPreferShow ) {
 				// … on two-edit-tab wikis, or single-edit-tab wikis, where the user wants both …
 				if ( !conf.singleEditTab || tabPreference === 'multi-tab' ) {
 					// … set the skin up with both tabs and both section edit links.
 					init.setupSkin();
-				} else if ( init.isVisualAvailable && pageCanLoadVE && onlyTabIsVE ) {
+				} else if ( pageCanLoadVE && onlyTabIsVE ) {
 					// … on single-edit-tab wikis, where VE is the user's preferred editor
 					// Handle section edit link clicks
 					$( '.mw-editsection a' ).on( 'click', function ( e ) {
@@ -989,63 +856,12 @@
 					} );
 					// Allow instant switching to edit mode, without refresh
 					$( '#ca-edit' ).on( 'click', function ( e ) {
-						e.preventDefault();
-						if ( isLoading ) {
-							return;
-						}
 						trackActivateStart( { type: 'page', mechanism: 'click' } );
-						activateTarget( 'visual' );
+						activateTarget();
+						e.preventDefault();
 					} );
 				}
 			}
-		}
-
-		if (
-			showWikitextWelcome &&
-			mw.config.get( 'wgVisualEditorConfig' ).showBetaWelcome &&
-			[ 'edit', 'submit' ].indexOf( mw.config.get( 'wgAction' ) ) !== -1 &&
-			!urlSaysHideWelcome &&
-			(
-				prefSaysShowWelcome ||
-				(
-					!isLoggedIn &&
-					localStorage.getItem( 've-beta-welcome-dialog' ) === null &&
-					$.cookie( 've-beta-welcome-dialog' ) === null
-				)
-			)
-		) {
-			mw.loader.using( 'ext.visualEditor.welcome' ).done( function () {
-				var windowManager = new OO.ui.WindowManager(),
-					welcomeDialog = new mw.libs.ve.WelcomeDialog();
-				$( 'body' ).append( windowManager.$element );
-				windowManager.addWindows( [ welcomeDialog ] );
-				windowManager.openWindow(
-					welcomeDialog,
-					{
-						switchable: init.isVisualAvailable,
-						editor: 'source'
-					}
-				)
-					.then( function ( opened ) { return opened; } )
-					.then( function ( closing ) { return closing; } )
-					.then( function ( data ) {
-						windowManager.destroy();
-						if ( data && data.action === 'switch-ve' ) {
-							init.activateVe( 'visual' );
-						}
-					} );
-
-				if ( prefSaysShowWelcome ) {
-					new mw.Api().saveOption( 'visualeditor-hidebetawelcome', '1' );
-					mw.user.options.set( 'visualeditor-hidebetawelcome', '1' );
-				} else if ( !isLoggedIn && !urlSaysHideWelcome ) {
-					try {
-						localStorage.setItem( 've-beta-welcome-dialog', 1 );
-					} catch ( e ) {
-						$.cookie( 've-beta-welcome-dialog', 1, { path: '/', expires: 30 } );
-					}
-				}
-			} );
 		}
 
 		if ( uri.query.venotify ) {
@@ -1058,10 +874,6 @@
 			} );
 
 			delete uri.query.venotify;
-			// Get rid of the ?venotify= from the URL
-			if ( history.replaceState ) {
-				history.replaceState( null, document.title, uri );
-			}
 		}
 	} );
 }() );

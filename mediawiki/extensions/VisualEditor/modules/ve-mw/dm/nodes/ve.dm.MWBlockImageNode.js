@@ -19,7 +19,7 @@
  */
 ve.dm.MWBlockImageNode = function VeDmMWBlockImageNode() {
 	// Parent constructor
-	ve.dm.MWBlockImageNode.super.apply( this, arguments );
+	ve.dm.BranchNode.apply( this, arguments );
 
 	// Mixin constructors
 	ve.dm.MWImageNode.call( this );

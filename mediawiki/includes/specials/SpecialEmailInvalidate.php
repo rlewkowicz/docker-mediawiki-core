@@ -39,15 +39,12 @@ class EmailInvalidation extends UnlistedSpecialPage {
 	function execute( $code ) {
 		// Ignore things like master queries/connections on GET requests.
 		// It's very convenient to just allow formless link usage.
-		$trxProfiler = Profiler::instance()->getTransactionProfiler();
+		Profiler::instance()->getTransactionProfiler()->resetExpectations();
 
 		$this->setHeaders();
 		$this->checkReadOnly();
 		$this->checkPermissions();
-
-		$old = $trxProfiler->setSilenced( true );
 		$this->attemptInvalidate( $code );
-		$trxProfiler->setSilenced( $old );
 	}
 
 	/**
@@ -56,7 +53,7 @@ class EmailInvalidation extends UnlistedSpecialPage {
 	 *
 	 * @param string $code Confirmation code
 	 */
-	private function attemptInvalidate( $code ) {
+	function attemptInvalidate( $code ) {
 		$user = User::newFromConfirmationCode( $code, User::READ_LATEST );
 		if ( !is_object( $user ) ) {
 			$this->getOutput()->addWikiMsg( 'confirmemail_invalid' );

@@ -13,9 +13,9 @@
  * @constructor
  * @param {Object} element Reference to element in meta-linmod
  */
-ve.dm.MWNoTitleConvertMetaItem = function VeDmMWNoTitleConvertMetaItem() {
+ve.dm.MWNoTitleConvertMetaItem = function VeDmMWNoTitleConvertMetaItem( element ) {
 	// Parent constructor
-	ve.dm.MWNoTitleConvertMetaItem.super.apply( this, arguments );
+	ve.dm.MetaItem.call( this, element );
 };
 
 /* Inheritance */

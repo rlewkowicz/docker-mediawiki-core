@@ -6,8 +6,7 @@
 			"Elioqoshi",
 			"GretaDoci",
 			"Gertakapllani",
-			"Techlik",
-			"Liridon"
+			"Techlik"
 		]
 	},
 	"ooui-outline-control-move-down": "Zhvendose artikullin më poshtë",
@@ -22,8 +21,6 @@
 	"ooui-dialog-process-dismiss": "Largoje",
 	"ooui-dialog-process-retry": "Provo përsëri",
 	"ooui-dialog-process-continue": "Vazhdo",
-	"ooui-selectfile-button-select": "Përzgjidhni një skedë",
 	"ooui-selectfile-not-supported": "Skedari i përzgjedhur nuk përkrahet",
-	"ooui-selectfile-placeholder": "Nuk është zgjedhur asnjë skedar",
-	"ooui-selectfile-dragdrop-placeholder": "Vendose skedën këtu"
+	"ooui-selectfile-placeholder": "Nuk është zgjedhur asnjë skedar"
 }

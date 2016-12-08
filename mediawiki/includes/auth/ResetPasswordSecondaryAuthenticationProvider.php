@@ -58,7 +58,6 @@ class ResetPasswordSecondaryAuthenticationProvider extends AbstractSecondaryAuth
 
 	/**
 	 * Try to reset the password
-	 * @param \User $user
 	 * @param AuthenticationRequest[] $reqs
 	 * @return AuthenticationResponse
 	 */
@@ -113,17 +112,17 @@ class ResetPasswordSecondaryAuthenticationProvider extends AbstractSecondaryAuth
 
 		$req = AuthenticationRequest::getRequestByClass( $reqs, get_class( $needReq ) );
 		if ( !$req || !array_key_exists( 'retype', $req->getFieldInfo() ) ) {
-			return AuthenticationResponse::newUI( $needReqs, $data->msg, 'warning' );
+			return AuthenticationResponse::newUI( $needReqs, $data->msg );
 		}
 
 		if ( $req->password !== $req->retype ) {
-			return AuthenticationResponse::newUI( $needReqs, new \Message( 'badretype' ), 'error' );
+			return AuthenticationResponse::newUI( $needReqs, new \Message( 'badretype' ) );
 		}
 
 		$req->username = $user->getName();
 		$status = $this->manager->allowsAuthenticationDataChange( $req );
 		if ( !$status->isGood() ) {
-			return AuthenticationResponse::newUI( $needReqs, $status->getMessage(), 'error' );
+			return AuthenticationResponse::newUI( $needReqs, $status->getMessage() );
 		}
 		$this->manager->changeAuthenticationData( $req );
 

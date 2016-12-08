@@ -57,8 +57,5 @@
 			"InputBoxHooks::onSpecialPageBeforeExecute"
 		]
 	},
-	"ParserTestFiles": [
-		"tests/inputBoxParserTests.txt"
-	],
 	"manifest_version": 1
 }

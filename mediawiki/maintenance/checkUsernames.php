@@ -40,7 +40,7 @@ class CheckUsernames extends Maintenance {
 	}
 
 	function execute() {
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 
 		$maxUserId = 0;
 		do {

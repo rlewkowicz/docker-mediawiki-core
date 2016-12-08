@@ -64,7 +64,7 @@ class LocalSettingsGenerator {
 				'wgRightsText', '_MainCacheType', 'wgEnableUploads',
 				'_MemCachedServers', 'wgDBserver', 'wgDBuser',
 				'wgDBpassword', 'wgUseInstantCommons', 'wgUpgradeKey', 'wgDefaultSkin',
-				'wgMetaNamespace', 'wgLogo', 'wgAuthenticationTokenVersion', 'wgPingback',
+				'wgMetaNamespace', 'wgLogo', 'wgAuthenticationTokenVersion',
 			],
 			$db->getGlobalNames()
 		);
@@ -72,8 +72,7 @@ class LocalSettingsGenerator {
 		$unescaped = [ 'wgRightsIcon', 'wgLogo' ];
 		$boolItems = [
 			'wgEnableEmail', 'wgEnableUserEmail', 'wgEnotifUserTalk',
-			'wgEnotifWatchlist', 'wgEmailAuthentication', 'wgEnableUploads', 'wgUseInstantCommons',
-			'wgPingback',
+			'wgEnotifWatchlist', 'wgEmailAuthentication', 'wgEnableUploads', 'wgUseInstantCommons'
 		];
 
 		foreach ( $confItems as $c ) {
@@ -98,7 +97,7 @@ class LocalSettingsGenerator {
 	 * For $wgGroupPermissions, set a given ['group']['permission'] value.
 	 * @param string $group Group name
 	 * @param array $rightsArr An array of permissions, in the form of:
-	 *   [ 'right' => true, 'right2' => false ]
+	 *   array( 'right' => true, 'right2' => false )
 	 */
 	public function setGroupRights( $group, $rightsArr ) {
 		$this->groupPermissions[$group] = $rightsArr;
@@ -372,11 +371,6 @@ ${serverSetting}
 
 # InstantCommons allows wiki to use images from https://commons.wikimedia.org
 \$wgUseInstantCommons = {$this->values['wgUseInstantCommons']};
-
-# Periodically send a pingback to https://www.mediawiki.org/ with basic data
-# about this MediaWiki instance. The Wikimedia Foundation shares this data
-# with MediaWiki developers to help guide future development efforts.
-\$wgPingback = {$this->values['wgPingback']};
 
 ## If you use ImageMagick (or any other shell command) on a
 ## Linux server, this will need to be set to the name of an

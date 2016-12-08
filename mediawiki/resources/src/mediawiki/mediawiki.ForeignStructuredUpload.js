@@ -65,12 +65,8 @@
 					// Foreign wiki might be running a pre-1.27 MediaWiki, without support for this
 					if ( resp.query && resp.query.uploaddialog ) {
 						upload.config = resp.query.uploaddialog;
-						return upload.config;
-					} else {
-						return $.Deferred().reject( 'upload-foreign-cant-load-config' );
 					}
-				}, function () {
-					return $.Deferred().reject( 'upload-foreign-cant-load-config' );
+					return upload.config;
 				} );
 			} );
 		}
@@ -136,7 +132,7 @@
 	 */
 	ForeignStructuredUpload.prototype.getText = function () {
 		return this.config.format.filepage
-			// Replace "named parameters" with the given information
+			// Replace "numbered parameters" with the given information
 			.replace( '$DESCRIPTION', this.getDescriptions() )
 			.replace( '$DATE', this.getDate() )
 			.replace( '$SOURCE', this.getSource() )
@@ -149,12 +145,7 @@
 	 * @inheritdoc
 	 */
 	ForeignStructuredUpload.prototype.getComment = function () {
-		var
-			isLocal = this.target === 'local',
-			comment = typeof this.config.comment === 'string' ?
-				this.config.comment :
-				this.config.comment[ isLocal ? 'local' : 'foreign' ];
-		return comment
+		return this.config.comment
 			.replace( '$PAGENAME', mw.config.get( 'wgPageName' ) )
 			.replace( '$HOST', location.host );
 	};

@@ -63,8 +63,7 @@ if ( $ext == 'php' || $ext == 'php5' ) {
 	return true;
 }
 $mime = false;
-// Borrow mime type file from MimeAnalyzer
-$lines = explode( "\n", file_get_contents( "includes/libs/mime/mime.types" ) );
+$lines = explode( "\n", file_get_contents( "includes/mime.types" ) );
 foreach ( $lines as $line ) {
 	$exts = explode( " ", $line );
 	$mime = array_shift( $exts );

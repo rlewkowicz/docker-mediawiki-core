@@ -21,6 +21,7 @@
  */
 
 use MediaWiki\Auth\AuthManager;
+use MediaWiki\Auth\AuthenticationRequest;
 use MediaWiki\Auth\AuthenticationResponse;
 
 /**
@@ -66,15 +67,13 @@ class ApiAMCreateAccount extends ApiBase {
 		$helper = new ApiAuthManagerHelper( $this );
 		$manager = AuthManager::singleton();
 
-		// Make sure it's possible to create accounts
+		// Make sure it's possible to log in
 		if ( !$manager->canCreateAccounts() ) {
 			$this->getResult()->addValue( null, 'createaccount', $helper->formatAuthenticationResponse(
 				AuthenticationResponse::newFail(
 					$this->msg( 'userlogin-cannot-' . AuthManager::ACTION_CREATE )
 				)
 			) );
-			$helper->logAuthenticationResult( 'accountcreation',
-				'userlogin-cannot-' . AuthManager::ACTION_CREATE );
 			return;
 		}
 
@@ -95,7 +94,6 @@ class ApiAMCreateAccount extends ApiBase {
 
 		$this->getResult()->addValue( null, 'createaccount',
 			$helper->formatAuthenticationResponse( $res ) );
-		$helper->logAuthenticationResult( 'accountcreation', $res );
 	}
 
 	public function isReadMode() {

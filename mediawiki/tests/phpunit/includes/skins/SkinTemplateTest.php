@@ -35,7 +35,7 @@ class SkinTemplateTest extends MediaWikiTestCase {
 					'text' => 'text'
 				],
 				[],
-				'Test makeListItem with normal values'
+				'Test makteListItem with normal values'
 			]
 		];
 	}

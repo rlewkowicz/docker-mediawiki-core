@@ -23,7 +23,7 @@ ve.ui.MWParameterPlaceholderPage = function VeUiMWParameterPlaceholderPage( para
 	}, config );
 
 	// Parent constructor
-	ve.ui.MWParameterPlaceholderPage.super.call( this, name, config );
+	OO.ui.PageLayout.call( this, name, config );
 
 	// Properties
 	this.name = name;
@@ -77,9 +77,9 @@ ve.ui.MWParameterPlaceholderPage.prototype.onParameterShowAll = function () {
 /**
  * @inheritdoc
  */
-ve.ui.MWParameterPlaceholderPage.prototype.setOutlineItem = function () {
+ve.ui.MWParameterPlaceholderPage.prototype.setOutlineItem = function ( outlineItem ) {
 	// Parent method
-	ve.ui.MWParameterPlaceholderPage.super.prototype.setOutlineItem.apply( this, arguments );
+	OO.ui.PageLayout.prototype.setOutlineItem.call( this, outlineItem );
 
 	if ( this.outlineItem ) {
 		this.outlineItem

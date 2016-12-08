@@ -16,7 +16,6 @@
 ve.dm.Model = function VeDmModel( element ) {
 	// Properties
 	this.element = element || { type: this.constructor.static.name };
-	this.store = null;
 };
 
 /* Inheritance */
@@ -211,14 +210,13 @@ ve.dm.Model.static.preserveHtmlAttributes = true;
  * @return {Object} Hash object
  */
 ve.dm.Model.static.getHashObject = function ( dataElement ) {
-	var hash = {
+	return {
 		type: dataElement.type,
-		attributes: dataElement.attributes
+		attributes: dataElement.attributes,
+		// For uniqueness we are only concerned with the first node
+		originalDomElements: dataElement.originalDomElements &&
+			dataElement.originalDomElements[ 0 ].cloneNode( false ).outerHTML
 	};
-	if ( dataElement.originalDomElementsIndex !== undefined ) {
-		hash.originalDomElementsIndex = dataElement.originalDomElementsIndex;
-	}
-	return hash;
 };
 
 /**
@@ -278,16 +276,6 @@ ve.dm.Model.prototype.getElement = function () {
 };
 
 /**
- * Get a reference to the index-value store used by the element.
- *
- * @method
- * @return {ve.dm.IndexValueStore} Index-value store
- */
-ve.dm.Model.prototype.getStore = function () {
-	return this.store;
-};
-
-/**
  * Get the symbolic name of this model's type.
  *
  * @method
@@ -337,20 +325,10 @@ ve.dm.Model.prototype.getAttributes = function ( prefix ) {
 /**
  * Get the DOM element(s) this model was originally converted from, if any.
  *
- * @return {number|undefined} Store index of DOM elements this model was converted from
- */
-ve.dm.Model.prototype.getOriginalDomElementsIndex = function () {
-	return this.element ? this.element.originalDomElementsIndex : undefined;
-};
-
-/**
- * Get the DOM element(s) this model was originally converted from, if any.
- *
- * @param {ve.dm.IndexValueStore} store Index value store where the DOM elements are stored
  * @return {HTMLElement[]} DOM elements this model was converted from, empty if not applicable
  */
-ve.dm.Model.prototype.getOriginalDomElements = function ( store ) {
-	return store.value( this.getOriginalDomElementsIndex() ) || [];
+ve.dm.Model.prototype.getOriginalDomElements = function () {
+	return ( this.element && this.element.originalDomElements ) || [];
 };
 
 /**

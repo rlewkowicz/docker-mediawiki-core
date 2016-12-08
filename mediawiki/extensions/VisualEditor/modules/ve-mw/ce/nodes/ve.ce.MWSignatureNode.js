@@ -33,9 +33,9 @@ setInterval( function () {
  * @param {ve.dm.MWSignatureNode} model Model to observe
  * @param {Object} [config] Configuration options
  */
-ve.ce.MWSignatureNode = function VeCeMWSignatureNode() {
+ve.ce.MWSignatureNode = function VeCeMWSignatureNode( model ) {
 	// Parent constructor
-	ve.ce.MWSignatureNode.super.apply( this, arguments );
+	ve.ce.MWTransclusionInlineNode.call( this, model );
 
 	// DOM changes
 	this.$element.addClass( 've-ce-mwSignatureNode' );

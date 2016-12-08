@@ -33,8 +33,6 @@
  * @author לערי ריינהארט
  */
 
-$fallback = 'cs';
-
 $specialPageAliases = [
 	'Activeusers'               => [ 'AktívniPoužívatelia' ],
 	'Allmessages'               => [ 'VšetkySprávy' ],
@@ -137,8 +135,6 @@ $datePreferenceMigrationMap = [
 	'tdmy',
 	'short tdmy',
 ];
-
-$defaultDateFormat = 'dmy';
 
 $dateFormats = [
 	/*
@@ -252,8 +248,8 @@ $namespaceNames = [
 	NS_MEDIA            => 'Médiá',
 	NS_SPECIAL          => 'Špeciálne',
 	NS_TALK             => 'Diskusia',
-	NS_USER             => 'Užívateľ',
-	NS_USER_TALK        => 'Diskusia_s_užívateľom',
+	NS_USER             => 'Redaktor',
+	NS_USER_TALK        => 'Diskusia_s_redaktorom',
 	NS_PROJECT_TALK     => 'Diskusia_k_{{GRAMMAR:datív|$1}}',
 	NS_FILE             => 'Súbor',
 	NS_FILE_TALK        => 'Diskusia_k_súboru',
@@ -269,19 +265,12 @@ $namespaceNames = [
 
 $namespaceAliases = [
 	"Komentár"               => NS_TALK,
-	'Redaktor'               => NS_USER,
-	'Diskusia_s_redaktorom'  => NS_USER_TALK,
 	"Komentár_k_redaktorovi" => NS_USER_TALK,
 	"Komentár_k_Wikipédii"   => NS_PROJECT_TALK,
 	'Obrázok' => NS_FILE,
 	'Diskusia_k_obrázku' => NS_FILE_TALK,
 	"Komentár_k_obrázku"     => NS_FILE_TALK,
 	"Komentár_k_MediaWiki"   => NS_MEDIAWIKI_TALK,
-];
-
-$namespaceGenderAliases = [
-	NS_USER => [ 'male' => 'Užívateľ', 'female' => 'Užívateľka' ],
-	NS_USER_TALK => [ 'male' => 'Diskusia_s_užívateľom', 'female' => 'Diskusia_s_užívateľkou' ],
 ];
 
 $separatorTransformTable = [

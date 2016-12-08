@@ -118,7 +118,7 @@ class SpecialJavaScriptTest extends SpecialPage {
 			. 'window.__karma__.loaded = function () {};'
 			. '}';
 
-		// The below is essentially a pure-javascript version of OutputPage::headElement().
+		// The below is essentially a pure-javascript version of OutputPage::getHeadScripts.
 		$startup = $rl->makeModuleResponse( $startupContext, [
 			'startup' => $rl->getModule( 'startup' ),
 		] );
@@ -166,7 +166,7 @@ class SpecialJavaScriptTest extends SpecialPage {
 			[ 'raw' => true, 'sync' => true ]
 		);
 
-		$head = implode( "\n", [ $styles, $scripts ] );
+		$head = implode( "\n", array_merge( $styles['html'], $scripts['html'] ) );
 		$summary = $this->getSummaryHtml();
 		$html = <<<HTML
 <!DOCTYPE html>

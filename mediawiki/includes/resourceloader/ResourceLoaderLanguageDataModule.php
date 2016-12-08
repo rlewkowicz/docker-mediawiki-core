@@ -41,7 +41,6 @@ class ResourceLoaderLanguageDataModule extends ResourceLoaderModule {
 			'digitTransformTable' => $language->digitTransformTable(),
 			'separatorTransformTable' => $language->separatorTransformTable(),
 			'grammarForms' => $language->getGrammarForms(),
-			'grammarTransformations' => $language->getGrammarTransformations(),
 			'pluralRules' => $language->getPluralRules(),
 			'digitGroupingPattern' => $language->digitGroupingPattern(),
 			'fallbackLanguages' => $language->getFallbackLanguages(),

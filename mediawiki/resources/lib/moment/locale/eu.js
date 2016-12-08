@@ -3,15 +3,13 @@
 // author : Eneko Illarramendi : https://github.com/eillarra
 
 (function (factory) {
-    // Comment out broken wrapper, see T145382
-    /*if (typeof define === 'function' && define.amd) {
+    if (typeof define === 'function' && define.amd) {
         define(['moment'], factory); // AMD
     } else if (typeof exports === 'object') {
         module.exports = factory(require('../moment')); // Node
     } else {
         factory((typeof global !== 'undefined' ? global : this).moment); // node or other global
-    }*/
-    factory(this.moment);
+    }
 }(function (moment) {
     return moment.defineLocale('eu', {
         months : 'urtarrila_otsaila_martxoa_apirila_maiatza_ekaina_uztaila_abuztua_iraila_urria_azaroa_abendua'.split('_'),

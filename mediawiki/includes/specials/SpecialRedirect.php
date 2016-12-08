@@ -182,7 +182,7 @@ class SpecialRedirect extends FormSpecialPage {
 			'log_user_text',
 		];
 
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 
 		// Gets the nested SQL statement which
 		// returns timestamp of the log with the given log ID

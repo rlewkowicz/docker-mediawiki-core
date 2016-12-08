@@ -47,17 +47,6 @@ ve.init.mw.Platform.prototype.getUnanchoredExternalLinkUrlProtocolsRegExp = func
 	return this.unanchoredExternalLinkUrlProtocolsRegExp;
 };
 
-/**
- * Regular expression matching RESTBase IDs
- *
- * This isn't perfect, see T147607
- *
- * @inheritdoc
- */
-ve.init.mw.Platform.prototype.getMetadataIdRegExp = function () {
-	return /^mw[a-zA-Z0-9\-_]{2,6}$/;
-};
-
 /** @inheritdoc */
 ve.init.mw.Platform.prototype.addMessages = function ( messages ) {
 	return mw.messages.set( messages );
@@ -197,16 +186,15 @@ ve.init.mw.Platform.prototype.fetchSpecialCharList = function () {
 		var characters = {},
 			otherGroupName = mw.msg( 'visualeditor-special-characters-group-other' ),
 			otherMsg = mw.msg( 'visualeditor-quick-access-characters.json' ),
-			other, groupObject;
+			groupObject;
 
-		try {
-			other = JSON.parse( otherMsg );
-			if ( other ) {
-				characters[ otherGroupName ] = other;
+		if ( otherMsg !== '<visualeditor-quick-access-characters.json>' ) {
+			try {
+				characters[ otherGroupName ] = JSON.parse( otherMsg );
+			} catch ( err ) {
+				ve.log( 've.init.mw.Platform: Could not parse the Special Character list.' );
+				ve.log( err );
 			}
-		} catch ( err ) {
-			ve.log( 've.init.mw.Platform: Could not parse the Special Character list.' );
-			ve.log( err );
 		}
 
 		$.each( mw.language.specialCharacters, function ( groupName, groupCharacters ) {

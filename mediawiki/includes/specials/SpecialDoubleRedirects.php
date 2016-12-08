@@ -50,7 +50,7 @@ class DoubleRedirectsPage extends QueryPage {
 
 	function reallyGetQueryInfo( $namespace = null, $title = null ) {
 		$limitToTitle = !( $namespace === null && $title === null );
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 		$retval = [
 			'tables' => [
 				'ra' => 'redirect',
@@ -121,7 +121,7 @@ class DoubleRedirectsPage extends QueryPage {
 		// get a little more detail about each individual entry quickly
 		// using the filter of reallyGetQueryInfo.
 		if ( $result && !isset( $result->nsb ) ) {
-			$dbr = wfGetDB( DB_REPLICA );
+			$dbr = wfGetDB( DB_SLAVE );
 			$qi = $this->reallyGetQueryInfo(
 				$result->namespace,
 				$result->title

@@ -15,7 +15,6 @@ class WikiMapTest extends MediaWikiLangTestCase {
 			'wgServer' => [
 				'enwiki' => 'http://en.example.org',
 				'ruwiki' => '//ru.example.org',
-				'nopathwiki' => '//nopath.example.org',
 			],
 			'wgArticlePath' => [
 				'enwiki' => '/w/$1',
@@ -47,8 +46,6 @@ class WikiMapTest extends MediaWikiLangTestCase {
 			'nlwiki (sites)' => [ $nlwiki, 'nlwiki', false ],
 			'enwiktionary (sites)' => [ $enwiktionary, 'enwiktionary', false ],
 			'non MediaWiki site' => [ null, 'spam', false ],
-			'boguswiki' => [ null, 'boguswiki' ],
-			'nopathwiki' => [ null, 'nopathwiki' ],
 		];
 	}
 

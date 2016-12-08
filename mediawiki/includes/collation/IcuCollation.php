@@ -36,9 +36,6 @@ class IcuCollation extends Collation {
 	/** @var Language */
 	protected $digitTransformLanguage;
 
-	/** @var boolean */
-	private $useNumericCollation = false;
-
 	/** @var array */
 	private $firstLetterData;
 
@@ -94,41 +91,20 @@ class IcuCollation extends Collation {
 		// Verified by native speakers
 		'be' => [ "Ё" ],
 		'be-tarask' => [ "Ё" ],
-		'bs' => [ "Č", "Ć", "Dž", "Đ", "Lj", "Nj", "Š", "Ž" ],
-		'cs' => [ "Č", "Ch", "Ř", "Š", "Ž" ],
 		'cy' => [ "Ch", "Dd", "Ff", "Ng", "Ll", "Ph", "Rh", "Th" ],
 		'en' => [],
-		'fa' => [
-			// RTL, let's put each letter on a new line
-			"آ",
-			"ء",
-			"ه",
-			"ا",
-			"و"
-		],
+		'fa' => [ "آ", "ء", "ه" ],
 		'fi' => [ "Å", "Ä", "Ö" ],
 		'fr' => [],
-		'hr' => [ "Č", "Ć", "Dž", "Đ", "Lj", "Nj", "Š", "Ž" ],
-		'hsb' => [ "Č", "Dź", "Ě", "Ch", "Ł", "Ń", "Ř", "Š", "Ć", "Ž" ],
 		'hu' => [ "Cs", "Dz", "Dzs", "Gy", "Ly", "Ny", "Ö", "Sz", "Ty", "Ü", "Zs" ],
 		'is' => [ "Á", "Ð", "É", "Í", "Ó", "Ú", "Ý", "Þ", "Æ", "Ö", "Å" ],
 		'it' => [],
-		'lt' => [ "Č", "Š", "Ž" ],
 		'lv' => [ "Č", "Ģ", "Ķ", "Ļ", "Ņ", "Š", "Ž" ],
-		'mk' => [ "Ѓ", "Ќ" ],
-		'nl' => [],
 		'pl' => [ "Ą", "Ć", "Ę", "Ł", "Ń", "Ó", "Ś", "Ź", "Ż" ],
 		'pt' => [],
 		'ru' => [],
-		'sk' => [ "Ä", "Č", "Ch", "Ô", "Š", "Ž" ],
-		'sr' => [],
 		'sv' => [ "Å", "Ä", "Ö" ],
 		'sv@collation=standard' => [ "Å", "Ä", "Ö" ],
-		'ta' => [
-			"\xE0\xAE\x82", "ஃ", "க்ஷ", "க்", "ங்", "ச்", "ஞ்", "ட்", "ண்", "த்", "ந்",
-			"ப்", "ம்", "ய்", "ர்", "ல்", "வ்", "ழ்", "ள்", "ற்", "ன்", "ஜ்", "ஶ்", "ஷ்",
-			"ஸ்", "ஹ்", "க்ஷ்"
-		],
 		'uk' => [ "Ґ", "Ь" ],
 		'vi' => [ "Ă", "Â", "Đ", "Ê", "Ô", "Ơ", "Ư" ],
 		// Not verified, but likely correct
@@ -137,8 +113,10 @@ class IcuCollation extends Collation {
 		'az' => [ "Ç", "Ə", "Ğ", "İ", "Ö", "Ş", "Ü" ],
 		'bg' => [],
 		'br' => [ "Ch", "C'h" ],
+		'bs' => [ "Č", "Ć", "Dž", "Đ", "Lj", "Nj", "Š", "Ž" ],
 		'ca' => [],
 		'co' => [],
+		'cs' => [ "Č", "Ch", "Ř", "Š", "Ž" ],
 		'da' => [ "Æ", "Ø", "Å" ],
 		'de' => [],
 		'dsb' => [ "Č", "Ć", "Dź", "Ě", "Ch", "Ł", "Ń", "Ŕ", "Š", "Ś", "Ž", "Ź" ],
@@ -153,23 +131,30 @@ class IcuCollation extends Collation {
 		'ga' => [],
 		'gd' => [],
 		'gl' => [ "Ch", "Ll", "Ñ" ],
+		'hr' => [ "Č", "Ć", "Dž", "Đ", "Lj", "Nj", "Š", "Ž" ],
+		'hsb' => [ "Č", "Dź", "Ě", "Ch", "Ł", "Ń", "Ř", "Š", "Ć", "Ž" ],
 		'kk' => [ "Ү", "І" ],
 		'kl' => [ "Æ", "Ø", "Å" ],
 		'ku' => [ "Ç", "Ê", "Î", "Ş", "Û" ],
 		'ky' => [ "Ё" ],
 		'la' => [],
 		'lb' => [],
+		'lt' => [ "Č", "Š", "Ž" ],
+		'mk' => [],
 		'mo' => [ "Ă", "Â", "Î", "Ş", "Ţ" ],
 		'mt' => [ "Ċ", "Ġ", "Għ", "Ħ", "Ż" ],
+		'nl' => [],
 		'no' => [ "Æ", "Ø", "Å" ],
 		'oc' => [],
 		'rm' => [],
 		'ro' => [ "Ă", "Â", "Î", "Ş", "Ţ" ],
 		'rup' => [ "Ă", "Â", "Î", "Ľ", "Ń", "Ş", "Ţ" ],
 		'sco' => [],
+		'sk' => [ "Ä", "Č", "Ch", "Ô", "Š", "Ž" ],
 		'sl' => [ "Č", "Š", "Ž" ],
 		'smn' => [ "Á", "Č", "Đ", "Ŋ", "Š", "Ŧ", "Ž", "Æ", "Ø", "Å", "Ä", "Ö" ],
 		'sq' => [ "Ç", "Dh", "Ë", "Gj", "Ll", "Nj", "Rr", "Sh", "Th", "Xh", "Zh" ],
+		'sr' => [],
 		'tk' => [ "Ç", "Ä", "Ž", "Ň", "Ö", "Ş", "Ü", "Ý" ],
 		'tl' => [ "Ñ", "Ng" ],
 		'tr' => [ "Ç", "Ğ", "İ", "Ö", "Ş", "Ü" ],
@@ -200,23 +185,23 @@ class IcuCollation extends Collation {
 
 		$this->primaryCollator = Collator::create( $locale );
 		$this->primaryCollator->setStrength( Collator::PRIMARY );
-
-		// If the special suffix for numeric collation is present, turn on numeric collation.
-		if ( substr( $locale, -5, 5 ) === '-u-kn' ) {
-			$this->useNumericCollation = true;
-			// Strip off the special suffix so it doesn't trip up fetchFirstLetterData().
-			$this->locale = substr( $this->locale, 0, -5 );
-			$this->mainCollator->setAttribute( Collator::NUMERIC_COLLATION, Collator::ON );
-			$this->primaryCollator->setAttribute( Collator::NUMERIC_COLLATION, Collator::ON );
-		}
 	}
 
 	public function getSortKey( $string ) {
-		return $this->mainCollator->getSortKey( $string );
+		// intl extension produces non null-terminated
+		// strings. Appending '' fixes it so that it doesn't generate
+		// a warning on each access in debug php.
+		MediaWiki\suppressWarnings();
+		$key = $this->mainCollator->getSortKey( $string ) . '';
+		MediaWiki\restoreWarnings();
+		return $key;
 	}
 
 	public function getPrimarySortKey( $string ) {
-		return $this->primaryCollator->getSortKey( $string );
+		MediaWiki\suppressWarnings();
+		$key = $this->primaryCollator->getSortKey( $string ) . '';
+		MediaWiki\restoreWarnings();
+		return $key;
 	}
 
 	public function getFirstLetter( $string ) {
@@ -225,9 +210,8 @@ class IcuCollation extends Collation {
 			return '';
 		}
 
+		// Check for CJK
 		$firstChar = mb_substr( $string, 0, 1, 'UTF-8' );
-
-		// If the first character is a CJK character, just return that character.
 		if ( ord( $firstChar ) > 0x7f && self::isCjk( UtfNormal\Utils::utf8ToCodepoint( $firstChar ) ) ) {
 			return $firstChar;
 		}
@@ -245,50 +229,37 @@ class IcuCollation extends Collation {
 			// Before the first letter
 			return '';
 		}
-
-		$sortLetter = $this->getLetterByIndex( $min );
-
-		if ( $this->useNumericCollation ) {
-			// If the sort letter is a number, return '0–9' (or localized equivalent).
-			// ASCII value of 0 is 48. ASCII value of 9 is 57.
-			// Note that this also applies to non-Arabic numerals since they are
-			// mapped to Arabic numeral sort letters. For example, ২ sorts as 2.
-			if ( ord( $sortLetter ) >= 48 && ord( $sortLetter ) <= 57 ) {
-				$sortLetter = wfMessage( 'category-header-numerals' )->numParams( 0, 9 )->text();
-			}
-		}
-		return $sortLetter;
+		return $this->getLetterByIndex( $min );
 	}
 
 	/**
 	 * @since 1.16.3
-	 * @return array
 	 */
 	public function getFirstLetterData() {
-		if ( $this->firstLetterData === null ) {
-			$cache = ObjectCache::getLocalServerInstance( CACHE_ANYTHING );
-			$cacheKey = $cache->makeKey(
-				'first-letters',
-				$this->locale,
-				$this->digitTransformLanguage->getCode(),
-				self::getICUVersion(),
-				self::FIRST_LETTER_VERSION
-			);
-			$this->firstLetterData = $cache->getWithSetCallback( $cacheKey, $cache::TTL_WEEK, function () {
-				return $this->fetchFirstLetterData();
-			} );
+		if ( $this->firstLetterData !== null ) {
+			return $this->firstLetterData;
 		}
-		return $this->firstLetterData;
-	}
 
-	/**
-	 * @return array
-	 * @throws MWException
-	 */
-	private function fetchFirstLetterData() {
+		$cache = ObjectCache::getLocalServerInstance( CACHE_ANYTHING );
+		$cacheKey = $cache->makeKey(
+			'first-letters',
+			$this->locale,
+			$this->digitTransformLanguage->getCode(),
+			self::getICUVersion()
+		);
+		$cacheEntry = $cache->get( $cacheKey );
+
+		if ( $cacheEntry && isset( $cacheEntry['version'] )
+			&& $cacheEntry['version'] == self::FIRST_LETTER_VERSION
+		) {
+			$this->firstLetterData = $cacheEntry;
+			return $this->firstLetterData;
+		}
+
 		// Generate data from serialized data file
+
 		if ( isset( self::$tailoringFirstLetters[$this->locale] ) ) {
-			$letters = wfGetPrecompiledData( 'first-letters-root.ser' );
+			$letters = wfGetPrecompiledData( "first-letters-root.ser" );
 			// Append additional characters
 			$letters = array_merge( $letters, self::$tailoringFirstLetters[$this->locale] );
 			// Remove unnecessary ones, if any
@@ -403,11 +374,15 @@ class IcuCollation extends Collation {
 		$data = [
 			'chars' => array_values( $letterMap ),
 			'keys' => array_keys( $letterMap ),
+			'version' => self::FIRST_LETTER_VERSION,
 		];
 
 		// Reduce memory usage before caching
 		unset( $letterMap );
 
+		// Save to cache
+		$this->firstLetterData = $data;
+		$cache->set( $cacheKey, $data, $cache::TTL_WEEK );
 		return $data;
 	}
 
@@ -415,25 +390,33 @@ class IcuCollation extends Collation {
 	 * @since 1.16.3
 	 */
 	public function getLetterByIndex( $index ) {
-		return $this->getFirstLetterData()['chars'][$index];
+		if ( $this->firstLetterData === null ) {
+			$this->getFirstLetterData();
+		}
+		return $this->firstLetterData['chars'][$index];
 	}
 
 	/**
 	 * @since 1.16.3
 	 */
 	public function getSortKeyByLetterIndex( $index ) {
-		return $this->getFirstLetterData()['keys'][$index];
+		if ( $this->firstLetterData === null ) {
+			$this->getFirstLetterData();
+		}
+		return $this->firstLetterData['keys'][$index];
 	}
 
 	/**
 	 * @since 1.16.3
 	 */
 	public function getFirstLetterCount() {
-		return count( $this->getFirstLetterData()['chars'] );
+		if ( $this->firstLetterData === null ) {
+			$this->getFirstLetterData();
+		}
+		return count( $this->firstLetterData['chars'] );
 	}
 
 	/**
-	 * Test if a code point is a CJK (Chinese, Japanese, Korean) character
 	 * @since 1.16.3
 	 */
 	public static function isCjk( $codepoint ) {
@@ -477,13 +460,6 @@ class IcuCollation extends Collation {
 		$versionPrefix = substr( $icuVersion, 0, 3 );
 		// Source: http://site.icu-project.org/download
 		$map = [
-			'57.' => '8.0',
-			'56.' => '8.0',
-			'55.' => '7.0',
-			'54.' => '7.0',
-			'53.' => '6.3',
-			'52.' => '6.3',
-			'51.' => '6.2',
 			'50.' => '6.2',
 			'49.' => '6.1',
 			'4.8' => '6.0',

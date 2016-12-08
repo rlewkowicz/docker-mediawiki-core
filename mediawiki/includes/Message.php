@@ -120,7 +120,7 @@
  *
  * @code
  *     // old style:
- *     wfMsgExt( 'key', [ 'parseinline' ], 'apple' );
+ *     wfMsgExt( 'key', array( 'parseinline' ), 'apple' );
  *     // new style:
  *     wfMessage( 'key', 'apple' )->parse();
  * @endcode
@@ -131,7 +131,7 @@
  * Places where HTML cannot be used. {{-transformation is done.
  * @code
  *     // old style:
- *     wfMsgExt( 'key', [ 'parsemag' ], 'apple', 'pear' );
+ *     wfMsgExt( 'key', array( 'parsemag' ), 'apple', 'pear' );
  *     // new style:
  *     wfMessage( 'key', 'apple', 'pear' )->text();
  * @endcode
@@ -393,7 +393,6 @@ class Message implements MessageSpecifier, Serializable {
 	 * @param string|array|MessageSpecifier $value
 	 * @return Message
 	 * @throws InvalidArgumentException
-	 * @since 1.27
 	 */
 	public static function newFromSpecifier( $value ) {
 		$params = [];
@@ -402,8 +401,8 @@ class Message implements MessageSpecifier, Serializable {
 			$value = array_shift( $params );
 		}
 
-		if ( $value instanceof Message ) { // Message, RawMessage, ApiMessage, etc
-			$message = clone( $value );
+		if ( $value instanceof RawMessage ) {
+			$message = new RawMessage( $value->getKey(), $value->getParams() );
 		} elseif ( $value instanceof MessageSpecifier ) {
 			$message = new Message( $value );
 		} elseif ( is_string( $value ) ) {
@@ -455,12 +454,12 @@ class Message implements MessageSpecifier, Serializable {
 	public function getTitle() {
 		global $wgContLang, $wgForceUIMsgAsContentMsg;
 
+		$code = $this->getLanguage()->getCode();
 		$title = $this->key;
 		if (
-			!$this->language->equals( $wgContLang )
+			$wgContLang->getCode() !== $code
 			&& in_array( $this->key, (array)$wgForceUIMsgAsContentMsg )
 		) {
-			$code = $this->language->getCode();
 			$title .= '/' . $code;
 		}
 
@@ -802,13 +801,10 @@ class Message implements MessageSpecifier, Serializable {
 		$string = $this->fetchMessage();
 
 		if ( $string === false ) {
-			// Err on the side of safety, ensure that the output
-			// is always html safe in the event the message key is
-			// missing, since in that case its highly likely the
-			// message key is user-controlled.
-			// '⧼' is used instead of '<' to side-step any
-			// double-escaping issues.
-			return '⧼' . htmlspecialchars( $this->key ) . '⧽';
+			if ( $this->format === 'plain' || $this->format === 'text' ) {
+				return '<' . $this->key . '>';
+			}
+			return '&lt;' . htmlspecialchars( $this->key ) . '&gt;';
 		}
 
 		# Replace $* with a list of parameters for &uselang=qqx.
@@ -852,12 +848,6 @@ class Message implements MessageSpecifier, Serializable {
 	 * @return string
 	 */
 	public function __toString() {
-		if ( $this->format !== 'parse' ) {
-			$ex = new LogicException( __METHOD__ . ' using implicit format: ' . $this->format );
-			\MediaWiki\Logger\LoggerFactory::getInstance( 'message-format' )->warning(
-				$ex->getMessage(), [ 'exception' => $ex, 'format' => $this->format, 'key' => $this->key ] );
-		}
-
 		// PHP doesn't allow __toString to throw exceptions and will
 		// trigger a fatal error if it does. So, catch any exceptions.
 

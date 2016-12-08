@@ -22,7 +22,7 @@
 
 /**
  * A cache class that directs writes to one set of servers and reads to
- * another. This assumes that the servers used for reads are setup to replica DB
+ * another. This assumes that the servers used for reads are setup to slave
  * those that writes go to. This can easily be used with redis for example.
  *
  * In the WAN scenario (e.g. multi-datacenter case), this is useful when
@@ -42,7 +42,7 @@ class ReplicatedBagOStuff extends BagOStuff {
 	 *   - writeFactory : ObjectFactory::getObjectFromSpec array yeilding BagOStuff.
 	 *                    This object will be used for writes (e.g. the master DB).
 	 *   - readFactory  : ObjectFactory::getObjectFromSpec array yeilding BagOStuff.
-	 *                    This object will be used for reads (e.g. a replica DB).
+	 *                    This object will be used for reads (e.g. a slave DB).
 	 *
 	 * @param array $params
 	 * @throws InvalidArgumentException
@@ -59,14 +59,12 @@ class ReplicatedBagOStuff extends BagOStuff {
 				__METHOD__ . ': the "readFactory" parameter is required' );
 		}
 
-		$opts = [ 'reportDupes' => false ]; // redundant
 		$this->writeStore = ( $params['writeFactory'] instanceof BagOStuff )
 			? $params['writeFactory']
-			: ObjectFactory::getObjectFromSpec( $opts + $params['writeFactory'] );
+			: ObjectFactory::getObjectFromSpec( $params['writeFactory'] );
 		$this->readStore = ( $params['readFactory'] instanceof BagOStuff )
 			? $params['readFactory']
-			: ObjectFactory::getObjectFromSpec( $opts + $params['readFactory'] );
-		$this->attrMap = $this->mergeFlagMaps( [ $this->readStore, $this->writeStore ] );
+			: ObjectFactory::getObjectFromSpec( $params['readFactory'] );
 	}
 
 	public function setDebug( $debug ) {
@@ -114,7 +112,7 @@ class ReplicatedBagOStuff extends BagOStuff {
 		return $this->writeStore->unlock( $key );
 	}
 
-	public function merge( $key, callable $callback, $exptime = 0, $attempts = 10, $flags = 0 ) {
+	public function merge( $key, $callback, $exptime = 0, $attempts = 10, $flags = 0 ) {
 		return $this->writeStore->merge( $key, $callback, $exptime, $attempts, $flags );
 	}
 

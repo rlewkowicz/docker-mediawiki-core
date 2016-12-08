@@ -35,7 +35,7 @@ class CompareParserCache extends Maintenance {
 	public function execute() {
 		$pages = $this->getOption( 'maxpages' );
 
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 
 		$totalsec = 0.0;
 		$scanned = 0;

@@ -4,17 +4,12 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	exit;
 }
 
-use \MediaWiki\MediaWikiServices;
-
 class SpamBlacklist extends BaseBlacklist {
-	const STASH_TTL = 180;
-	const STASH_AGE_DYING = 150;
 
 	/**
-	 * Changes to external links, for logging purposes
 	 * @var array[]
 	 */
-	private $urlChangeLog = array();
+	private $urlChanges = array();
 
 	/**
 	 * Returns the code for the blacklist implementation
@@ -47,48 +42,10 @@ class SpamBlacklist extends BaseBlacklist {
 	 * @param boolean $preventLog Whether to prevent logging of hits. Set to true when
 	 *               the action is testing the links rather than attempting to save them
 	 *               (e.g. the API spamblacklist action)
-	 * @param string $mode Either 'check' or 'stash'
 	 *
-	 * @return string[]|bool Matched text(s) if the edit should not be allowed; false otherwise
+	 * @return Array Matched text(s) if the edit should not be allowed, false otherwise
 	 */
-	function filter( array $links, Title $title = null, $preventLog = false, $mode = 'check' ) {
-		$statsd = MediaWikiServices::getInstance()->getStatsdDataFactory();
-		$cache = ObjectCache::getLocalClusterInstance();
-
-		// If there are no new links, and we are logging,
-		// mark all of the current links as being removed.
-		if ( !$links && $this->isLoggingEnabled() ) {
-			$this->logUrlChanges( $this->getCurrentLinks( $title ), [], [] );
-		}
-
-		if ( !$links ) {
-			return false;
-		}
-
-		sort( $links );
-		$key = $cache->makeKey(
-			'blacklist',
-			$this->getBlacklistType(),
-			'pass',
-			sha1( implode( "\n", $links ) ),
-			(string)$title
-		);
-		// Skip blacklist checks if nothing matched during edit stashing...
-		$knownNonMatchAsOf = $cache->get( $key );
-		if ( $mode === 'check' ) {
-			if ( $knownNonMatchAsOf ) {
-				$statsd->increment( 'spamblacklist.check-stash.hit' );
-
-				return false;
-			} else {
-				$statsd->increment( 'spamblacklist.check-stash.miss' );
-			}
-		} elseif ( $mode === 'stash' ) {
-			if ( $knownNonMatchAsOf && ( time() - $knownNonMatchAsOf ) < self::STASH_AGE_DYING ) {
-				return false; // OK; not about to expire soon
-			}
-		}
-
+	function filter( array $links, Title $title = null, $preventLog = false ) {
 		$blacklists = $this->getBlacklists();
 		$whitelists = $this->getWhitelists();
 
@@ -109,9 +66,7 @@ class SpamBlacklist extends BaseBlacklist {
 			wfDebugLog( 'SpamBlacklist', "New URLs: " . implode( ', ', $newLinks ) );
 			wfDebugLog( 'SpamBlacklist', "Added URLs: " . implode( ', ', $addedLinks ) );
 
-			if ( !$preventLog ) {
-				$this->logUrlChanges( $oldLinks, $newLinks, $addedLinks );
-			}
+			$this->logUrlChanges( $oldLinks, $newLinks, $addedLinks );
 
 			$links = implode( "\n", $addedLinks );
 
@@ -164,18 +119,10 @@ class SpamBlacklist extends BaseBlacklist {
 			$retVal = false;
 		}
 
-		if ( $retVal === false ) {
-			// Cache the typical negative results
-			$cache->set( $key, time(), self::STASH_TTL );
-			if ( $mode === 'stash' ) {
-				$statsd->increment( 'spamblacklist.check-stash.store' );
-			}
-		}
-
 		return $retVal;
 	}
 
-	public function isLoggingEnabled() {
+	private function doEventLogging() {
 		global $wgSpamBlacklistEventLogging;
 		return $wgSpamBlacklistEventLogging && class_exists( 'EventLogging' );
 	}
@@ -187,8 +134,8 @@ class SpamBlacklist extends BaseBlacklist {
 	 * @param string[] $newLinks
 	 * @param string[] $addedLinks
 	 */
-	public function logUrlChanges( $oldLinks, $newLinks, $addedLinks ) {
-		if ( !$this->isLoggingEnabled() ) {
+	private function logUrlChanges( $oldLinks, $newLinks, $addedLinks ) {
+		if ( !$this->doEventLogging() ) {
 			return;
 		}
 
@@ -207,29 +154,27 @@ class SpamBlacklist extends BaseBlacklist {
 	 *
 	 * @param User $user
 	 * @param Title $title
-	 * @param int $revId
+	 * @param Revision $rev
 	 */
-	public function doLogging( User $user, Title $title, $revId ) {
-		if ( !$this->isLoggingEnabled() ) {
+	public function doLogging( User $user, Title $title, Revision $rev ) {
+		if ( !$this->doEventLogging() ) {
 			return;
 		}
 
 		$baseInfo = array(
-			'revId' => $revId,
+			'revId' => $rev->getId(),
 			'pageId' => $title->getArticleID(),
 			'pageNamespace' => $title->getNamespace(),
 			'userId' => $user->getId(),
 			'userText' => $user->getName(),
 		);
-		$changes = $this->urlChangeLog;
-		// Empty the changes queue in case this function gets called more than once
-		$this->urlChangeLog = array();
+		$changes = $this->urlChanges;
 
 		DeferredUpdates::addCallableUpdate( function() use ( $changes, $baseInfo ) {
 			foreach ( $changes as $change ) {
 				EventLogging::logEvent(
 					'ExternalLinksChange',
-					15716074,
+					15573909,
 					$baseInfo + $change
 				);
 			}
@@ -237,27 +182,24 @@ class SpamBlacklist extends BaseBlacklist {
 	}
 
 	/**
-	 * Queue log data about change for a url addition or removal
+	 * Generate events for each url addition or removal
 	 *
 	 * @param string $url
-	 * @param string $action 'insert' or 'remove'
+	 * @param string $type 'insert' or 'remove'
 	 */
-	private function logUrlChange( $url, $action ) {
+	private function logUrlChange( $url, $type ) {
 		$parsed = wfParseUrl( $url );
-		if ( !isset( $parsed['host'] ) ) {
-			wfDebugLog( 'SpamBlacklist', "Unable to parse $url" );
-			return;
-		}
+		$domain = $parsed['host'];
 		$info = array(
-			'action' => $action,
+			'action' => $type,
 			'protocol' => $parsed['scheme'],
-			'domain' => $parsed['host'],
-			'path' => $parsed['path'] !== null ? $parsed['path'] : '',
-			'query' => $parsed['query'] !== null ? $parsed['query'] : '',
-			'fragment' => $parsed['fragment'] !== null ? $parsed['fragment'] : '',
+			'domain' => $domain,
+			'path' => $parsed['path'],
+			'query' => $parsed['query'],
+			'fragment' => $parsed['fragment'],
 		);
 
-		$this->urlChangeLog[] = $info;
+		$this->urlChanges[] = $info;
 	}
 
 	/**
@@ -288,8 +230,8 @@ class SpamBlacklist extends BaseBlacklist {
 		);
 	}
 
-	public function warmCachesForFilter( Title $title, array $entries ) {
-		$this->filter( $entries, $title, true /* no logging */, 'stash' );
+	public function warmCachesForFilter( Title $title ) {
+		$this->getCurrentLinks( $title );
 	}
 
 	/**

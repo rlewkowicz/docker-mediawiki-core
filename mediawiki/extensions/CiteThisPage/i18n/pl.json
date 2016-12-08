@@ -4,8 +4,7 @@
 			"Sp5uhe",
 			"Chrumps",
 			"Peter Bowman",
-			"Tar Lócesilion",
-			"Woytecr"
+			"Tar Lócesilion"
 		]
 	},
 	"citethispage": "Przypis do tej strony",
@@ -13,6 +12,5 @@
 	"citethispage-link": "Cytowanie tego artykułu",
 	"tooltip-citethispage": "Informacja o tym jak należy cytować tę stronę",
 	"citethispage-change-submit": "Wygeneruj przypis bibliograficzny",
-	"citethispage-change-target": "Strona:",
-	"citethispage-badrevision": "Błąd: nie można znaleźć wersji strony \"$1\" o identyfikatorze $2."
+	"citethispage-change-target": "Strona:"
 }

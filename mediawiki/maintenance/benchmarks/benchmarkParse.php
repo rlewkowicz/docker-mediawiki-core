@@ -24,8 +24,6 @@
 
 require __DIR__ . '/../Maintenance.php';
 
-use MediaWiki\MediaWikiServices;
-
 /**
  * Maintenance script to benchmark how long it takes to parse a given title at an optionally
  * specified timestamp
@@ -35,13 +33,6 @@ use MediaWiki\MediaWikiServices;
 class BenchmarkParse extends Maintenance {
 	/** @var string MediaWiki concatenated string timestamp (YYYYMMDDHHMMSS) */
 	private $templateTimestamp = null;
-
-	private $clearLinkCache = false;
-
-	/**
-	 * @var LinkCache
-	 */
-	private $linkCache;
 
 	/** @var array Cache that maps a Title DB key to revision ID for the requested timestamp */
 	private $idCache = [];
@@ -61,8 +52,6 @@ class BenchmarkParse extends Maintenance {
 			'Use templates which were current at the given time (except that moves and ' .
 			'deletes are not handled properly)',
 			false, true );
-		$this->addOption( 'reset-linkcache', 'Reset the LinkCache after every parse.',
-			false, false );
 	}
 
 	function execute() {
@@ -70,10 +59,6 @@ class BenchmarkParse extends Maintenance {
 			$this->templateTimestamp = wfTimestamp( TS_MW, strtotime( $this->getOption( 'tpl-time' ) ) );
 			Hooks::register( 'BeforeParserFetchTemplateAndtitle', [ $this, 'onFetchTemplate' ] );
 		}
-
-		$this->clearLinkCache = $this->hasOption( 'reset-linkcache' );
-		// Set as a member variable to avoid function calls when we're timing the parse
-		$this->linkCache = MediaWikiServices::getInstance()->getLinkCache();
 
 		$title = Title::newFromText( $this->getArg() );
 		if ( !$title ) {
@@ -133,7 +118,7 @@ class BenchmarkParse extends Maintenance {
 	 * @return bool|string Revision ID, or false if not found or error
 	 */
 	function getRevIdForTime( Title $title, $timestamp ) {
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 
 		$id = $dbr->selectField(
 			[ 'revision', 'page' ],
@@ -159,9 +144,6 @@ class BenchmarkParse extends Maintenance {
 	function runParser( Revision $revision ) {
 		$content = $revision->getContent();
 		$content->getParserOutput( $revision->getTitle(), $revision->getId() );
-		if ( $this->clearLinkCache ) {
-			$this->linkCache->clear();
-		}
 	}
 
 	/**

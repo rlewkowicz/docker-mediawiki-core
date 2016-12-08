@@ -1,5 +1,4 @@
 <?php
-use MediaWiki\MediaWikiServices;
 
 /**
  * @author Addshore
@@ -14,13 +13,6 @@ class WatchedItemIntegrationTest extends MediaWikiTestCase {
 		parent::setUp();
 		self::$users['WatchedItemIntegrationTestUser']
 			= new TestUser( 'WatchedItemIntegrationTestUser' );
-
-		$this->hideDeprecated( 'WatchedItem::fromUserTitle' );
-		$this->hideDeprecated( 'WatchedItem::addWatch' );
-		$this->hideDeprecated( 'WatchedItem::removeWatch' );
-		$this->hideDeprecated( 'WatchedItem::isWatched' );
-		$this->hideDeprecated( 'WatchedItem::duplicateEntries' );
-		$this->hideDeprecated( 'WatchedItem::batchAddWatch' );
 	}
 
 	private function getUser() {
@@ -28,7 +20,6 @@ class WatchedItemIntegrationTest extends MediaWikiTestCase {
 	}
 
 	public function testWatchAndUnWatchItem() {
-
 		$user = $this->getUser();
 		$title = Title::newFromText( 'WatchedItemIntegrationTestPage' );
 		// Cleanup after previous tests
@@ -63,9 +54,7 @@ class WatchedItemIntegrationTest extends MediaWikiTestCase {
 			WatchedItem::fromUserTitle( $user, $title )->getNotificationTimestamp()
 		);
 
-		MediaWikiServices::getInstance()->getWatchedItemStore()->resetNotificationTimestamp(
-			$user, $title
-		);
+		WatchedItem::fromUserTitle( $user, $title )->resetNotificationTimestamp();
 		$this->assertNull( WatchedItem::fromUserTitle( $user, $title )->getNotificationTimestamp() );
 	}
 
@@ -109,9 +98,7 @@ class WatchedItemIntegrationTest extends MediaWikiTestCase {
 		$user = $this->getUser();
 		$title = Title::newFromText( 'WatchedItemIntegrationTestPage' );
 		WatchedItem::fromUserTitle( $user, $title )->addWatch();
-		MediaWikiServices::getInstance()->getWatchedItemStore()->resetNotificationTimestamp(
-			$user, $title
-		);
+		WatchedItem::fromUserTitle( $user, $title )->resetNotificationTimestamp();
 
 		$this->assertEquals(
 			null,

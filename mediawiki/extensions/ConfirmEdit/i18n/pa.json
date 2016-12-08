@@ -1,10 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"Babanwalia",
-			"Tow"
+			"Babanwalia"
 		]
 	},
-	"captcha-label": "ਕੈਪਚਾ",
-	"captchahelp-title": "ਕੈਪਚਾ ਮਦਦ"
+	"captcha-label": "ਕੈਪਚਾ"
 }

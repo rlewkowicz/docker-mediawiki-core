@@ -360,7 +360,7 @@ class SessionBackendTest extends MediaWikiTestCase {
 	}
 
 	public function testSetUser() {
-		$user = static::getTestSysop()->getUser();
+		$user = User::newFromName( 'UTSysop' );
 
 		$this->provider = $this->getMock( 'DummySessionProvider', [ 'canChangeUser' ] );
 		$this->provider->expects( $this->any() )->method( 'canChangeUser' )
@@ -464,7 +464,7 @@ class SessionBackendTest extends MediaWikiTestCase {
 		// Save happens when delay is consumed
 		$this->onSessionMetadataCalled = false;
 		$priv->metaDirty = true;
-		\Wikimedia\ScopedCallback::consume( $delay );
+		\ScopedCallback::consume( $delay );
 		$this->assertTrue( $this->onSessionMetadataCalled );
 
 		// Test multiple delays
@@ -475,16 +475,16 @@ class SessionBackendTest extends MediaWikiTestCase {
 		$priv->metaDirty = true;
 		$priv->autosave();
 		$this->assertFalse( $this->onSessionMetadataCalled );
-		\Wikimedia\ScopedCallback::consume( $delay3 );
+		\ScopedCallback::consume( $delay3 );
 		$this->assertFalse( $this->onSessionMetadataCalled );
-		\Wikimedia\ScopedCallback::consume( $delay1 );
+		\ScopedCallback::consume( $delay1 );
 		$this->assertFalse( $this->onSessionMetadataCalled );
-		\Wikimedia\ScopedCallback::consume( $delay2 );
+		\ScopedCallback::consume( $delay2 );
 		$this->assertTrue( $this->onSessionMetadataCalled );
 	}
 
 	public function testSave() {
-		$user = static::getTestSysop()->getUser();
+		$user = User::newFromName( 'UTSysop' );
 		$this->store = new TestBagOStuff();
 		$testData = [ 'foo' => 'foo!', 'bar', [ 'baz', null ] ];
 
@@ -733,7 +733,7 @@ class SessionBackendTest extends MediaWikiTestCase {
 	}
 
 	public function testRenew() {
-		$user = static::getTestSysop()->getUser();
+		$user = User::newFromName( 'UTSysop' );
 		$this->store = new TestBagOStuff();
 		$testData = [ 'foo' => 'foo!', 'bar', [ 'baz', null ] ];
 
@@ -822,14 +822,14 @@ class SessionBackendTest extends MediaWikiTestCase {
 			$rProp = new \ReflectionProperty( PHPSessionHandler::class, 'instance' );
 			$rProp->setAccessible( true );
 			$handler = \TestingAccessWrapper::newFromObject( $rProp->getValue() );
-			$resetHandler = new \Wikimedia\ScopedCallback( function () use ( $handler ) {
+			$resetHandler = new \ScopedCallback( function () use ( $handler ) {
 				session_write_close();
 				$handler->enable = false;
 			} );
 			$handler->enable = true;
 		}
 
-		$backend = $this->getBackend( static::getTestSysop()->getUser() );
+		$backend = $this->getBackend( User::newFromName( 'UTSysop' ) );
 		\TestingAccessWrapper::newFromObject( $backend )->usePhpSessionHandling = true;
 
 		$resetSingleton = TestUtils::setSessionManagerSingleton( $this->manager );
@@ -862,7 +862,7 @@ class SessionBackendTest extends MediaWikiTestCase {
 			$rProp = new \ReflectionProperty( PHPSessionHandler::class, 'instance' );
 			$rProp->setAccessible( true );
 			$handler = \TestingAccessWrapper::newFromObject( $rProp->getValue() );
-			$resetHandler = new \Wikimedia\ScopedCallback( function () use ( $handler ) {
+			$resetHandler = new \ScopedCallback( function () use ( $handler ) {
 				session_write_close();
 				$handler->enable = false;
 			} );
@@ -898,7 +898,7 @@ class SessionBackendTest extends MediaWikiTestCase {
 			$rProp = new \ReflectionProperty( PHPSessionHandler::class, 'instance' );
 			$rProp->setAccessible( true );
 			$handler = \TestingAccessWrapper::newFromObject( $rProp->getValue() );
-			$resetHandler = new \Wikimedia\ScopedCallback( function () use ( $handler ) {
+			$resetHandler = new \ScopedCallback( function () use ( $handler ) {
 				session_write_close();
 				$handler->enable = false;
 			} );

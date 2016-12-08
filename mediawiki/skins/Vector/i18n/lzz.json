@@ -3,8 +3,7 @@
 		"authors": [
 			"Bombola",
 			"Ceas08",
-			"Erdemaslancan",
-			"Velg"
+			"Erdemaslancan"
 		]
 	},
 	"vector-action-delete": "Jili",
@@ -12,6 +11,5 @@
 	"vector-action-protect": "İçvi",
 	"vector-view-create": "dokʼidi",
 	"vector-view-edit": "Doktiri",
-	"vector-view-history": "Dosyaşi tarixi",
 	"vector-view-view": "İǩitxi"
 }

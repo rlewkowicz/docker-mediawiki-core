@@ -16,27 +16,31 @@ class CiteThisPageHooks {
 		// (which would mean that the current page doesn’t exist)
 		$title = $skintemplate->getTitle();
 		if ( $title->isContentPage() && $revid !== 0 && !empty( $revid ) ) {
-			$nav_urls['citethispage'] = [
-				'text' => $skintemplate->msg( 'citethispage-link' )->text(),
-				'href' => SpecialPage::getTitleFor( 'CiteThisPage' )
-					->getLocalURL( [ 'page' => $title->getPrefixedDBkey(), 'id' => $revid ] ),
-				'id' => 't-cite',
-				# Used message keys: 'tooltip-citethispage', 'accesskey-citethispage'
-				'single-id' => 'citethispage',
-			];
+			$nav_urls['citeThisPage'] = array(
+				'args' => array( 'page' => $title->getPrefixedDBkey(), 'id' => $revid )
+			);
 		}
 
 		return true;
 	}
 
 	/**
-	 * @param BaseTemplate $baseTemplate
-	 * @param array $toolbox
+	 * @param Skin $skin
 	 * @return bool
 	 */
-	public static function onBaseTemplateToolbox( BaseTemplate $baseTemplate, array &$toolbox ) {
-		if ( isset( $baseTemplate->data['nav_urls']['citethispage'] ) ) {
-			$toolbox['citethispage'] = $baseTemplate->data['nav_urls']['citethispage'];
+	public static function onSkinTemplateToolboxEnd( &$skin ) {
+		if ( isset( $skin->data['nav_urls']['citeThisPage'] ) ) {
+			echo Html::rawElement(
+				'li',
+				array( 'id' => 't-cite' ),
+				Linker::link(
+					SpecialPage::getTitleFor( 'CiteThisPage' ),
+					wfMessage( 'citethispage-link' )->escaped(),
+					# Used message keys: 'tooltip-citethispage', 'accesskey-citethispage'
+					Linker::tooltipAndAccessKeyAttribs( 'citethispage' ),
+					$skin->data['nav_urls']['citeThisPage']['args']
+				)
+			);
 		}
 
 		return true;

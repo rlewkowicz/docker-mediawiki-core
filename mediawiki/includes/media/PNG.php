@@ -30,7 +30,7 @@ class PNGHandler extends BitmapHandler {
 	const BROKEN_FILE = '0';
 
 	/**
-	 * @param File|FSFile $image
+	 * @param File $image
 	 * @param string $filename
 	 * @return string
 	 */

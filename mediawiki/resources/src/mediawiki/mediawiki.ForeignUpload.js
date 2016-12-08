@@ -43,9 +43,7 @@
 		// However, if the target is a remote wiki, we must check the API
 		// to confirm that the target is one that this site is configured to
 		// support.
-		if ( validTargets.length === 0 ) {
-			this.apiPromise = $.Deferred().reject( 'upload-dialog-disabled' );
-		} else if ( this.target === 'local' ) {
+		if ( this.target === 'local' ) {
 			// If local uploads were requested, but they are disabled, fail.
 			if ( !mw.config.get( 'wgEnableUploads' ) ) {
 				this.apiPromise = $.Deferred().reject( 'uploaddisabledtext' );

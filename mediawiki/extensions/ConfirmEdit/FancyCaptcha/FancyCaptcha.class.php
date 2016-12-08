@@ -5,7 +5,7 @@ use MediaWiki\Auth\AuthManager;
 
 class FancyCaptcha extends SimpleCaptcha {
 	// used for fancycaptcha-edit, fancycaptcha-addurl, fancycaptcha-badlogin,
-	// fancycaptcha-accountcreate, fancycaptcha-create, fancycaptcha-sendemail via getMessage()
+	// fancycaptcha-createaccount, fancycaptcha-create, fancycaptcha-sendemail via getMessage()
 	protected static $messagePrefix = 'fancycaptcha-';
 
 	/**
@@ -21,12 +21,10 @@ class FancyCaptcha extends SimpleCaptcha {
 			if ( !$backend ) {
 				$backend = new FSFileBackend( [
 					'name'           => 'captcha-backend',
-					'wikiId'         => wfWikiID(),
+					'wikiId'         => wfWikiId(),
 					'lockManager'    => new NullLockManager( [] ),
 					'containerPaths' => [ 'captcha-render' => $wgCaptchaDirectory ],
-					'fileMode'       => 777,
-					'obResetFunc'    => 'wfResetOutputBuffers',
-					'streamMimeFunc' => [ 'StreamFile', 'contentTypeFromPath' ]
+					'fileMode'       => 777
 				] );
 			}
 			return $backend;
@@ -101,9 +99,15 @@ class FancyCaptcha extends SimpleCaptcha {
 		];
 	}
 
-	function getFormInformation( $tabIndex = 1 ) {
+	/**
+	 * Insert the captcha prompt into the edit form.
+	 * @param OutputPage $out
+	 */
+	function getForm( OutputPage $out, $tabIndex = 1 ) {
 		global $wgEnableAPI;
-		$modules = [];
+
+		// Uses addModuleStyles so it is loaded when JS is disabled.
+		$out->addModuleStyles( 'ext.confirmEdit.fancyCaptcha.styles' );
 
 		$title = SpecialPage::getTitleFor( 'Captcha', 'image' );
 		$info = $this->getCaptcha();
@@ -111,7 +115,7 @@ class FancyCaptcha extends SimpleCaptcha {
 
 		if ( $wgEnableAPI ) {
 			// Loaded only if JS is enabled
-			$modules[] = 'ext.confirmEdit.fancyCaptcha';
+			$out->addModules( 'ext.confirmEdit.fancyCaptcha' );
 
 			$captchaReload = Html::element(
 				'small',
@@ -168,12 +172,7 @@ class FancyCaptcha extends SimpleCaptcha {
 				]
 			) . Html::closeElement( 'div' ) . Html::closeElement( 'div' ) . "\n";
 
-		return [
-			'html' => $form,
-			'modules' => $modules,
-			// Uses addModuleStyles so it is loaded when JS is disabled.
-			'modulestyles' => [ 'ext.confirmEdit.fancyCaptcha.styles' ],
-		];
+			return $form;
 	}
 
 	/**

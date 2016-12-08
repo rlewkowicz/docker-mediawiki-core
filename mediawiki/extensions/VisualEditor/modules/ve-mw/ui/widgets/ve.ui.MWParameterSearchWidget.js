@@ -24,7 +24,7 @@ ve.ui.MWParameterSearchWidget = function VeUiMWParameterSearchWidget( template, 
 	}, config );
 
 	// Parent constructor
-	ve.ui.MWParameterSearchWidget.super.call( this, config );
+	OO.ui.SearchWidget.call( this, config );
 
 	// Properties
 	this.template = template;
@@ -62,7 +62,7 @@ OO.inheritClass( ve.ui.MWParameterSearchWidget, OO.ui.SearchWidget );
  */
 ve.ui.MWParameterSearchWidget.prototype.onQueryChange = function () {
 	// Parent method
-	ve.ui.MWParameterSearchWidget.super.prototype.onQueryChange.call( this );
+	OO.ui.SearchWidget.prototype.onQueryChange.call( this );
 
 	// Populate
 	this.addResults();

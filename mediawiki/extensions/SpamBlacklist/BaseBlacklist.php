@@ -386,9 +386,7 @@ abstract class BaseBlacklist {
 			__METHOD__
 		);
 
-		return $row
-			? ContentHandler::getContentText( Revision::newFromRow( $row )->getContent() )
-			: false;
+		return $row ? Revision::newFromRow( $row )->getText() : false;
 	}
 
 	/**
@@ -411,10 +409,9 @@ abstract class BaseBlacklist {
 	}
 
 	/**
-	 * @param Title $title
-	 * @param string[] $entries
+	 * @param $title Title
 	 */
-	public function warmCachesForFilter( Title $title, array $entries ) {
+	public function warmCachesForFilter( Title $title ) {
 		// subclass this
 	}
 }

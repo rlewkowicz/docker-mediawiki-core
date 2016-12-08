@@ -98,7 +98,7 @@ class DeletedContributionsPage extends SpecialPage {
 			return;
 		}
 
-		# Show a message about replica DB lag, if applicable
+		# Show a message about slave lag, if applicable
 		$lag = wfGetLB()->safeGetLag( $pager->getDatabase() );
 		if ( $lag > 0 ) {
 			$out->showLagWarning( $lag );
@@ -129,29 +129,97 @@ class DeletedContributionsPage extends SpecialPage {
 	 * Generates the subheading with links
 	 * @param User $userObj User object for the target
 	 * @return string Appropriately-escaped HTML to be output literally
+	 * @todo FIXME: Almost the same as contributionsSub in SpecialContributions.php. Could be combined.
 	 */
 	function getSubTitle( $userObj ) {
-		$linkRenderer = $this->getLinkRenderer();
 		if ( $userObj->isAnon() ) {
 			$user = htmlspecialchars( $userObj->getName() );
 		} else {
-			$user = $linkRenderer->makeLink( $userObj->getUserPage(), $userObj->getName() );
+			$user = Linker::link( $userObj->getUserPage(), htmlspecialchars( $userObj->getName() ) );
 		}
 		$links = '';
 		$nt = $userObj->getUserPage();
+		$id = $userObj->getId();
 		$talk = $nt->getTalkPage();
 		if ( $talk ) {
-			$tools = SpecialContributions::getUserLinks( $this, $userObj );
+			# Talk page link
+			$tools[] = Linker::link( $talk, $this->msg( 'sp-contributions-talk' )->escaped() );
+			if ( ( $id !== null ) || ( $id === null && IP::isIPAddress( $nt->getText() ) ) ) {
+				# Block / Change block / Unblock links
+				if ( $this->getUser()->isAllowed( 'block' ) ) {
+					if ( $userObj->isBlocked() && $userObj->getBlock()->getType() !== Block::TYPE_AUTO ) {
+						$tools[] = Linker::linkKnown( # Change block link
+							SpecialPage::getTitleFor( 'Block', $nt->getDBkey() ),
+							$this->msg( 'change-blocklink' )->escaped()
+						);
+						$tools[] = Linker::linkKnown( # Unblock link
+							SpecialPage::getTitleFor( 'BlockList' ),
+							$this->msg( 'unblocklink' )->escaped(),
+							[],
+							[
+								'action' => 'unblock',
+								'ip' => $nt->getDBkey()
+							]
+						);
+					} else {
+						# User is not blocked
+						$tools[] = Linker::linkKnown( # Block link
+							SpecialPage::getTitleFor( 'Block', $nt->getDBkey() ),
+							$this->msg( 'blocklink' )->escaped()
+						);
+					}
+				}
+				# Block log link
+				$tools[] = Linker::linkKnown(
+					SpecialPage::getTitleFor( 'Log' ),
+					$this->msg( 'sp-contributions-blocklog' )->escaped(),
+					[],
+					[
+						'type' => 'block',
+						'page' => $nt->getPrefixedText()
+					]
+				);
+				# Suppression log link (bug 59120)
+				if ( $this->getUser()->isAllowed( 'suppressionlog' ) ) {
+					$tools[] = Linker::linkKnown(
+						SpecialPage::getTitleFor( 'Log', 'suppress' ),
+						$this->msg( 'sp-contributions-suppresslog' )->escaped(),
+						[],
+						[ 'offender' => $userObj->getName() ]
+					);
+				}
+			}
 
-			# Link to contributions
-			$insert['contribs'] = $linkRenderer->makeKnownLink(
-				SpecialPage::getTitleFor( 'Contributions', $nt->getDBkey() ),
-				$this->msg( 'sp-deletedcontributions-contribs' )->text()
+			# Uploads
+			$tools[] = Linker::linkKnown(
+				SpecialPage::getTitleFor( 'Listfiles', $userObj->getName() ),
+				$this->msg( 'sp-contributions-uploads' )->escaped()
 			);
 
-			// Swap out the deletedcontribs link for our contribs one
-			$tools = wfArrayInsertAfter( $tools, $insert, 'deletedcontribs' );
-			unset( $tools['deletedcontribs'] );
+			# Other logs link
+			$tools[] = Linker::linkKnown(
+				SpecialPage::getTitleFor( 'Log' ),
+				$this->msg( 'sp-contributions-logs' )->escaped(),
+				[],
+				[ 'user' => $nt->getText() ]
+			);
+			# Link to contributions
+			$tools[] = Linker::linkKnown(
+				SpecialPage::getTitleFor( 'Contributions', $nt->getDBkey() ),
+				$this->msg( 'sp-deletedcontributions-contribs' )->escaped()
+			);
+
+			# Add a link to change user rights for privileged users
+			$userrightsPage = new UserrightsPage();
+			$userrightsPage->setContext( $this->getContext() );
+			if ( $userrightsPage->userCanChangeRights( $userObj ) ) {
+				$tools[] = Linker::linkKnown(
+					SpecialPage::getTitleFor( 'Userrights', $nt->getDBkey() ),
+					$this->msg( 'sp-contributions-userrights' )->escaped()
+				);
+			}
+
+			Hooks::run( 'ContributionsToolLinks', [ $id, $nt, &$tools ] );
 
 			$links = $this->getLanguage()->pipeList( $tools );
 

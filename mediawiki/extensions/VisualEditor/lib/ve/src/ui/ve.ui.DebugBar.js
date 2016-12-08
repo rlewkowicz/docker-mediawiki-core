@@ -15,41 +15,37 @@
  * @param {Object} [config] Configuration options
  */
 ve.ui.DebugBar = function VeUiDebugBar( surface, config ) {
-	var closeButton;
+	var dumpModelButtonGroup, hideDumpButton, closeButton;
 
 	// Parent constructor
-	ve.ui.DebugBar.super.call( this, config );
+	OO.ui.Element.call( this, config );
 
 	this.surface = surface;
 
 	this.$commands = $( '<div>' ).addClass( 've-ui-debugBar-commands' );
-	this.$linmodData = $( '<td>' ).addClass( 've-ui-debugBar-dump-linmod-data' );
-	this.$linmodMetadata = $( '<td>' ).addClass( 've-ui-debugBar-dump-linmod-metadata' );
-	this.$viewTree = $( '<td>' ).addClass( 've-ui-debugBar-view-tree' );
-	this.$modelTree = $( '<td>' ).addClass( 've-ui-debugBar-model-tree' );
+	this.$dumpLinmodData = $( '<td>' ).addClass( 've-ui-debugBar-dump-linmod-data' );
+	this.$dumpLinmodMetadata = $( '<td>' ).addClass( 've-ui-debugBar-dump-linmod-metadata' );
+	this.$dumpView = $( '<td>' ).addClass( 've-ui-debugBar-dump-view' );
+	this.$dumpModel = $( '<td>' ).addClass( 've-ui-debugBar-dump-model' );
+
+	hideDumpButton = new OO.ui.ButtonWidget( {
+		icon: 'collapse',
+		label: 'Hide'
+	} );
 
 	closeButton = new OO.ui.ButtonWidget( {
 		icon: 'close',
 		label: 'Close'
 	} );
 
-	// Widgets
-	this.selectionLabel = new OO.ui.LabelWidget( { classes: [ 've-ui-debugBar-selectionLabel' ] } );
-
-	this.logRangeButton = new OO.ui.ButtonWidget( { label: 'Log', disabled: true } );
-	this.showModelToggle = new OO.ui.ToggleButtonWidget( { label: 'Show model' } );
-	this.updateModelToggle = new OO.ui.ToggleButtonWidget( { label: 'Update on changes' } );
-	this.inputDebuggingToggle = new OO.ui.ToggleButtonWidget( { label: 'Input debugging' } );
-	this.filibusterToggle = new OO.ui.ToggleButtonWidget( { label: 'Filibuster' } );
-
 	this.$dump =
 		$( '<div class="ve-ui-debugBar-dump">' ).append(
-			this.updateModelToggle.$element,
+			hideDumpButton.$element,
 			$( '<table></table>' ).append(
 				$( '<thead><th>Linear model data</th><th>Linear model metadata</th><th>View tree</th><th>Model tree</th></thead>' ),
 				$( '<tbody>' ).append(
 					$( '<tr>' ).append(
-						this.$linmodData, this.$linmodMetadata, this.$viewTree, this.$modelTree
+						this.$dumpLinmodData, this.$dumpLinmodMetadata, this.$dumpView, this.$dumpModel
 					)
 				)
 			)
@@ -57,14 +53,30 @@ ve.ui.DebugBar = function VeUiDebugBar( surface, config ) {
 
 	this.$filibuster = $( '<div class="ve-ui-debugBar-filibuster"></div>' );
 
+	// Widgets
+	this.selectionLabel = new OO.ui.LabelWidget( { classes: [ 've-ui-debugBar-selectionLabel' ] } );
+
+	this.logRangeButton = new OO.ui.ButtonWidget( { label: 'Log', disabled: true } );
+	this.dumpModelButton = new OO.ui.ButtonWidget( { label: 'Dump model' } );
+	this.dumpModelChangeToggle = new OO.ui.ToggleButtonWidget( { icon: 'check' } );
+	this.inputDebuggingToggle = new OO.ui.ToggleButtonWidget( { label: 'Input debugging' } );
+	this.filibusterToggle = new OO.ui.ToggleButtonWidget( { label: 'Filibuster' } );
+
+	dumpModelButtonGroup = new OO.ui.ButtonGroupWidget( { items: [
+		this.dumpModelButton,
+		this.dumpModelChangeToggle
+	] } );
+
 	// Events
 	this.logRangeButton.on( 'click', this.onLogRangeButtonClick.bind( this ) );
-	this.showModelToggle.on( 'change', this.onShowModelToggleChange.bind( this ) );
-	this.updateModelToggle.on( 'change', this.onUpdateModelToggleChange.bind( this ) );
-	this.inputDebuggingToggle.on( 'change', this.onInputDebuggingToggleChange.bind( this ) );
+	this.dumpModelButton.on( 'click', this.onDumpModelButtonClick.bind( this ) );
+	this.dumpModelChangeToggle.on( 'click', this.onDumpModelChangeToggleClick.bind( this ) );
+	this.inputDebuggingToggle.on( 'click', this.onInputDebuggingToggleClick.bind( this ) );
 	this.filibusterToggle.on( 'click', this.onFilibusterToggleClick.bind( this ) );
+	hideDumpButton.on( 'click', this.$dump.hide.bind( this.$dump ) );
 	closeButton.on( 'click', this.$element.remove.bind( this.$element ) );
 
+	this.onDumpModelChangeToggleClick();
 	this.getSurface().getModel().connect( this, { select: 'onSurfaceSelect' } );
 	this.onSurfaceSelect( this.getSurface().getModel().getSelection() );
 
@@ -74,7 +86,7 @@ ve.ui.DebugBar = function VeUiDebugBar( surface, config ) {
 			this.selectionLabel.$element,
 			this.logRangeButton.$element,
 			$( this.constructor.static.dividerTemplate ),
-			this.showModelToggle.$element,
+			dumpModelButtonGroup.$element,
 			this.inputDebuggingToggle.$element,
 			this.filibusterToggle.$element,
 			$( this.constructor.static.dividerTemplate ),
@@ -112,9 +124,7 @@ ve.ui.DebugBar.prototype.getSurface = function () {
  *
  * @param {ve.dm.Selection} selection
  */
-ve.ui.DebugBar.prototype.onSurfaceSelect = function () {
-	// Do not trust the emitted selection: nested emits can invalidate it. See T145938.
-	var selection = this.surface.model.getSelection();
+ve.ui.DebugBar.prototype.onSurfaceSelect = function ( selection ) {
 	this.selectionLabel.setLabel( selection.getDescription() );
 	this.logRangeButton.setDisabled( !(
 		( selection instanceof ve.dm.LinearSelection && !selection.isCollapsed() ) ||
@@ -138,38 +148,26 @@ ve.ui.DebugBar.prototype.onLogRangeButtonClick = function () {
 };
 
 /**
- * Handle change events on the show model toggle
+ * Handle click events on the dump model button
  *
- * @param {boolean} value Value
+ * @param {jQuery.Event} e Event
  */
-ve.ui.DebugBar.prototype.onShowModelToggleChange = function ( value ) {
-	if ( value ) {
-		this.updateDump();
-		this.$dump.show();
-	} else {
-		this.updateModelToggle.setValue( false );
-		this.$dump.hide();
-	}
-};
-
-/**
- * Update the model dump
- */
-ve.ui.DebugBar.prototype.updateDump = function () {
+ve.ui.DebugBar.prototype.onDumpModelButtonClick = function () {
 	var surface = this.getSurface(),
 		documentModel = surface.getModel().getDocument(),
 		documentView = surface.getView().getDocument();
 
 	// linear model dump
-	this.$linmodData.html( this.generateListFromLinearData( documentModel.data ) );
-	this.$linmodMetadata.html( this.generateListFromLinearData( documentModel.metadata ) );
+	this.$dumpLinmodData.html( this.generateListFromLinearData( documentModel.data ) );
+	this.$dumpLinmodMetadata.html( this.generateListFromLinearData( documentModel.metadata ) );
 
-	this.$modelTree.html(
+	this.$dumpModel.html(
 		this.generateListFromNode( documentModel.getDocumentNode() )
 	);
-	this.$viewTree.html(
+	this.$dumpView.html(
 		this.generateListFromNode( documentView.getDocumentNode() )
 	);
+	this.$dump.show();
 };
 
 /**
@@ -262,29 +260,24 @@ ve.ui.DebugBar.prototype.generateListFromNode = function ( node ) {
 };
 
 /**
- * Handle change events on the update model toggle button
+ * Handle click events on the dump model toggle button
  *
- * @param {boolean} value Value
+ * @param {jQuery.Event} e Event
  */
-ve.ui.DebugBar.prototype.onUpdateModelToggleChange = function ( value ) {
-	if ( value ) {
-		this.updateDump();
-		this.getSurface().model.connect( this, { documentUpdate: 'updateDump' } );
+ve.ui.DebugBar.prototype.onDumpModelChangeToggleClick = function () {
+	if ( this.dumpModelChangeToggle.getValue() ) {
+		this.onDumpModelButtonClick();
+		this.getSurface().model.connect( this, { documentUpdate: 'onDumpModelButtonClick' } );
 	} else {
-		this.getSurface().model.disconnect( this, { documentUpdate: 'updateDump' } );
+		this.getSurface().model.disconnect( this, { documentUpdate: 'onDumpModelButtonClick' } );
 	}
 };
 
-/**
- * Handle click events on the input debugging toggle button
- *
- * @param {boolean} value Value
- */
-ve.ui.DebugBar.prototype.onInputDebuggingToggleChange = function ( value ) {
+ve.ui.DebugBar.prototype.onInputDebuggingToggleClick = function () {
 	var surfaceModel = this.getSurface().getModel(),
 		selection = surfaceModel.getSelection();
 
-	ve.inputDebug = value;
+	ve.inputDebug = this.inputDebuggingToggle.getValue();
 
 	// Clear the cursor before rebuilding, it will be restored later
 	surfaceModel.setNullSelection();
@@ -330,7 +323,7 @@ ve.ui.DebugBar.prototype.onFilibusterToggleClick = function () {
 				$li.toggleClass( 've-filibuster-frame-expanded' );
 			}
 		} );
-		this.filibusterToggle.setLabel( 'Filibuster' );
+		this.filibusterToggle.setLabel( 'Start Filibuster' );
 	}
 };
 

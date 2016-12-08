@@ -207,9 +207,7 @@ class UploadStash {
 			wfDebug( __METHOD__ . " tried to stash file at '$path', but it doesn't exist\n" );
 			throw new UploadStashBadPathException( "path doesn't exist" );
 		}
-
-		$mwProps = new MWFileProps( MimeMagic::singleton() );
-		$fileProps = $mwProps->getPropsFromPath( $path, true );
+		$fileProps = FSFile::getPropsFromPath( $path );
 		wfDebug( __METHOD__ . " stashing file at '$path'\n" );
 
 		// we will be initializing from some tmpnam files that don't have extensions.
@@ -501,10 +499,10 @@ class UploadStash {
 	 * Helper function: do the actual database query to fetch file metadata.
 	 *
 	 * @param string $key
-	 * @param int $readFromDB Constant (default: DB_REPLICA)
+	 * @param int $readFromDB Constant (default: DB_SLAVE)
 	 * @return bool
 	 */
-	protected function fetchFileMetadata( $key, $readFromDB = DB_REPLICA ) {
+	protected function fetchFileMetadata( $key, $readFromDB = DB_SLAVE ) {
 		// populate $fileMetadata[$key]
 		$dbr = null;
 		if ( $readFromDB === DB_MASTER ) {

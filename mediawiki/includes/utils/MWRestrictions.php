@@ -27,7 +27,6 @@ class MWRestrictions {
 
 	/**
 	 * @param array $restrictions
-	 * @throws InvalidArgumentException
 	 */
 	protected function __construct( array $restrictions = null ) {
 		if ( $restrictions !== null ) {
@@ -45,7 +44,6 @@ class MWRestrictions {
 	/**
 	 * @param array $restrictions
 	 * @return MWRestrictions
-	 * @throws InvalidArgumentException
 	 */
 	public static function newFromArray( array $restrictions ) {
 		return new self( $restrictions );
@@ -54,7 +52,6 @@ class MWRestrictions {
 	/**
 	 * @param string $json JSON representation of the restrictions
 	 * @return MWRestrictions
-	 * @throws InvalidArgumentException
 	 */
 	public static function newFromJson( $json ) {
 		$restrictions = FormatJson::decode( $json, true );

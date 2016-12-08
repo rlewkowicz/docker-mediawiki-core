@@ -30,14 +30,12 @@ require_once __DIR__ . '/Maintenance.php';
  * Maintenance script to reset the user_token for all users on the wiki.
  *
  * @ingroup Maintenance
- * @deprecated since 1.27, use $wgAuthenticationTokenVersion instead.
  */
 class ResetUserTokens extends Maintenance {
 	public function __construct() {
 		parent::__construct();
 		$this->addDescription(
-			"Reset the user_token of all users on the wiki. Note that this may log some of them out.\n"
-			. "Deprecated, use \$wgAuthenticationTokenVersion instead."
+			'Reset the user_token of all users on the wiki. Note that this may log some of them out.'
 		);
 		$this->addOption( 'nowarn', "Hides the 5 seconds warning", false, false );
 		$this->addOption(
@@ -67,9 +65,8 @@ class ResetUserTokens extends Maintenance {
 			wfCountDown( 5 );
 		}
 
-		// We list user by user_id from one of the replica DBs
 		// We list user by user_id from one of the slave database
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 
 		$where = [];
 		if ( $this->nullsOnly ) {

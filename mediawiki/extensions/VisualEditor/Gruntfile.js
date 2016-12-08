@@ -4,20 +4,17 @@
  * @package VisualEditor
  */
 
-require( 'babel-polyfill' );
-
 /*jshint node:true */
 module.exports = function ( grunt ) {
 	var modules = grunt.file.readJSON( 'lib/ve/build/modules.json' );
 
 	grunt.loadNpmTasks( 'grunt-contrib-copy' );
+	grunt.loadNpmTasks( 'grunt-contrib-csslint' );
 	grunt.loadNpmTasks( 'grunt-contrib-jshint' );
 	grunt.loadNpmTasks( 'grunt-contrib-watch' );
 	grunt.loadNpmTasks( 'grunt-jsonlint' );
 	grunt.loadNpmTasks( 'grunt-banana-checker' );
-	grunt.loadNpmTasks( 'grunt-mocha-test' );
 	grunt.loadNpmTasks( 'grunt-jscs' );
-	grunt.loadNpmTasks( 'grunt-stylelint' );
 	grunt.loadNpmTasks( 'grunt-tyops' );
 	grunt.loadTasks( 'lib/ve/build/tasks' );
 	grunt.loadTasks( 'build/tasks' );
@@ -55,34 +52,6 @@ module.exports = function ( grunt ) {
 				indent: '\t\t'
 			}
 		},
-		mochaTest: {
-			'screenshots-en': {
-				options: {
-					reporter: 'spec',
-					timeout: 40000,
-					require: [
-						function () {
-							/* jshint undef:false */
-							langs = [ 'en' ];
-						}
-					]
-				},
-				src: [ 'build/screenshots.js' ]
-			},
-			'screenshots-all': {
-				options: {
-					reporter: 'spec',
-					timeout: 40000,
-					require: [
-						function () {
-							/* jshint undef:false */
-							langs = require( './build/tasks/screenshotLangs.json' ).langs;
-						}
-					]
-				},
-				src: [ 'build/screenshots.js' ]
-			}
-		},
 		tyops: {
 			options: {
 				typos: 'build/typos.json'
@@ -116,19 +85,16 @@ module.exports = function ( grunt ) {
 				src: '<%= jshint.all %>'
 			}
 		},
-		stylelint: {
-			all: [
-				'**/*.css',
-				'!coverage/**',
-				'!dist/**',
-				'!docs/**',
-				'!lib/**',
-				'!node_modules/**'
-			]
+		csslint: {
+			options: {
+				csslintrc: '.csslintrc'
+			},
+			all: 'modules/**/*.css'
 		},
 		banana: {
 			all: [
-				'modules/ve-{mw,wmf}/i18n/'
+				'modules/ve-{mw,wmf}/i18n/',
+				'modules/ve-mw/tests/browser/i18n'
 			]
 		},
 		jsonlint: {
@@ -148,9 +114,9 @@ module.exports = function ( grunt ) {
 		},
 		watch: {
 			files: [
-				'.{stylelintrc,jscsrc,jshintignore,jshintrc}',
+				'.{csslintrc,jscsrc,jshintignore,jshintrc}',
 				'<%= jshint.all %>',
-				'<%= stylelint.all %>'
+				'<%= csslint.all %>'
 			],
 			tasks: 'test'
 		}
@@ -177,12 +143,10 @@ module.exports = function ( grunt ) {
 	} );
 
 	grunt.registerTask( 'build', [ 'jsduckcatconfig', 'buildloader' ] );
-	grunt.registerTask( 'lint', [ 'tyops', 'jshint', 'jscs:main', 'stylelint', 'jsonlint', 'banana' ] );
+	grunt.registerTask( 'lint', [ 'tyops', 'jshint', 'jscs:main', 'csslint', 'jsonlint', 'banana' ] );
 	grunt.registerTask( 'fix', [ 'jscs:fix' ] );
 	grunt.registerTask( 'test', [ 'build', 'lint' ] );
 	grunt.registerTask( 'test-ci', [ 'git-status' ] );
-	grunt.registerTask( 'screenshots', [ 'mochaTest:screenshots-en' ] );
-	grunt.registerTask( 'screenshots-all', [ 'mochaTest:screenshots-all' ] );
 	grunt.registerTask( 'default', 'test' );
 
 	if ( process.env.JENKINS_HOME ) {

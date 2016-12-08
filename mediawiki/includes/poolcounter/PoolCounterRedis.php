@@ -18,7 +18,6 @@
  * @file
  * @author Aaron Schulz
  */
-use Psr\Log\LoggerInterface;
 
 /**
  * Version of PoolCounter that uses Redis
@@ -56,8 +55,6 @@ class PoolCounterRedis extends PoolCounter {
 	protected $ring;
 	/** @var RedisConnectionPool */
 	protected $pool;
-	/** @var LoggerInterface */
-	protected $logger;
 	/** @var array (server label => host) map */
 	protected $serversByLabel;
 	/** @var string SHA-1 of the key */
@@ -90,7 +87,6 @@ class PoolCounterRedis extends PoolCounter {
 
 		$conf['redisConfig']['serializer'] = 'none'; // for use with Lua
 		$this->pool = RedisConnectionPool::singleton( $conf['redisConfig'] );
-		$this->logger = \MediaWiki\Logger\LoggerFactory::getInstance( 'redis' );
 
 		$this->keySha1 = sha1( $this->key );
 		$met = ini_get( 'max_execution_time' ); // usually 0 in CLI mode
@@ -111,7 +107,7 @@ class PoolCounterRedis extends PoolCounter {
 			$servers = $this->ring->getLocations( $this->key, 3 );
 			ArrayUtils::consistentHashSort( $servers, $this->key );
 			foreach ( $servers as $server ) {
-				$conn = $this->pool->getConnection( $this->serversByLabel[$server], $this->logger );
+				$conn = $this->pool->getConnection( $this->serversByLabel[$server] );
 				if ( $conn ) {
 					break;
 				}
@@ -155,7 +151,6 @@ class PoolCounterRedis extends PoolCounter {
 
 		// @codingStandardsIgnoreStart Generic.Files.LineLength
 		static $script =
-		/** @lang Lua */
 <<<LUA
 		local kSlots,kSlotsNextRelease,kWakeup,kWaiting = unpack(KEYS)
 		local rMaxWorkers,rExpiry,rSlot,rSlotTime,rAwakeAll,rTime = unpack(ARGV)
@@ -251,7 +246,7 @@ LUA;
 			} elseif ( $slot === 'QUEUE_WAIT' ) {
 				// This process is now registered as waiting
 				$keys = ( $doWakeup == self::AWAKE_ALL )
-					// Wait for an open slot or wake-up signal (preferring the latter)
+					// Wait for an open slot or wake-up signal (preferring the later)
 					? [ $this->getWakeupListKey(), $this->getSlotListKey() ]
 					// Just wait for an actual pool slot
 					: [ $this->getSlotListKey() ];
@@ -292,13 +287,12 @@ LUA;
 	 */
 	protected function initAndPopPoolSlotList( RedisConnRef $conn, $now ) {
 		static $script =
-		/** @lang Lua */
 <<<LUA
 		local kSlots,kSlotsNextRelease,kSlotWaits = unpack(KEYS)
 		local rMaxWorkers,rMaxQueue,rTimeout,rExpiry,rSess,rTime = unpack(ARGV)
 		-- Initialize if the "next release" time sorted-set is empty. The slot key
 		-- itself is empty if all slots are busy or when nothing is initialized.
-		-- If the list is empty but the set is not, then it is the latter case.
+		-- If the list is empty but the set is not, then it is the later case.
 		-- For sanity, if the list exists but not the set, then reset everything.
 		if redis.call('exists',kSlotsNextRelease) == 0 then
 			redis.call('del',kSlots)
@@ -361,7 +355,6 @@ LUA;
 	 */
 	protected function registerAcquisitionTime( RedisConnRef $conn, $slot, $now ) {
 		static $script =
-		/** @lang Lua */
 <<<LUA
 		local kSlots,kSlotsNextRelease,kSlotWaits = unpack(KEYS)
 		local rSlot,rExpiry,rSess,rTime = unpack(ARGV)

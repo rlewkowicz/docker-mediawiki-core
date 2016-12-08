@@ -7,7 +7,7 @@ class DatabaseSqliteMock extends DatabaseSqlite {
 		$p['dbFilePath'] = ':memory:';
 		$p['schema'] = false;
 
-		return Database::factory( 'SqliteMock', $p );
+		return DatabaseBase::factory( 'SqliteMock', $p );
 	}
 
 	function query( $sql, $fname = '', $tempIgnore = false ) {

@@ -1,9 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"Tulsi Bhagat",
-			"बिप्लब आनन्द"
+			"Tulsi Bhagat"
 		]
 	},
-	"cite_error": "सन्दर्भ त्रुटि: $1"
+	"cite_error": "उल्लेख गल्ती: $1"
 }

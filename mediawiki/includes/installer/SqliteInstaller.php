@@ -179,12 +179,16 @@ class SqliteInstaller extends DatabaseInstaller {
 	 * @return Status
 	 */
 	public function openConnection() {
+		global $wgSQLiteDataDir;
+
 		$status = Status::newGood();
 		$dir = $this->getVar( 'wgSQLiteDataDir' );
 		$dbName = $this->getVar( 'wgDBname' );
 		try {
 			# @todo FIXME: Need more sensible constructor parameters, e.g. single associative array
-			$db = Database::factory( 'sqlite', [ 'dbname' => $dbName, 'dbDirectory' => $dir ] );
+			# Setting globals kind of sucks
+			$wgSQLiteDataDir = $dir;
+			$db = DatabaseBase::factory( 'sqlite', [ 'dbname' => $dbName ] );
 			$status->value = $db;
 		} catch ( DBConnectionError $e ) {
 			$status->fatal( 'config-sqlite-connection-error', $e->getMessage() );
@@ -239,7 +243,10 @@ class SqliteInstaller extends DatabaseInstaller {
 
 		# Create the global cache DB
 		try {
-			$conn = Database::factory( 'sqlite', [ 'dbname' => 'wikicache', 'dbDirectory' => $dir ] );
+			global $wgSQLiteDataDir;
+			# @todo FIXME: setting globals kind of sucks
+			$wgSQLiteDataDir = $dir;
+			$conn = DatabaseBase::factory( 'sqlite', [ 'dbname' => "wikicache" ] );
 			# @todo: don't duplicate objectcache definition, though it's very simple
 			$sql =
 <<<EOT
@@ -261,11 +268,6 @@ EOT;
 		return $this->getConnection();
 	}
 
-	/**
-	 * @param $dir
-	 * @param $db
-	 * @return Status
-	 */
 	protected function makeStubDBFile( $dir, $db ) {
 		$file = DatabaseSqlite::generateFileName( $dir, $db );
 		if ( file_exists( $file ) ) {
@@ -324,7 +326,6 @@ EOT;
 		'type' => 'sqlite',
 		'dbname' => 'wikicache',
 		'tablePrefix' => '',
-		'dbDirectory' => \$wgSQLiteDataDir,
 		'flags' => 0
 	]
 ];";

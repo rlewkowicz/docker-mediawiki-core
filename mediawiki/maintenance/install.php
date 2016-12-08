@@ -21,7 +21,11 @@
  * @ingroup Maintenance
  */
 
-require_once __DIR__ . '/Maintenance.php';
+// Checking for old versions of PHP is done in Maintenance.php
+// We need to use dirname( __FILE__ ) here cause __DIR__ is PHP5.3+
+// @codingStandardsIgnoreStart MediaWiki.Usage.DirUsage.FunctionFound
+require_once dirname( __FILE__ ) . '/Maintenance.php';
+// @codingStandardsIgnoreEnd
 
 define( 'MW_CONFIG_CALLBACK', 'Installer::overrideConfig' );
 define( 'MEDIAWIKI_INSTALL', true );

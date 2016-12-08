@@ -9,18 +9,16 @@ QUnit.module( 've.ui.MWWikitextStringTransferHandler', QUnit.newMwEnvironment( {
 	setup: function () {
 		// Mock XHR for mw.Api()
 		this.server = MWWIKITEXT_MOCK_API ? this.sandbox.useFakeServer() : null;
-		ve.test.utils.mwEnvironment.setup.call( this );
-	},
-	teardown: ve.test.utils.mwEnvironment.teardown
+	}
 } ) );
 
 /* Tests */
 
-function runWikitextStringHandlerTest( assert, server, string, mimeType, expectedResponse, expectedData, annotations, assertDom, msg ) {
+function runWikitextStringHandlerTest( assert, server, string, mimeType, expectedResponse, expectedData, annotations, msg ) {
 	var handler, i, j, name,
 		done = assert.async(),
 		item = ve.ui.DataTransferItem.static.newFromString( string, mimeType ),
-		doc = new ve.dm.Document( [] ),
+		doc = ve.dm.example.createExampleDocument(),
 		mockSurface = {
 			getModel: function () {
 				return {
@@ -55,11 +53,7 @@ function runWikitextStringHandlerTest( assert, server, string, mimeType, expecte
 	handler.getInsertableData().done( function ( doc2 ) {
 		var actualData = doc2.getData();
 		ve.dm.example.postprocessAnnotations( actualData, doc2.getStore() );
-		if ( assertDom ) {
-			assert.equalLinearDataWithDom( doc2.getStore(), actualData, expectedData, msg + ': data match (with DOM)' );
-		} else {
-			assert.equalLinearData( actualData, expectedData, msg + ': data match' );
-		}
+		assert.equalLinearData( actualData, expectedData, msg + ': data match' );
 		done();
 	} );
 
@@ -150,19 +144,21 @@ QUnit.test( 'convert', function ( assert ) {
 				]
 			},
 			{
-				msg: 'Headings, only RESTBase IDs stripped',
+				msg: 'Heading',
 				pasteString: '==heading==',
 				pasteType: 'text/plain',
-				parsoidResponse: '<h2 id="mwAB">foo</h2><h2 id="mw-meaningful-id">bar</h2>',
+				parsoidResponse: '<h2>heading</h2>',
 				annotations: [],
-				assertDom: true,
 				expectedData: [
-					{ type: 'mwHeading', attributes: { level: 2 }, originalDomElements: $( '<h2>foo</h2>' ).toArray() },
-					'f', 'o', 'o',
-					{ type: '/mwHeading' },
-					{ type: 'mwHeading', attributes: { level: 2 }, originalDomElements: $( '<h2 id="mw-meaningful-id">bar</h2>' ).toArray() },
-					'b', 'a', 'r',
-					{ type: '/mwHeading' },
+					{ type: 'heading', attributes: { level: 2 } },
+					'h',
+					'e',
+					'a',
+					'd',
+					'i',
+					'n',
+					'g',
+					{ type: '/heading' },
 					{ type: 'internalList' },
 					{ type: '/internalList' }
 				]
@@ -300,9 +296,6 @@ QUnit.test( 'convert', function ( assert ) {
 
 	QUnit.expect( cases.length * 2 );
 	for ( i = 0; i < cases.length; i++ ) {
-		runWikitextStringHandlerTest(
-			assert, this.server, cases[ i ].pasteString, cases[ i ].pasteType, cases[ i ].parsoidResponse,
-			cases[ i ].expectedData, cases[ i ].annotations, cases[ i ].assertDom, cases[ i ].msg
-		);
+		runWikitextStringHandlerTest( assert, this.server, cases[ i ].pasteString, cases[ i ].pasteType, cases[ i ].parsoidResponse, cases[ i ].expectedData, cases[ i ].annotations, cases[ i ].msg );
 	}
 } );

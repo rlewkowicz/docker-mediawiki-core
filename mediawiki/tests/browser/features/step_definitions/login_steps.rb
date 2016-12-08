@@ -23,11 +23,11 @@ When(/^I log in without entering password$/) do
 end
 
 Then(/^error box should be visible$/) do
-  expect(on(LoginPage).error_message_element).to exist
+  expect(on(LoginErrorPage).error_box_element).to be_visible
 end
 
 Then(/^error box should not be visible$/) do
-  expect(on(LoginPage).error_message_element).not_to exist
+  expect(on(LoginErrorPage).error_box_element).not_to be_visible
 end
 
 Then(/^feedback should be (.+)$/) do |feedback|

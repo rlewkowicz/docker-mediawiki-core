@@ -25,7 +25,7 @@ ve.ui.MWCategoryWidget = function VeUiMWCategoryWidget( config ) {
 	config = config || {};
 
 	// Parent constructor
-	ve.ui.MWCategoryWidget.super.call( this, config );
+	OO.ui.Widget.call( this, config );
 
 	// Mixin constructors
 	OO.ui.mixin.GroupElement.call( this, config );
@@ -37,6 +37,8 @@ ve.ui.MWCategoryWidget = function VeUiMWCategoryWidget( config ) {
 	this.categoryRedirects = {};
 	// Title cache - will contain entries even if title is already normalized
 	this.normalizedTitles = {};
+	this.popupState = false;
+	this.savedPopupState = false;
 	this.popup = new ve.ui.MWCategoryPopupWidget();
 	this.input = new ve.ui.MWCategoryInputWidget( this, { $overlay: config.$overlay } );
 	this.forceCapitalization = mw.config.get( 'wgCaseSensitiveNamespaces' ).indexOf( categoryNamespace ) === -1;
@@ -46,7 +48,8 @@ ve.ui.MWCategoryWidget = function VeUiMWCategoryWidget( config ) {
 	this.input.connect( this, { choose: 'onInputChoose' } );
 	this.popup.connect( this, {
 		removeCategory: 'onRemoveCategory',
-		updateSortkey: 'onUpdateSortkey'
+		updateSortkey: 'onUpdateSortkey',
+		hide: 'onPopupHide'
 	} );
 	this.connect( this, {
 		drag: 'onDrag'
@@ -207,13 +210,27 @@ ve.ui.MWCategoryWidget.prototype.clearItems = function () {
 };
 
 /**
+ * Sets popup state when popup is hidden
+ */
+ve.ui.MWCategoryWidget.prototype.onPopupHide = function () {
+	this.popupState = false;
+};
+
+/**
+ * Saves current popup state
+ */
+ve.ui.MWCategoryWidget.prototype.onSavePopupState = function () {
+	this.savedPopupState = this.popupState;
+};
+
+/**
  * Toggles popup menu per category item
  *
  * @param {Object} item
  */
 ve.ui.MWCategoryWidget.prototype.onTogglePopupMenu = function ( item ) {
 	// Close open popup.
-	if ( item.value !== this.popup.category ) {
+	if ( this.savedPopupState === false || item.value !== this.popup.category ) {
 		this.popup.openPopup( item );
 	} else {
 		// Handle toggle
@@ -350,6 +367,7 @@ ve.ui.MWCategoryWidget.prototype.addItems = function ( items, index ) {
 
 			categoryItem = new ve.ui.MWCategoryItemWidget( config );
 			categoryItem.connect( widget, {
+				savePopupState: 'onSavePopupState',
 				togglePopupMenu: 'onTogglePopupMenu'
 			} );
 

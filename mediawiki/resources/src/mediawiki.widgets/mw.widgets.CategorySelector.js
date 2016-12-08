@@ -9,25 +9,23 @@
 		NS_CATEGORY = mw.config.get( 'wgNamespaceIds' ).category;
 
 	/**
-	 * Category selector widget. Displays an OO.ui.CapsuleMultiselectWidget
+	 * Category selector widget. Displays an OO.ui.CapsuleMultiSelectWidget
 	 * and autocompletes with available categories.
 	 *
-	 *     mw.loader.using( 'mediawiki.widgets.CategorySelector', function () {
-	 *       var selector = new mw.widgets.CategorySelector( {
-	 *         searchTypes: [
-	 *           mw.widgets.CategorySelector.SearchType.OpenSearch,
-	 *           mw.widgets.CategorySelector.SearchType.InternalSearch
-	 *         ]
-	 *       } );
-	 *
-	 *       $( 'body' ).append( selector.$element );
-	 *
-	 *       selector.setSearchTypes( [ mw.widgets.CategorySelector.SearchType.SubCategories ] );
+	 *     var selector = new mw.widgets.CategorySelector( {
+	 *       searchTypes: [
+	 *         mw.widgets.CategorySelector.SearchType.OpenSearch,
+	 *         mw.widgets.CategorySelector.SearchType.InternalSearch
+	 *       ]
 	 *     } );
+	 *
+	 *     $( '#content' ).append( selector.$element );
+	 *
+	 *     selector.setSearchTypes( [ mw.widgets.CategorySelector.SearchType.SubCategories ] );
 	 *
 	 * @class mw.widgets.CategorySelector
 	 * @uses mw.Api
-	 * @extends OO.ui.CapsuleMultiselectWidget
+	 * @extends OO.ui.CapsuleMultiSelectWidget
 	 * @mixins OO.ui.mixin.PendingElement
 	 *
 	 * @constructor
@@ -65,12 +63,11 @@
 
 		// Initialize
 		this.api = config.api || new mw.Api();
-		this.searchCache = {};
 	}
 
 	/* Setup */
 
-	OO.inheritClass( CategorySelector, OO.ui.CapsuleMultiselectWidget );
+	OO.inheritClass( CategorySelector, OO.ui.CapsuleMultiSelectWidget );
 	OO.mixinClass( CategorySelector, OO.ui.mixin.PendingElement );
 	CSP = CategorySelector.prototype;
 
@@ -189,13 +186,9 @@
 	 * @inheritdoc
 	 */
 	CSP.createItemWidget = function ( data ) {
-		var title = mw.Title.makeTitle( NS_CATEGORY, data );
-		if ( !title ) {
-			return null;
-		}
 		return new mw.widgets.CategoryCapsuleItemWidget( {
 			apiUrl: this.api.apiUrl || undefined,
-			title: title
+			title: mw.Title.makeTitle( NS_CATEGORY, data )
 		} );
 	};
 
@@ -205,11 +198,8 @@
 	CSP.getItemFromData = function ( data ) {
 		// This is a bit of a hack... We have to canonicalize the data in the same way that
 		// #createItemWidget and CategoryCapsuleItemWidget will do, otherwise we won't find duplicates.
-		var title = mw.Title.makeTitle( NS_CATEGORY, data );
-		if ( !title ) {
-			return null;
-		}
-		return OO.ui.mixin.GroupElement.prototype.getItemFromData.call( this, title.getMainText() );
+		data = mw.Title.makeTitle( NS_CATEGORY, data ).getMainText();
+		return OO.ui.mixin.GroupElement.prototype.getItemFromData.call( this, data );
 	};
 
 	/**
@@ -270,13 +260,7 @@
 	 * @return {jQuery.Promise} Resolves with an array of categories
 	 */
 	CSP.searchCategories = function ( input, searchType ) {
-		var deferred = $.Deferred(),
-			cacheKey = input + searchType.toString();
-
-		// Check cache
-		if ( this.searchCache[ cacheKey ] !== undefined ) {
-			return this.searchCache[ cacheKey ];
-		}
+		var deferred = $.Deferred();
 
 		switch ( searchType ) {
 			case CategorySelector.SearchType.OpenSearch:
@@ -370,10 +354,12 @@
 					var categories = [];
 
 					$.each( res.query.pages, function ( index, page ) {
-						if ( !page.missing && $.isArray( page.categories ) ) {
-							categories.push.apply( categories, page.categories.map( function ( category ) {
-								return category.title;
-							} ) );
+						if ( !page.missing ) {
+							if ( $.isArray( page.categories ) ) {
+								categories.push.apply( categories, page.categories.map( function ( category ) {
+									return category.title;
+								} ) );
+							}
 						}
 					} );
 
@@ -384,9 +370,6 @@
 			default:
 				throw new Error( 'Unknown searchType' );
 		}
-
-		// Cache the result
-		this.searchCache[ cacheKey ] = deferred.promise();
 
 		return deferred.promise();
 	};

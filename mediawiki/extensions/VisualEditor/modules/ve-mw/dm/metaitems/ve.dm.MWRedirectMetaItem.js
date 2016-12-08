@@ -13,9 +13,9 @@
  * @constructor
  * @param {Object} element Reference to element in meta-linmod
  */
-ve.dm.MWRedirectMetaItem = function VeDmMWRedirectMetaItem() {
+ve.dm.MWRedirectMetaItem = function VeDmMWRedirectMetaItem( element ) {
 	// Parent constructor
-	ve.dm.MWRedirectMetaItem.super.apply( this, arguments );
+	ve.dm.MetaItem.call( this, element );
 };
 
 /* Inheritance */

@@ -24,7 +24,6 @@
  *
  * @file
  */
-use MediaWiki\MediaWikiServices;
 
 /**
  * API interface for setting the wl_notificationtimestamp field
@@ -99,14 +98,13 @@ class ApiSetNotificationTimestamp extends ApiBase {
 			}
 		}
 
-		$watchedItemStore = MediaWikiServices::getInstance()->getWatchedItemStore();
 		$apiResult = $this->getResult();
 		$result = [];
 		if ( $params['entirewatchlist'] ) {
 			// Entire watchlist mode: Just update the thing and return a success indicator
-			$watchedItemStore->setNotificationTimestampsForUser(
-				$user,
-				$timestamp
+			$dbw->update( 'watchlist', [ 'wl_notificationtimestamp' => $timestamp ],
+				[ 'wl_user' => $user->getId() ],
+				__METHOD__
 			);
 
 			$result['notificationtimestamp'] = is_null( $timestamp )
@@ -135,17 +133,23 @@ class ApiSetNotificationTimestamp extends ApiBase {
 
 			if ( $pageSet->getTitles() ) {
 				// Now process the valid titles
-				$watchedItemStore->setNotificationTimestampsForUser(
-					$user,
-					$timestamp,
-					$pageSet->getTitles()
+				$lb = new LinkBatch( $pageSet->getTitles() );
+				$dbw->update( 'watchlist', [ 'wl_notificationtimestamp' => $timestamp ],
+					[ 'wl_user' => $user->getId(), $lb->constructSet( 'wl', $dbw ) ],
+					__METHOD__
 				);
 
 				// Query the results of our update
-				$timestamps = $watchedItemStore->getNotificationTimestampsBatch(
-					$user,
-					$pageSet->getTitles()
+				$timestamps = [];
+				$res = $dbw->select(
+					'watchlist',
+					[ 'wl_namespace', 'wl_title', 'wl_notificationtimestamp' ],
+					[ 'wl_user' => $user->getId(), $lb->constructSet( 'wl', $dbw ) ],
+					__METHOD__
 				);
+				foreach ( $res as $row ) {
+					$timestamps[$row->wl_namespace][$row->wl_title] = $row->wl_notificationtimestamp;
+				}
 
 				// Now, put the valid titles into the result
 				/** @var $title Title */
@@ -158,9 +162,6 @@ class ApiSetNotificationTimestamp extends ApiBase {
 					];
 					if ( !$title->exists() ) {
 						$r['missing'] = true;
-						if ( $title->isKnown() ) {
-							$r['known'] = true;
-						}
 					}
 					if ( isset( $timestamps[$ns] ) && array_key_exists( $dbkey, $timestamps[$ns] ) ) {
 						$r['notificationtimestamp'] = '';

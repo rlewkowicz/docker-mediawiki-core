@@ -42,6 +42,9 @@ class ComplexTitleInputWidget extends \OOUI\Widget {
 		$this->title = new TitleInputWidget( array_merge(
 			$config['title'],
 			[
+				// The inner TitleInputWidget shouldn't be infusable,
+				// only the ComplexTitleInputWidget itself can be.
+				'infusable' => false,
 				'relative' => true,
 				'namespace' => isset( $config['namespace']['value'] ) ?
 					$config['namespace']['value'] :

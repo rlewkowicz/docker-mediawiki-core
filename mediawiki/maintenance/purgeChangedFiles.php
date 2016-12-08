@@ -106,7 +106,7 @@ class PurgeChangedFiles extends Maintenance {
 		}
 
 		// Validate the timestamps
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 		$this->startTimestamp = $dbr->timestamp( $this->getOption( 'starttime' ) );
 		$this->endTimestamp = $dbr->timestamp( $this->getOption( 'endtime' ) );
 
@@ -137,7 +137,7 @@ class PurgeChangedFiles extends Maintenance {
 	 */
 	protected function purgeFromLogType( $type ) {
 		$repo = RepoGroup::singleton()->getLocalRepo();
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 
 		foreach ( self::$typeMappings[$type] as $logType => $logActions ) {
 			$this->verbose( "Scanning for {$logType}/" . implode( ',', $logActions ) . "\n" );
@@ -164,12 +164,8 @@ class PurgeChangedFiles extends Maintenance {
 					continue;
 				}
 
-				// Purge current version and its thumbnails
+				// Purge current version and any versions in oldimage table
 				$file->purgeCache();
-				// Purge the old versions and their thumbnails
-				foreach ( $file->getHistory() as $oldFile ) {
-					$oldFile->purgeCache();
-				}
 
 				if ( $logType === 'delete' ) {
 					// If there is an orphaned storage file... delete it

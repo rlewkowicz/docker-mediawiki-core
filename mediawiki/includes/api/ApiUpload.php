@@ -64,8 +64,7 @@ class ApiUpload extends ApiBase {
 				$this->dieUsage( 'No upload module set', 'nomodule' );
 			}
 		} catch ( UploadStashException $e ) { // XXX: don't spam exception log
-			list( $msg, $code ) = $this->handleStashException( get_class( $e ), $e->getMessage() );
-			$this->dieUsage( $msg, $code );
+			$this->handleStashException( $e );
 		}
 
 		// First check permission to upload
@@ -109,18 +108,14 @@ class ApiUpload extends ApiBase {
 		// Get the result based on the current upload context:
 		try {
 			$result = $this->getContextResult();
+			if ( $result['result'] === 'Success' ) {
+				$result['imageinfo'] = $this->mUpload->getImageInfo( $this->getResult() );
+			}
 		} catch ( UploadStashException $e ) { // XXX: don't spam exception log
-			list( $msg, $code ) = $this->handleStashException( get_class( $e ), $e->getMessage() );
-			$this->dieUsage( $msg, $code );
+			$this->handleStashException( $e );
 		}
-		$this->getResult()->addValue( null, $this->getModuleName(), $result );
 
-		// Add 'imageinfo' in a separate addValue() call. File metadata can be unreasonably large,
-		// so otherwise when it exceeded $wgAPIMaxResultSize, no result would be returned (T143993).
-		if ( $result['result'] === 'Success' ) {
-			$imageinfo = $this->mUpload->getImageInfo( $this->getResult() );
-			$this->getResult()->addValue( $this->getModuleName(), 'imageinfo', $imageinfo );
-		}
+		$this->getResult()->addValue( null, $this->getModuleName(), $result );
 
 		// Cleanup any temporary mess
 		$this->mUpload->cleanupTempFile();
@@ -161,13 +156,20 @@ class ApiUpload extends ApiBase {
 	 */
 	private function getStashResult( $warnings ) {
 		$result = [];
-		$result['result'] = 'Success';
-		if ( $warnings && count( $warnings ) > 0 ) {
-			$result['warnings'] = $warnings;
-		}
 		// Some uploads can request they be stashed, so as not to publish them immediately.
 		// In this case, a failure to stash ought to be fatal
-		$this->performStash( 'critical', $result );
+		try {
+			$result['result'] = 'Success';
+			$result['filekey'] = $this->performStash();
+			$result['sessionkey'] = $result['filekey']; // backwards compatibility
+			if ( $warnings && count( $warnings ) > 0 ) {
+				$result['warnings'] = $warnings;
+			}
+		} catch ( UploadStashException $e ) {
+			$this->handleStashException( $e );
+		} catch ( Exception $e ) {
+			$this->dieUsage( $e->getMessage(), 'stashfailed' );
+		}
 
 		return $result;
 	}
@@ -183,7 +185,12 @@ class ApiUpload extends ApiBase {
 		$result['warnings'] = $warnings;
 		// in case the warnings can be fixed with some further user action, let's stash this upload
 		// and return a key they can use to restart it
-		$this->performStash( 'optional', $result );
+		try {
+			$result['filekey'] = $this->performStash();
+			$result['sessionkey'] = $result['filekey']; // backwards compatibility
+		} catch ( Exception $e ) {
+			$result['warnings']['stashfailed'] = $e->getMessage();
+		}
 
 		return $result;
 	}
@@ -221,7 +228,14 @@ class ApiUpload extends ApiBase {
 		}
 
 		if ( $this->mParams['offset'] == 0 ) {
-			$filekey = $this->performStash( 'critical' );
+			try {
+				$filekey = $this->performStash();
+			} catch ( UploadStashException $e ) {
+				$this->handleStashException( $e );
+			} catch ( Exception $e ) {
+				// FIXME: Error handling here is wrong/different from rest of this
+				$this->dieUsage( $e->getMessage(), 'stashfailed' );
+			}
 		} else {
 			$filekey = $this->mParams['filekey'];
 
@@ -243,7 +257,7 @@ class ApiUpload extends ApiBase {
 					'offset' => $this->mUpload->getOffset(),
 				];
 
-				$this->dieStatusWithCode( $status, 'stashfailed', $extradata );
+				$this->dieUsage( $status->getWikiText( false, false, 'en' ), 'stashfailed', 0, $extradata );
 			}
 		}
 
@@ -274,20 +288,14 @@ class ApiUpload extends ApiBase {
 						$filekey,
 						[ 'result' => 'Failure', 'stage' => 'assembling', 'status' => $status ]
 					);
-					$this->dieStatusWithCode( $status, 'stashfailed' );
-				}
-
-				// We can only get warnings like 'duplicate' after concatenating the chunks
-				$warnings = $this->getApiWarnings();
-				if ( $warnings ) {
-					$result['warnings'] = $warnings;
+					$this->dieUsage( $status->getWikiText( false, false, 'en' ), 'stashfailed' );
 				}
 
 				// The fully concatenated file has a new filekey. So remove
 				// the old filekey and fetch the new one.
 				UploadBase::setSessionStatus( $this->getUser(), $filekey, false );
 				$this->mUpload->stash->removeFile( $filekey );
-				$filekey = $this->mUpload->getStashFile()->getFileKey();
+				$filekey = $this->mUpload->getLocalFile()->getFileKey();
 
 				$result['result'] = 'Success';
 			}
@@ -312,106 +320,53 @@ class ApiUpload extends ApiBase {
 	}
 
 	/**
-	 * Stash the file and add the file key, or error information if it fails, to the data.
-	 *
-	 * @param string $failureMode What to do on failure to stash:
-	 *   - When 'critical', use dieStatus() to produce an error response and throw an exception.
-	 *     Use this when stashing the file was the primary purpose of the API request.
-	 *   - When 'optional', only add a 'stashfailed' key to the data and return null.
-	 *     Use this when some error happened for a non-stash upload and we're stashing the file
-	 *     only to save the client the trouble of re-uploading it.
-	 * @param array &$data API result to which to add the information
-	 * @return string|null File key
+	 * Stash the file and return the file key
+	 * Also re-raises exceptions with slightly more informative message strings (useful for API)
+	 * @throws MWException
+	 * @return string File key
 	 */
-	private function performStash( $failureMode, &$data = null ) {
-		$isPartial = (bool)$this->mParams['chunk'];
+	private function performStash() {
 		try {
-			$status = $this->mUpload->tryStashFile( $this->getUser(), $isPartial );
+			$stashFile = $this->mUpload->stashFile( $this->getUser() );
 
-			if ( $status->isGood() && !$status->getValue() ) {
-				// Not actually a 'good' status...
-				$status->fatal( new ApiRawMessage( 'Invalid stashed file', 'stashfailed' ) );
+			if ( !$stashFile ) {
+				throw new MWException( 'Invalid stashed file' );
 			}
+			$fileKey = $stashFile->getFileKey();
 		} catch ( Exception $e ) {
-			$debugMessage = 'Stashing temporary file failed: ' . get_class( $e ) . ' ' . $e->getMessage();
-			wfDebug( __METHOD__ . ' ' . $debugMessage . "\n" );
-			$status = Status::newFatal( new ApiRawMessage( $e->getMessage(), 'stashfailed' ) );
+			$message = 'Stashing temporary file failed: ' . get_class( $e ) . ' ' . $e->getMessage();
+			wfDebug( __METHOD__ . ' ' . $message . "\n" );
+			$className = get_class( $e );
+			throw new $className( $message );
 		}
 
-		if ( $status->isGood() ) {
-			$stashFile = $status->getValue();
-			$data['filekey'] = $stashFile->getFileKey();
-			// Backwards compatibility
-			$data['sessionkey'] = $data['filekey'];
-			return $data['filekey'];
-		}
-
-		if ( $status->getMessage()->getKey() === 'uploadstash-exception' ) {
-			// The exceptions thrown by upload stash code and pretty silly and UploadBase returns poor
-			// Statuses for it. Just extract the exception details and parse them ourselves.
-			list( $exceptionType, $message ) = $status->getMessage()->getParams();
-			$debugMessage = 'Stashing temporary file failed: ' . $exceptionType . ' ' . $message;
-			wfDebug( __METHOD__ . ' ' . $debugMessage . "\n" );
-			list( $msg, $code ) = $this->handleStashException( $exceptionType, $message );
-			$status = Status::newFatal( new ApiRawMessage( $msg, $code ) );
-		}
-
-		// Bad status
-		if ( $failureMode !== 'optional' ) {
-			$this->dieStatus( $status );
-		} else {
-			list( $code, $msg ) = $this->getErrorFromStatus( $status );
-			$data['stashfailed'] = $msg;
-			return null;
-		}
+		return $fileKey;
 	}
 
 	/**
 	 * Throw an error that the user can recover from by providing a better
 	 * value for $parameter
 	 *
-	 * @param array|string|MessageSpecifier $error Error suitable for passing to dieUsageMsg()
+	 * @param array $error Error array suitable for passing to dieUsageMsg()
 	 * @param string $parameter Parameter that needs revising
 	 * @param array $data Optional extra data to pass to the user
-	 * @param string $code Error code to use if the error is unknown
 	 * @throws UsageException
 	 */
-	private function dieRecoverableError( $error, $parameter, $data = [], $code = 'unknownerror' ) {
-		$this->performStash( 'optional', $data );
+	private function dieRecoverableError( $error, $parameter, $data = [] ) {
+		try {
+			$data['filekey'] = $this->performStash();
+			$data['sessionkey'] = $data['filekey'];
+		} catch ( Exception $e ) {
+			$data['stashfailed'] = $e->getMessage();
+		}
 		$data['invalidparameter'] = $parameter;
 
 		$parsed = $this->parseMsg( $error );
 		if ( isset( $parsed['data'] ) ) {
 			$data = array_merge( $data, $parsed['data'] );
 		}
-		if ( $parsed['code'] === 'unknownerror' ) {
-			$parsed['code'] = $code;
-		}
 
 		$this->dieUsage( $parsed['info'], $parsed['code'], 0, $data );
-	}
-
-	/**
-	 * Like dieStatus(), but always uses $overrideCode for the error code, unless the code comes from
-	 * IApiMessage.
-	 *
-	 * @param Status $status
-	 * @param string $overrideCode Error code to use if there isn't one from IApiMessage
-	 * @param array|null $moreExtraData
-	 * @throws UsageException
-	 */
-	public function dieStatusWithCode( $status, $overrideCode, $moreExtraData = null ) {
-		$extraData = null;
-		list( $code, $msg ) = $this->getErrorFromStatus( $status, $extraData );
-		$errors = $status->getErrorsByType( 'error' ) ?: $status->getErrorsByType( 'warning' );
-		if ( !( $errors[0]['message'] instanceof IApiMessage ) ) {
-			$code = $overrideCode;
-		}
-		if ( $moreExtraData ) {
-			$extraData = $extraData ?: [];
-			$extraData += $moreExtraData;
-		}
-		$this->dieUsage( $msg, $code, 0, $extraData );
 	}
 
 	/**
@@ -436,30 +391,13 @@ class ApiUpload extends ApiBase {
 			if ( !$progress ) {
 				$this->dieUsage( 'No result in status data', 'missingresult' );
 			} elseif ( !$progress['status']->isGood() ) {
-				$this->dieStatusWithCode( $progress['status'], 'stashfailed' );
+				$this->dieUsage( $progress['status']->getWikiText( false, false, 'en' ), 'stashfailed' );
 			}
 			if ( isset( $progress['status']->value['verification'] ) ) {
 				$this->checkVerification( $progress['status']->value['verification'] );
 			}
-			if ( isset( $progress['status']->value['warnings'] ) ) {
-				$warnings = $this->transformWarnings( $progress['status']->value['warnings'] );
-				if ( $warnings ) {
-					$progress['warnings'] = $warnings;
-				}
-			}
 			unset( $progress['status'] ); // remove Status object
-			$imageinfo = null;
-			if ( isset( $progress['imageinfo'] ) ) {
-				$imageinfo = $progress['imageinfo'];
-				unset( $progress['imageinfo'] );
-			}
-
 			$this->getResult()->addValue( null, $this->getModuleName(), $progress );
-			// Add 'imageinfo' in a separate addValue() call. File metadata can be unreasonably large,
-			// so otherwise when it exceeded $wgAPIMaxResultSize, no result would be returned (T143993).
-			if ( $imageinfo ) {
-				$this->getResult()->addValue( $this->getModuleName(), 'imageinfo', $imageinfo );
-			}
 
 			return false;
 		}
@@ -471,7 +409,7 @@ class ApiUpload extends ApiBase {
 
 		if ( $this->mParams['chunk'] ) {
 			// Chunk upload
-			$this->mUpload = new UploadFromChunks( $this->getUser() );
+			$this->mUpload = new UploadFromChunks();
 			if ( isset( $this->mParams['filekey'] ) ) {
 				if ( $this->mParams['offset'] === 0 ) {
 					$this->dieUsage( 'Cannot supply a filekey when offset is 0', 'badparams' );
@@ -625,28 +563,12 @@ class ApiUpload extends ApiBase {
 				$this->dieUsage( $msg, 'filetype-banned', 0, $extradata );
 				break;
 			case UploadBase::VERIFICATION_ERROR:
-				$parsed = $this->parseMsg( $verification['details'] );
-				$info = "This file did not pass file verification: {$parsed['info']}";
-				if ( $verification['details'][0] instanceof IApiMessage ) {
-					$code = $parsed['code'];
-				} else {
-					// For backwards-compatibility, all of the errors from UploadBase::verifyFile() are
-					// reported as 'verification-error', and the real error code is reported in 'details'.
-					$code = 'verification-error';
-				}
-				if ( $verification['details'][0] instanceof IApiMessage ) {
-					$msg = $verification['details'][0];
-					$details = array_merge( [ $msg->getKey() ], $msg->getParams() );
-				} else {
-					$details = $verification['details'];
-				}
-				ApiResult::setIndexedTagName( $details, 'detail' );
-				$data = [ 'details' => $details ];
-				if ( isset( $parsed['data'] ) ) {
-					$data = array_merge( $data, $parsed['data'] );
-				}
-
-				$this->dieUsage( $info, $code, 0, $data );
+				$params = $verification['details'];
+				$key = array_shift( $params );
+				$msg = $this->msg( $key, $params )->inLanguage( 'en' )->useDatabase( false )->text();
+				ApiResult::setIndexedTagName( $verification['details'], 'detail' );
+				$this->dieUsage( "This file did not pass file verification: $msg", 'verification-error',
+					0, [ 'details' => $verification['details'] ] );
 				break;
 			case UploadBase::HOOK_ABORTED:
 				if ( is_array( $verification['error'] ) ) {
@@ -704,30 +626,6 @@ class ApiUpload extends ApiBase {
 					: $warning['file'];
 				$warnings[$warning['warning']] = $localFile->getName();
 			}
-
-			if ( isset( $warnings['no-change'] ) ) {
-				/** @var File $file */
-				$file = $warnings['no-change'];
-				unset( $warnings['no-change'] );
-
-				$warnings['nochange'] = [
-					'timestamp' => wfTimestamp( TS_ISO_8601, $file->getTimestamp() )
-				];
-			}
-
-			if ( isset( $warnings['duplicate-version'] ) ) {
-				$dupes = [];
-				/** @var File $dupe */
-				foreach ( $warnings['duplicate-version'] as $dupe ) {
-					$dupes[] = [
-						'timestamp' => wfTimestamp( TS_ISO_8601, $dupe->getTimestamp() )
-					];
-				}
-				unset( $warnings['duplicate-version'] );
-
-				ApiResult::setIndexedTagName( $dupes, 'ver' );
-				$warnings['duplicateversions'] = $dupes;
-			}
 		}
 
 		return $warnings;
@@ -735,41 +633,49 @@ class ApiUpload extends ApiBase {
 
 	/**
 	 * Handles a stash exception, giving a useful error to the user.
-	 * @param string $exceptionType Class name of the exception we encountered.
-	 * @param string $message Message of the exception we encountered.
-	 * @return array Array of message and code, suitable for passing to dieUsage()
+	 * @param Exception $e The exception we encountered.
 	 */
-	protected function handleStashException( $exceptionType, $message ) {
+	protected function handleStashException( $e ) {
+		$exceptionType = get_class( $e );
+
 		switch ( $exceptionType ) {
 			case 'UploadStashFileNotFoundException':
-				return [
-					'Could not find the file in the stash: ' . $message,
+				$this->dieUsage(
+					'Could not find the file in the stash: ' . $e->getMessage(),
 					'stashedfilenotfound'
-				];
+				);
+				break;
 			case 'UploadStashBadPathException':
-				return [
-					'File key of improper format or otherwise invalid: ' . $message,
+				$this->dieUsage(
+					'File key of improper format or otherwise invalid: ' . $e->getMessage(),
 					'stashpathinvalid'
-				];
+				);
+				break;
 			case 'UploadStashFileException':
-				return [
-					'Could not store upload in the stash: ' . $message,
+				$this->dieUsage(
+					'Could not store upload in the stash: ' . $e->getMessage(),
 					'stashfilestorage'
-				];
+				);
+				break;
 			case 'UploadStashZeroLengthFileException':
-				return [
+				$this->dieUsage(
 					'File is of zero length, and could not be stored in the stash: ' .
-						$message,
+						$e->getMessage(),
 					'stashzerolength'
-				];
+				);
+				break;
 			case 'UploadStashNotLoggedInException':
-				return [ 'Not logged in: ' . $message, 'stashnotloggedin' ];
+				$this->dieUsage( 'Not logged in: ' . $e->getMessage(), 'stashnotloggedin' );
+				break;
 			case 'UploadStashWrongOwnerException':
-				return [ 'Wrong owner: ' . $message, 'stashwrongowner' ];
+				$this->dieUsage( 'Wrong owner: ' . $e->getMessage(), 'stashwrongowner' );
+				break;
 			case 'UploadStashNoSuchKeyException':
-				return [ 'No such filekey: ' . $message, 'stashnosuchfilekey' ];
+				$this->dieUsage( 'No such filekey: ' . $e->getMessage(), 'stashnosuchfilekey' );
+				break;
 			default:
-				return [ $exceptionType . ': ' . $message, 'stasherror' ];
+				$this->dieUsage( $exceptionType . ': ' . $e->getMessage(), 'stasherror' );
+				break;
 		}
 	}
 
@@ -786,7 +692,7 @@ class ApiUpload extends ApiBase {
 			$this->mParams['text'] = $this->mParams['comment'];
 		}
 
-		/** @var $file LocalFile */
+		/** @var $file File */
 		$file = $this->mUpload->getLocalFile();
 
 		// For preferences mode, we want to watch if 'watchdefault' is set,
@@ -848,14 +754,9 @@ class ApiUpload extends ApiBase {
 				$this->mParams['text'], $watch, $this->getUser(), $this->mParams['tags'] );
 
 			if ( !$status->isGood() ) {
-				// Is there really no better way to do this?
-				$errors = $status->getErrorsByType( 'error' );
-				$msg = array_merge( [ $errors[0]['message'] ], $errors[0]['params'] );
-				$data = $status->getErrorsArray();
-				ApiResult::setIndexedTagName( $data, 'error' );
-				// For backwards-compatibility, we use the 'internal-error' fallback key and merge $data
-				// into the root of the response (rather than something sane like [ 'details' => $data ]).
-				$this->dieRecoverableError( $msg, null, $data, 'internal-error' );
+				$error = $status->getErrorsArray();
+				ApiResult::setIndexedTagName( $error, 'error' );
+				$this->dieUsage( 'An internal error occurred', 'internal-error', 0, $error );
 			}
 			$result['result'] = 'Success';
 		}

@@ -71,9 +71,6 @@ class DeprecatedInterfaceFinder extends FileAwareNodeVisitor {
 	 * indicating that it is a hard-deprecated interface.
 	 */
 	public function isHardDeprecated( PhpParser\Node $node ) {
-		if ( !$node->stmts ) {
-			return false;
-		}
 		foreach ( $node->stmts as $stmt ) {
 			if (
 				$stmt instanceof PhpParser\Node\Expr\FuncCall
@@ -145,7 +142,7 @@ class FindDeprecated extends Maintenance {
 		$files = $this->getFiles();
 		$chunkSize = ceil( count( $files ) / 72 );
 
-		$parser = ( new PhpParser\ParserFactory )->create( PhpParser\ParserFactory::PREFER_PHP7 );
+		$parser = new PhpParser\Parser( new PhpParser\Lexer\Emulative );
 		$traverser = new PhpParser\NodeTraverser;
 		$finder = new DeprecatedInterfaceFinder;
 		$traverser->addVisitor( $finder );

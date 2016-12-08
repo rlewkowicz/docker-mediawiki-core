@@ -69,13 +69,7 @@
 			flags: 'safe',
 			action: 'cancel',
 			label: mw.msg( 'upload-dialog-button-cancel' ),
-			modes: [ 'upload', 'insert' ]
-		},
-		{
-			flags: 'safe',
-			action: 'cancelupload',
-			label: mw.msg( 'upload-dialog-button-back' ),
-			modes: [ 'info' ]
+			modes: [ 'upload', 'insert', 'info' ]
 		},
 		{
 			flags: [ 'primary', 'progressive' ],
@@ -84,7 +78,7 @@
 			modes: 'insert'
 		},
 		{
-			flags: [ 'primary', 'progressive' ],
+			flags: [ 'primary', 'constructive' ],
 			label: mw.msg( 'upload-dialog-button-save' ),
 			action: 'save',
 			modes: 'info'
@@ -203,9 +197,6 @@
 		}
 		if ( action === 'cancel' ) {
 			return new OO.ui.Process( this.close() );
-		}
-		if ( action === 'cancelupload' ) {
-			return new OO.ui.Process( this.uploadBooklet.initialize() );
 		}
 
 		return mw.Upload.Dialog.parent.prototype.getActionProcess.call( this, action );

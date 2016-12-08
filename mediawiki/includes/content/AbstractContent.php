@@ -281,7 +281,7 @@ abstract class AbstractContent implements Content {
 	 *
 	 * @since 1.21
 	 *
-	 * @return Title|null
+	 * @return null
 	 *
 	 * @see Content::getRedirectTarget
 	 */

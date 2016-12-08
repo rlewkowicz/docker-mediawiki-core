@@ -104,20 +104,19 @@ class ShortPagesPage extends QueryPage {
 				Linker::getInvalidTitleDescription( $this->getContext(), $result->namespace, $result->title ) );
 		}
 
-		$linkRenderer = $this->getLinkRenderer();
-		$hlink = $linkRenderer->makeKnownLink(
+		$hlink = Linker::linkKnown(
 			$title,
-			$this->msg( 'hist' )->text(),
+			$this->msg( 'hist' )->escaped(),
 			[],
 			[ 'action' => 'history' ]
 		);
 		$hlinkInParentheses = $this->msg( 'parentheses' )->rawParams( $hlink )->escaped();
 
 		if ( $this->isCached() ) {
-			$plink = $linkRenderer->makeLink( $title );
+			$plink = Linker::link( $title );
 			$exists = $title->exists();
 		} else {
-			$plink = $linkRenderer->makeKnownLink( $title );
+			$plink = Linker::linkKnown( $title );
 			$exists = true;
 		}
 

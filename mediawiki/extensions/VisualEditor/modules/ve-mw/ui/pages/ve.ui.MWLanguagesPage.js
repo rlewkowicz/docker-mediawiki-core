@@ -15,9 +15,9 @@
  * @param {string} name Unique symbolic name of page
  * @param {Object} [config] Configuration options
  */
-ve.ui.MWLanguagesPage = function VeUiMWLanguagesPage() {
+ve.ui.MWLanguagesPage = function VeUiMWLanguagesPage( name, config ) {
 	// Parent constructor
-	ve.ui.MWLanguagesPage.super.apply( this, arguments );
+	OO.ui.PageLayout.call( this, name, config );
 
 	// Properties
 	this.languagesFieldset = new OO.ui.FieldsetLayout( {
@@ -44,9 +44,9 @@ OO.inheritClass( ve.ui.MWLanguagesPage, OO.ui.PageLayout );
 /**
  * @inheritdoc
  */
-ve.ui.MWLanguagesPage.prototype.setOutlineItem = function () {
+ve.ui.MWLanguagesPage.prototype.setOutlineItem = function ( outlineItem ) {
 	// Parent method
-	ve.ui.MWLanguagesPage.super.prototype.setOutlineItem.apply( this, arguments );
+	OO.ui.PageLayout.prototype.setOutlineItem.call( this, outlineItem );
 
 	if ( this.outlineItem ) {
 		this.outlineItem

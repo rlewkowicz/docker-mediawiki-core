@@ -53,22 +53,21 @@ class SpecialPreferences extends SpecialPage {
 		$out->addModules( 'mediawiki.special.preferences' );
 		$out->addModuleStyles( 'mediawiki.special.preferences.styles' );
 
-		$session = $this->getRequest()->getSession();
-		if ( $session->get( 'specialPreferencesSaveSuccess' ) ) {
+		$request = $this->getRequest();
+		if ( $request->getSessionData( 'specialPreferencesSaveSuccess' ) ) {
 			// Remove session data for the success message
-			$session->remove( 'specialPreferencesSaveSuccess' );
-			$out->addModuleStyles( 'mediawiki.notification.convertmessagebox.styles' );
+			$request->setSessionData( 'specialPreferencesSaveSuccess', null );
 
-			$out->addHTML(
+			$out->wrapWikiMsg(
 				Html::rawElement(
 					'div',
 					[
-						'class' => 'mw-preferences-messagebox mw-notify-success successbox',
-						'id' => 'mw-preferences-success',
-						'data-mw-autohide' => 'false',
+						'class' => 'mw-preferences-messagebox successbox',
+						'id' => 'mw-preferences-success'
 					],
-					Html::element( 'p', [], $this->msg( 'savedprefs' )->text() )
-				)
+					Html::element( 'p', [], '$1' )
+				),
+				'savedprefs'
 			);
 		}
 
@@ -146,7 +145,7 @@ class SpecialPreferences extends SpecialPage {
 		$user->saveSettings();
 
 		// Set session data for the success message
-		$this->getRequest()->getSession()->set( 'specialPreferencesSaveSuccess', 1 );
+		$this->getRequest()->setSessionData( 'specialPreferencesSaveSuccess', 1 );
 
 		$url = $this->getPageTitle()->getFullURL();
 		$this->getOutput()->redirect( $url );

@@ -236,7 +236,7 @@ class PasswordReset {
 	 * @throws MWException On unexpected database errors
 	 */
 	protected function getUsersByEmail( $email ) {
-		$res = wfGetDB( DB_REPLICA )->select(
+		$res = wfGetDB( DB_SLAVE )->select(
 			'user',
 			User::selectFields(),
 			[ 'user_email' => $email ],

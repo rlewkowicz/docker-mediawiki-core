@@ -218,7 +218,7 @@ class RandomImageGenerator {
 	}
 
 	/**
-	 * Given [ [ 'x' => 10, 'y' => 20 ], [ 'x' => 30, y=> 5 ] ]
+	 * Given array( array('x' => 10, 'y' => 20), array( 'x' => 30, y=> 5 ) )
 	 * returns "10,20 30,5"
 	 * Useful for SVG and imagemagick command line arguments
 	 * @param array $shape Array of arrays, each array containing x & y keys mapped to numeric values
@@ -430,7 +430,7 @@ class RandomImageGenerator {
 
 	/**
 	 * Get an array of random pairs of random words, like
-	 * [ [ 'foo', 'bar' ], [ 'quux', 'baz' ] ];
+	 * array( array( 'foo', 'bar' ), array( 'quux', 'baz' ) );
 	 *
 	 * @param int $number Number of pairs
 	 * @return array Two-element arrays

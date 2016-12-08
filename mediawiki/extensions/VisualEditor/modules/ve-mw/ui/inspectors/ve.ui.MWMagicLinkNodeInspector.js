@@ -14,9 +14,9 @@
  * @constructor
  * @param {Object} [config] Configuration options
  */
-ve.ui.MWMagicLinkNodeInspector = function VeUiMWMagicLinkNodeInspector() {
+ve.ui.MWMagicLinkNodeInspector = function VeUiMWMagicLinkNodeInspector( config ) {
 	// Parent constructor
-	ve.ui.MWMagicLinkNodeInspector.super.apply( this, arguments );
+	ve.ui.NodeInspector.call( this, config );
 };
 
 /* Inheritance */

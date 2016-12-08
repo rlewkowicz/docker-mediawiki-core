@@ -81,8 +81,6 @@ class ButtonAuthenticationRequest extends AuthenticationRequest {
 
 	/**
 	 * @codeCoverageIgnore
-	 * @param array $data
-	 * @return AuthenticationRequest|static
 	 */
 	public static function __set_state( $data ) {
 		if ( !isset( $data['label'] ) ) {

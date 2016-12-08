@@ -348,8 +348,6 @@ class EditPageTest extends MediaWikiLangTestCase {
 
 		wfGetDB( DB_MASTER )->commit( __METHOD__ );
 
-		$this->assertEquals( 0, DeferredUpdates::pendingUpdatesCount(), 'No deferred updates' );
-
 		if ( $expectedCode != EditPage::AS_BLANK_ARTICLE ) {
 			$latest = $page->getLatest();
 			$page->doDeleteArticleReal( $pageTitle );

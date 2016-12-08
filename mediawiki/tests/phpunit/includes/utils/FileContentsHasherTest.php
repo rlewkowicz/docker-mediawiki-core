@@ -3,7 +3,7 @@
 /**
  * @covers FileContentsHasherTest
  */
-class FileContentsHasherTest extends PHPUnit_Framework_TestCase {
+class FileContentsHasherTest extends MediaWikiTestCase {
 
 	public function provideSingleFile() {
 		return array_map( function ( $file ) {

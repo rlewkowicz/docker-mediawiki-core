@@ -8,27 +8,50 @@ QUnit.module( 've.ui.ListAction' );
 
 /* Tests */
 
+function runListConverterTest( assert, html, method, style, range, expectedRange, expectedData, expectedOriginalData, msg ) {
+	var surface = ve.test.utils.createModelOnlySurfaceFromHtml( html || ve.dm.example.html ),
+		surfaceModel = surface.getModel(),
+		listAction = new ve.ui.ListAction( surface ),
+		data = ve.copy( surfaceModel.getDocument().getFullData() ),
+		originalData = ve.copy( data );
+
+	expectedData( data );
+	if ( expectedOriginalData ) {
+		expectedOriginalData( originalData );
+	}
+	surfaceModel.setLinearSelection( range );
+	listAction[ method ]( style );
+
+	assert.equalLinearData( surfaceModel.getDocument().getFullData(), data, msg + ': data models match' );
+	assert.equalRange( surfaceModel.getSelection().getRange(), expectedRange, msg + ': ranges match' );
+
+	surfaceModel.undo();
+
+	assert.equalLinearData( surfaceModel.getDocument().getFullData(), originalData, msg + ' (undo): data models match' );
+	assert.equalRange( surfaceModel.getSelection().getRange(), range, msg + ' (undo): ranges match' );
+}
+
 QUnit.test( '(un)wrap', function ( assert ) {
 	var i,
 		cases = [
 			{
-				rangeOrSelection: new ve.Range( 56, 60 ),
+				range: new ve.Range( 56, 60 ),
 				method: 'wrap',
 				style: 'bullet',
-				expectedRangeOrSelection: new ve.Range( 58, 64 ),
+				expectedRange: new ve.Range( 58, 64 ),
 				expectedData: function ( data ) {
 					data.splice( 55, 0, { type: 'list', attributes: { style: 'bullet' } }, { type: 'listItem' } );
 					data.splice( 60, 0, { type: '/listItem' }, { type: 'listItem' } );
 					data.splice( 65, 0, { type: '/listItem' }, { type: '/list' } );
 				},
-				undo: true,
 				msg: 'wrapping two paragraphs in a list'
 			},
 			{
 				html: ve.dm.example.isolationHtml,
-				rangeOrSelection: new ve.Range( 191, 211 ),
+				range: new ve.Range( 191, 211 ),
 				method: 'unwrap',
-				expectedRangeOrSelection: new ve.Range( 187, 205 ),
+				style: 'bullet',
+				expectedRange: new ve.Range( 187, 205 ),
 				expectedData: function ( data ) {
 					delete data[ 190 ].internal;
 					delete data[ 202 ].internal;
@@ -46,21 +69,12 @@ QUnit.test( '(un)wrap', function ( assert ) {
 					delete data[ 190 ].internal;
 					delete data[ 202 ].internal;
 				},
-				undo: true,
 				msg: 'unwrapping two double listed paragraphs'
 			}
 		];
 
-	QUnit.expect( ve.test.utils.countActionTests( cases ) );
+	QUnit.expect( cases.length * 4 );
 	for ( i = 0; i < cases.length; i++ ) {
-		ve.test.utils.runActionTest(
-			'list', assert, cases[ i ].html, false, cases[ i ].method, [ cases[ i ].style ], cases[ i ].rangeOrSelection, cases[ i ].msg,
-			{
-				expectedData: cases[ i ].expectedData,
-				expectedOriginalData: cases[ i ].expectedOriginalData,
-				expectedRangeOrSelection: cases[ i ].expectedRangeOrSelection,
-				undo: cases[ i ].undo
-			}
-		);
+		runListConverterTest( assert, cases[ i ].html, cases[ i ].method, cases[ i ].style, cases[ i ].range, cases[ i ].expectedRange, cases[ i ].expectedData, cases[ i ].expectedOriginalData, cases[ i ].msg );
 	}
 } );

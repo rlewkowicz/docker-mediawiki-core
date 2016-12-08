@@ -202,7 +202,7 @@ class ApiErrorFormatter {
 
 			case 'raw':
 				$value += [
-					'key' => $msg->getKey(),
+					'message' => $msg->getKey(),
 					'params' => $msg->getParams(),
 				];
 				ApiResult::setIndexedTagName( $value['params'], 'param' );

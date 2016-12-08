@@ -82,10 +82,9 @@ class JpegMetadataExtractor {
 				// this is just a sanity check
 				throw new MWException( 'Too many jpeg segments. Aborting' );
 			}
-			while ( $buffer !== "\xFF" ) {
-				// In theory JPEG files are not allowed to contain anything between the sections,
-				// but in practice they sometimes do. It's customary to ignore the garbage data.
-				$buffer = fread( $fh, 1 );
+			if ( $buffer !== "\xFF" ) {
+				throw new MWException( "Error reading jpeg file marker. " .
+					"Expected 0xFF but got " . bin2hex( $buffer ) );
 			}
 
 			$buffer = fread( $fh, 1 );
@@ -156,7 +155,7 @@ class JpegMetadataExtractor {
 			} else {
 				// segment we don't care about, so skip
 				$size = wfUnpack( "nint", fread( $fh, 2 ), 2 );
-				if ( $size['int'] < 2 ) {
+				if ( $size['int'] <= 2 ) {
 					throw new MWException( "invalid marker size in jpeg" );
 				}
 				fseek( $fh, $size['int'] - 2, SEEK_CUR );
@@ -174,12 +173,8 @@ class JpegMetadataExtractor {
 	 */
 	private static function jpegExtractMarker( &$fh ) {
 		$size = wfUnpack( "nint", fread( $fh, 2 ), 2 );
-		if ( $size['int'] < 2 ) {
+		if ( $size['int'] <= 2 ) {
 			throw new MWException( "invalid marker size in jpeg" );
-		}
-		if ( $size['int'] === 2 ) {
-			// fread( ..., 0 ) generates a warning
-			return '';
 		}
 		$segment = fread( $fh, $size['int'] - 2 );
 		if ( strlen( $segment ) !== $size['int'] - 2 ) {

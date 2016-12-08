@@ -20,8 +20,6 @@
  * @file
  * @ingroup Maintenance
  */
-use \MediaWiki\MediaWikiServices;
-
 class BatchRowWriter {
 	/**
 	 * @var IDatabase $db The database to write to
@@ -56,8 +54,7 @@ class BatchRowWriter {
 	 *  names to update values to apply to the row.
 	 */
 	public function write( array $updates ) {
-		$lbFactory = MediaWikiServices::getInstance()->getDBLoadBalancerFactory();
-		$ticket = $lbFactory->getEmptyTransactionTicket( __METHOD__ );
+		$this->db->begin();
 
 		foreach ( $updates as $update ) {
 			$this->db->update(
@@ -68,6 +65,7 @@ class BatchRowWriter {
 			);
 		}
 
-		$lbFactory->commitAndWaitForReplication( __METHOD__, $ticket );
+		$this->db->commit();
+		wfGetLBFactory()->waitForReplication();
 	}
 }

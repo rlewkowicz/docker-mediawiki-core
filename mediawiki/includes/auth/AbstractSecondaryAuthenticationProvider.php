@@ -77,7 +77,7 @@ abstract class AbstractSecondaryAuthenticationProvider extends AbstractAuthentic
 	public function postAccountCreation( $user, $creator, AuthenticationResponse $response ) {
 	}
 
-	public function testUserForCreation( $user, $autocreate, array $options = [] ) {
+	public function testUserForCreation( $user, $autocreate ) {
 		return \StatusValue::newGood();
 	}
 

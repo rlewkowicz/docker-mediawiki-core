@@ -27,20 +27,20 @@
  *
  * $router->add( "/wiki/$1" );
  *   - Matches /wiki/Foo style urls and extracts the title
- * $router->add( [ 'edit' => "/edit/$key" ], [ 'action' => '$key' ] );
+ * $router->add( array( 'edit' => "/edit/$key" ), array( 'action' => '$key' ) );
  *   - Matches /edit/Foo style urls and sets action=edit
  * $router->add( '/$2/$1',
- *   [ 'variant' => '$2' ],
- *   [ '$2' => [ 'zh-hant', 'zh-hans' ] ]
+ *   array( 'variant' => '$2' ),
+ *   array( '$2' => array( 'zh-hant', 'zh-hans' )
  * );
  *   - Matches /zh-hant/Foo or /zh-hans/Foo
- * $router->addStrict( "/foo/Bar", [ 'title' => 'Baz' ] );
+ * $router->addStrict( "/foo/Bar", array( 'title' => 'Baz' ) );
  *   - Matches /foo/Bar explicitly and uses "Baz" as the title
- * $router->add( '/help/$1', [ 'title' => 'Help:$1' ] );
+ * $router->add( '/help/$1', array( 'title' => 'Help:$1' ) );
  *   - Matches /help/Foo with "Help:Foo" as the title
- * $router->add( '/$1', [ 'foo' => [ 'value' => 'bar$2' ] ] );
+ * $router->add( '/$1', array( 'foo' => array( 'value' => 'bar$2' ) );
  *   - Matches /Foo and sets 'foo' to 'bar$2' without $2 being replaced
- * $router->add( '/$1', [ 'data:foo' => 'bar' ], [ 'callback' => 'functionname' ] );
+ * $router->add( '/$1', array( 'data:foo' => 'bar' ), array( 'callback' => 'functionname' ) );
  *   - Matches /Foo, adds the key 'foo' with the value 'bar' to the data array
  *     and calls functionname( &$matches, $data );
  *
@@ -56,7 +56,7 @@
  *   - The default behavior is equivalent to `array( 'title' => '$1' )`,
  *     if you don't want the title parameter you can explicitly use `array( 'title' => false )`
  *   - You can specify a value that won't have replacements in it
- *     using `'foo' => [ 'value' => 'bar' ];`
+ *     using `'foo' => array( 'value' => 'bar' );`
  *
  * Options:
  *   - The option keys $1, $2, etc... can be specified to restrict the possible values

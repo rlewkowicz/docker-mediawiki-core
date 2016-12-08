@@ -5,12 +5,15 @@
  * This is a non DBMS depending test.
  */
 class DatabaseSQLTest extends MediaWikiTestCase {
-	/** @var DatabaseTestHelper */
+
+	/**
+	 * @var DatabaseTestHelper
+	 */
 	private $database;
 
 	protected function setUp() {
 		parent::setUp();
-		$this->database = new DatabaseTestHelper( __CLASS__, [ 'cliMode' => true ] );
+		$this->database = new DatabaseTestHelper( __CLASS__ );
 	}
 
 	protected function assertLastSql( $sqlText ) {
@@ -20,13 +23,9 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 		);
 	}
 
-	protected function assertLastSqlDb( $sqlText, $db ) {
-		$this->assertEquals( $db->getLastSqls(), $sqlText );
-	}
-
 	/**
 	 * @dataProvider provideSelect
-	 * @covers Database::select
+	 * @covers DatabaseBase::select
 	 */
 	public function testSelect( $sql, $sqlText ) {
 		$this->database->select(
@@ -132,7 +131,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideUpdate
-	 * @covers Database::update
+	 * @covers DatabaseBase::update
 	 */
 	public function testUpdate( $sql, $sqlText ) {
 		$this->database->update(
@@ -184,7 +183,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideDelete
-	 * @covers Database::delete
+	 * @covers DatabaseBase::delete
 	 */
 	public function testDelete( $sql, $sqlText ) {
 		$this->database->delete(
@@ -217,7 +216,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideUpsert
-	 * @covers Database::upsert
+	 * @covers DatabaseBase::upsert
 	 */
 	public function testUpsert( $sql, $sqlText ) {
 		$this->database->upsert(
@@ -253,7 +252,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideDeleteJoin
-	 * @covers Database::deleteJoin
+	 * @covers DatabaseBase::deleteJoin
 	 */
 	public function testDeleteJoin( $sql, $sqlText ) {
 		$this->database->deleteJoin(
@@ -300,7 +299,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideInsert
-	 * @covers Database::insert
+	 * @covers DatabaseBase::insert
 	 */
 	public function testInsert( $sql, $sqlText ) {
 		$this->database->insert(
@@ -353,9 +352,9 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideInsertSelect
-	 * @covers Database::insertSelect
+	 * @covers DatabaseBase::insertSelect
 	 */
-	public function testInsertSelect( $sql, $sqlTextNative, $sqlSelect, $sqlInsert ) {
+	public function testInsertSelect( $sql, $sqlText ) {
 		$this->database->insertSelect(
 			$sql['destTable'],
 			$sql['srcTable'],
@@ -365,22 +364,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 			isset( $sql['insertOptions'] ) ? $sql['insertOptions'] : [],
 			isset( $sql['selectOptions'] ) ? $sql['selectOptions'] : []
 		);
-		$this->assertLastSql( $sqlTextNative );
-
-		$dbWeb = new DatabaseTestHelper( __CLASS__, [ 'cliMode' => false ] );
-		$dbWeb->forceNextResult( [
-			array_flip( array_keys( $sql['varMap'] ) )
-		] );
-		$dbWeb->insertSelect(
-			$sql['destTable'],
-			$sql['srcTable'],
-			$sql['varMap'],
-			$sql['conds'],
-			__METHOD__,
-			isset( $sql['insertOptions'] ) ? $sql['insertOptions'] : [],
-			isset( $sql['selectOptions'] ) ? $sql['selectOptions'] : []
-		);
-		$this->assertLastSqlDb( implode( '; ', [ $sqlSelect, $sqlInsert ] ), $dbWeb );
+		$this->assertLastSql( $sqlText );
 	}
 
 	public static function provideInsertSelect() {
@@ -395,10 +379,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 				"INSERT INTO insert_table " .
 					"(field_insert,field) " .
 					"SELECT field_select,field2 " .
-					"FROM select_table",
-				"SELECT field_select AS field_insert,field2 AS field " .
-				"FROM select_table WHERE *   FOR UPDATE",
-				"INSERT INTO insert_table (field_insert,field) VALUES ('0','1')"
+					"FROM select_table"
 			],
 			[
 				[
@@ -411,10 +392,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 					"(field_insert,field) " .
 					"SELECT field_select,field2 " .
 					"FROM select_table " .
-					"WHERE field = '2'",
-				"SELECT field_select AS field_insert,field2 AS field FROM " .
-				"select_table WHERE field = '2'   FOR UPDATE",
-				"INSERT INTO insert_table (field_insert,field) VALUES ('0','1')"
+					"WHERE field = '2'"
 			],
 			[
 				[
@@ -430,17 +408,14 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 					"SELECT field_select,field2 " .
 					"FROM select_table " .
 					"WHERE field = '2' " .
-					"ORDER BY field",
-				"SELECT field_select AS field_insert,field2 AS field " .
-				"FROM select_table WHERE field = '2' ORDER BY field  FOR UPDATE",
-				"INSERT IGNORE INTO insert_table (field_insert,field) VALUES ('0','1')"
+					"ORDER BY field"
 			],
 		];
 	}
 
 	/**
 	 * @dataProvider provideReplace
-	 * @covers Database::replace
+	 * @covers DatabaseBase::replace
 	 */
 	public function testReplace( $sql, $sqlText ) {
 		$this->database->replace(
@@ -555,7 +530,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideNativeReplace
-	 * @covers Database::nativeReplace
+	 * @covers DatabaseBase::nativeReplace
 	 */
 	public function testNativeReplace( $sql, $sqlText ) {
 		$this->database->nativeReplace(
@@ -582,7 +557,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideConditional
-	 * @covers Database::conditional
+	 * @covers DatabaseBase::conditional
 	 */
 	public function testConditional( $sql, $sqlText ) {
 		$this->assertEquals( trim( $this->database->conditional(
@@ -623,7 +598,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideBuildConcat
-	 * @covers Database::buildConcat
+	 * @covers DatabaseBase::buildConcat
 	 */
 	public function testBuildConcat( $stringList, $sqlText ) {
 		$this->assertEquals( trim( $this->database->buildConcat(
@@ -646,7 +621,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideBuildLike
-	 * @covers Database::buildLike
+	 * @covers DatabaseBase::buildLike
 	 */
 	public function testBuildLike( $array, $sqlText ) {
 		$this->assertEquals( trim( $this->database->buildLike(
@@ -677,7 +652,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideUnionQueries
-	 * @covers Database::unionQueries
+	 * @covers DatabaseBase::unionQueries
 	 */
 	public function testUnionQueries( $sql, $sqlText ) {
 		$this->assertEquals( trim( $this->database->unionQueries(
@@ -713,7 +688,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 	}
 
 	/**
-	 * @covers Database::commit
+	 * @covers DatabaseBase::commit
 	 */
 	public function testTransactionCommit() {
 		$this->database->begin( __METHOD__ );
@@ -722,7 +697,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 	}
 
 	/**
-	 * @covers Database::rollback
+	 * @covers DatabaseBase::rollback
 	 */
 	public function testTransactionRollback() {
 		$this->database->begin( __METHOD__ );
@@ -731,16 +706,16 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 	}
 
 	/**
-	 * @covers Database::dropTable
+	 * @covers DatabaseBase::dropTable
 	 */
 	public function testDropTable() {
 		$this->database->setExistingTables( [ 'table' ] );
 		$this->database->dropTable( 'table', __METHOD__ );
-		$this->assertLastSql( 'DROP TABLE table CASCADE' );
+		$this->assertLastSql( 'DROP TABLE table' );
 	}
 
 	/**
-	 * @covers Database::dropTable
+	 * @covers DatabaseBase::dropTable
 	 */
 	public function testDropNonExistingTable() {
 		$this->assertFalse(
@@ -750,7 +725,7 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 
 	/**
 	 * @dataProvider provideMakeList
-	 * @covers Database::makeList
+	 * @covers DatabaseBase::makeList
 	 */
 	public function testMakeList( $list, $mode, $sqlText ) {
 		$this->assertEquals( trim( $this->database->makeList(
@@ -826,43 +801,5 @@ class DatabaseSQLTest extends MediaWikiTestCase {
 				"field = 'value',field2 != 'value2'"
 			],
 		];
-	}
-
-	public function testSessionTempTables() {
-		$temp1 = $this->database->tableName( 'tmp_table_1' );
-		$temp2 = $this->database->tableName( 'tmp_table_2' );
-		$temp3 = $this->database->tableName( 'tmp_table_3' );
-
-		$this->database->query( "CREATE TEMPORARY TABLE $temp1 LIKE orig_tbl", __METHOD__ );
-		$this->database->query( "CREATE TEMPORARY TABLE $temp2 LIKE orig_tbl", __METHOD__ );
-		$this->database->query( "CREATE TEMPORARY TABLE $temp3 LIKE orig_tbl", __METHOD__ );
-
-		$this->assertTrue( $this->database->tableExists( "tmp_table_1", __METHOD__ ) );
-		$this->assertTrue( $this->database->tableExists( "tmp_table_2", __METHOD__ ) );
-		$this->assertTrue( $this->database->tableExists( "tmp_table_3", __METHOD__ ) );
-
-		$this->database->dropTable( 'tmp_table_1', __METHOD__ );
-		$this->database->dropTable( 'tmp_table_2', __METHOD__ );
-		$this->database->dropTable( 'tmp_table_3', __METHOD__ );
-
-		$this->assertFalse( $this->database->tableExists( "tmp_table_1", __METHOD__ ) );
-		$this->assertFalse( $this->database->tableExists( "tmp_table_2", __METHOD__ ) );
-		$this->assertFalse( $this->database->tableExists( "tmp_table_3", __METHOD__ ) );
-
-		$this->database->query( "CREATE TEMPORARY TABLE tmp_table_1 LIKE orig_tbl", __METHOD__ );
-		$this->database->query( "CREATE TEMPORARY TABLE 'tmp_table_2' LIKE orig_tbl", __METHOD__ );
-		$this->database->query( "CREATE TEMPORARY TABLE `tmp_table_3` LIKE orig_tbl", __METHOD__ );
-
-		$this->assertTrue( $this->database->tableExists( "tmp_table_1", __METHOD__ ) );
-		$this->assertTrue( $this->database->tableExists( "tmp_table_2", __METHOD__ ) );
-		$this->assertTrue( $this->database->tableExists( "tmp_table_3", __METHOD__ ) );
-
-		$this->database->query( "DROP TEMPORARY TABLE tmp_table_1 LIKE orig_tbl", __METHOD__ );
-		$this->database->query( "DROP TEMPORARY TABLE 'tmp_table_2' LIKE orig_tbl", __METHOD__ );
-		$this->database->query( "DROP TABLE `tmp_table_3` LIKE orig_tbl", __METHOD__ );
-
-		$this->assertFalse( $this->database->tableExists( "tmp_table_1", __METHOD__ ) );
-		$this->assertFalse( $this->database->tableExists( "tmp_table_2", __METHOD__ ) );
-		$this->assertFalse( $this->database->tableExists( "tmp_table_3", __METHOD__ ) );
 	}
 }

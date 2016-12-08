@@ -21,8 +21,10 @@
  */
 
 // Bail on old versions of PHP, or if composer has not been run yet to install
-// dependencies.
-require_once __DIR__ . '/../includes/PHPVersionCheck.php';
+// dependencies. Using dirname( __FILE__ ) here because __DIR__ is PHP5.3+.
+// @codingStandardsIgnoreStart MediaWiki.Usage.DirUsage.FunctionFound
+require_once dirname( __FILE__ ) . '/../includes/PHPVersionCheck.php';
+// @codingStandardsIgnoreEnd
 wfEntryPointCheck( 'cli' );
 
 /**
@@ -37,7 +39,6 @@ define( 'DO_MAINTENANCE', RUN_MAINTENANCE_IF_MAIN ); // original name, harmless
 $maintClass = false;
 
 use MediaWiki\Logger\LoggerFactory;
-use MediaWiki\MediaWikiServices;
 
 /**
  * Abstract maintenance class for quickly writing and churning out
@@ -104,12 +105,12 @@ abstract class Maintenance {
 
 	/**
 	 * Used by getDB() / setDB()
-	 * @var Database
+	 * @var IDatabase
 	 */
 	private $mDb = null;
 
 	/** @var float UNIX timestamp */
-	private $lastReplicationWait = 0.0;
+	private $lastSlaveWait = 0.0;
 
 	/**
 	 * Used when creating separate schema files.
@@ -123,12 +124,6 @@ abstract class Maintenance {
 	 * @var Config
 	 */
 	private $config;
-
-	/**
-	 * @see Maintenance::requireExtension
-	 * @var array
-	 */
-	private $requiredExtensions = [];
 
 	/**
 	 * Used to read the options in the order they were passed.
@@ -514,93 +509,6 @@ abstract class Maintenance {
 	}
 
 	/**
-	 * Indicate that the specified extension must be
-	 * loaded before the script can run.
-	 *
-	 * This *must* be called in the constructor.
-	 *
-	 * @since 1.28
-	 * @param string $name
-	 */
-	protected function requireExtension( $name ) {
-		$this->requiredExtensions[] = $name;
-	}
-
-	/**
-	 * Verify that the required extensions are installed
-	 *
-	 * @since 1.28
-	 */
-	public function checkRequiredExtensions() {
-		$registry = ExtensionRegistry::getInstance();
-		$missing = [];
-		foreach ( $this->requiredExtensions as $name ) {
-			if ( !$registry->isLoaded( $name ) ) {
-				$missing[] = $name;
-			}
-		}
-
-		if ( $missing ) {
-			$joined = implode( ', ', $missing );
-			$msg = "The following extensions are required to be installed "
-				. "for this script to run: $joined. Please enable them and then try again.";
-			$this->error( $msg, 1 );
-		}
-
-	}
-
-	/**
-	 * Set triggers like when to try to run deferred updates
-	 * @since 1.28
-	 */
-	public function setAgentAndTriggers() {
-		if ( function_exists( 'posix_getpwuid' ) ) {
-			$agent = posix_getpwuid( posix_geteuid() )['name'];
-		} else {
-			$agent = 'sysadmin';
-		}
-		$agent .= '@' . wfHostname();
-
-		$lbFactory = MediaWikiServices::getInstance()->getDBLoadBalancerFactory();
-		// Add a comment for easy SHOW PROCESSLIST interpretation
-		$lbFactory->setAgentName(
-			mb_strlen( $agent ) > 15 ? mb_substr( $agent, 0, 15 ) . '...' : $agent
-		);
-		self::setLBFactoryTriggers( $lbFactory );
-	}
-
-	/**
-	 * @param LBFactory $LBFactory
-	 * @since 1.28
-	 */
-	public static function setLBFactoryTriggers( LBFactory $LBFactory ) {
-		// Hook into period lag checks which often happen in long-running scripts
-		$lbFactory = MediaWikiServices::getInstance()->getDBLoadBalancerFactory();
-		$lbFactory->setWaitForReplicationListener(
-			__METHOD__,
-			function () {
-				global $wgCommandLineMode;
-				// Check config in case of JobRunner and unit tests
-				if ( $wgCommandLineMode ) {
-					DeferredUpdates::tryOpportunisticExecute( 'run' );
-				}
-			}
-		);
-		// Check for other windows to run them. A script may read or do a few writes
-		// to the master but mostly be writing to something else, like a file store.
-		$lbFactory->getMainLB()->setTransactionListener(
-			__METHOD__,
-			function ( $trigger ) {
-				global $wgCommandLineMode;
-				// Check config in case of JobRunner and unit tests
-				if ( $wgCommandLineMode && $trigger === IDatabase::TRIGGER_COMMIT ) {
-					DeferredUpdates::tryOpportunisticExecute( 'run' );
-				}
-			}
-		);
-	}
-
-	/**
 	 * Run a child maintenance script. Pass all of the current arguments
 	 * to it.
 	 * @param string $maintClass A name of a child maintenance class
@@ -726,7 +634,6 @@ abstract class Maintenance {
 
 		if ( is_array( $wgProfiler ) && isset( $wgProfiler['class'] ) ) {
 			$class = $wgProfiler['class'];
-			/** @var Profiler $profiler */
 			$profiler = new $class(
 				[ 'sampling' => 1, 'output' => [ $output ] ]
 					+ $wgProfiler
@@ -960,7 +867,7 @@ abstract class Maintenance {
 
 		// Description ...
 		if ( $this->mDescription ) {
-			$this->output( "\n" . wordwrap( $this->mDescription, $screenWidth ) . "\n" );
+			$this->output( "\n" . $this->mDescription . "\n" );
 		}
 		$output = "\nUsage: php " . basename( $this->mSelf );
 
@@ -1103,7 +1010,7 @@ abstract class Maintenance {
 				$wgLBFactoryConf['serverTemplate']['user'] = $wgDBuser;
 				$wgLBFactoryConf['serverTemplate']['password'] = $wgDBpassword;
 			}
-			MediaWikiServices::getInstance()->getDBLoadBalancerFactory()->destroy();
+			LBFactory::destroyInstance();
 		}
 
 		// Per-script profiling; useful for debugging
@@ -1183,7 +1090,6 @@ abstract class Maintenance {
 		$this->beginTransaction( $dbw, __METHOD__ );
 
 		# Get "active" text records from the revisions table
-		$cur = [];
 		$this->output( 'Searching for active text records in revisions table...' );
 		$res = $dbw->select( 'revision', 'rev_text_id', [], __METHOD__, [ 'DISTINCT' ] );
 		foreach ( $res as $row ) {
@@ -1240,10 +1146,10 @@ abstract class Maintenance {
 	 * If not set, wfGetDB() will be used.
 	 * This function has the same parameters as wfGetDB()
 	 *
-	 * @param integer $db DB index (DB_REPLICA/DB_MASTER)
+	 * @param integer $db DB index (DB_SLAVE/DB_MASTER)
 	 * @param array $groups; default: empty array
 	 * @param string|bool $wiki; default: current wiki
-	 * @return Database
+	 * @return IDatabase
 	 */
 	protected function getDB( $db, $groups = [], $wiki = false ) {
 		if ( is_null( $this->mDb ) ) {
@@ -1277,29 +1183,23 @@ abstract class Maintenance {
 	}
 
 	/**
-	 * Commit the transcation on a DB handle and wait for replica DBs to catch up
+	 * Commit the transcation on a DB handle and wait for slaves to catch up
 	 *
 	 * This method makes it clear that commit() is called from a maintenance script,
 	 * which has outermost scope. This is safe, unlike $dbw->commit() called in other places.
 	 *
 	 * @param IDatabase $dbw
 	 * @param string $fname Caller name
-	 * @return bool Whether the replica DB wait succeeded
+	 * @return bool Whether the slave wait succeeded
 	 * @since 1.27
 	 */
 	protected function commitTransaction( IDatabase $dbw, $fname ) {
 		$dbw->commit( $fname );
-		try {
-			$lbFactory = MediaWikiServices::getInstance()->getDBLoadBalancerFactory();
-			$lbFactory->waitForReplication(
-				[ 'timeout' => 30, 'ifWritesSince' => $this->lastReplicationWait ]
-			);
-			$this->lastReplicationWait = microtime( true );
 
-			return true;
-		} catch ( DBReplicationWaitError $e ) {
-			return false;
-		}
+		$ok = wfWaitForSlaves( $this->lastSlaveWait, false, '*', 30 );
+		$this->lastSlaveWait = microtime( true );
+
+		return $ok;
 	}
 
 	/**
@@ -1318,7 +1218,7 @@ abstract class Maintenance {
 
 	/**
 	 * Lock the search index
-	 * @param Database &$db
+	 * @param DatabaseBase &$db
 	 */
 	private function lockSearchindex( $db ) {
 		$write = [ 'searchindex' ];
@@ -1336,7 +1236,7 @@ abstract class Maintenance {
 
 	/**
 	 * Unlock the tables
-	 * @param Database &$db
+	 * @param DatabaseBase &$db
 	 */
 	private function unlockSearchindex( $db ) {
 		$db->unlockTables( __CLASS__ . '::' . __METHOD__ );
@@ -1345,7 +1245,7 @@ abstract class Maintenance {
 	/**
 	 * Unlock and lock again
 	 * Since the lock is low-priority, queued reads will be able to complete
-	 * @param Database &$db
+	 * @param DatabaseBase &$db
 	 */
 	private function relockSearchindex( $db ) {
 		$this->unlockSearchindex( $db );
@@ -1356,7 +1256,7 @@ abstract class Maintenance {
 	 * Perform a search index update with locking
 	 * @param int $maxLockTime The maximum time to keep the search index locked.
 	 * @param string $callback The function that will update the function.
-	 * @param Database $dbw
+	 * @param DatabaseBase $dbw
 	 * @param array $results
 	 */
 	public function updateSearchIndex( $maxLockTime, $callback, $dbw, $results ) {
@@ -1392,7 +1292,7 @@ abstract class Maintenance {
 
 	/**
 	 * Update the searchindex table for a given pageid
-	 * @param Database $dbw A database write handle
+	 * @param DatabaseBase $dbw A database write handle
 	 * @param int $pageId The page ID to update.
 	 * @return null|string
 	 */
@@ -1500,14 +1400,6 @@ abstract class Maintenance {
 		print $prompt;
 
 		return fgets( STDIN, 1024 );
-	}
-
-	/**
-	 * Call this to set up the autoloader to allow classes to be used from the
-	 * tests directory.
-	 */
-	public static function requireTestsAutoloader() {
-		require_once __DIR__ . '/../tests/common/TestsAutoLoader.php';
 	}
 }
 

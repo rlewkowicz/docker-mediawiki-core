@@ -13,9 +13,9 @@
  * @constructor
  * @param {Object} element Reference to element in meta-linmod
  */
-ve.dm.MWCategoryMetaItem = function VeDmMWCategoryMetaItem() {
+ve.dm.MWCategoryMetaItem = function VeDmMWCategoryMetaItem( element ) {
 	// Parent constructor
-	ve.dm.MWCategoryMetaItem.super.apply( this, arguments );
+	ve.dm.MetaItem.call( this, element );
 };
 
 /* Inheritance */
@@ -41,9 +41,9 @@ ve.dm.MWCategoryMetaItem.static.toDataElement = function ( domElements ) {
 		type: this.name,
 		attributes: {
 			hrefPrefix: matches[ 1 ],
-			category: ve.decodeURIComponentIntoArticleTitle( matches[ 2 ] ),
+			category: ve.safeDecodeURIComponent( matches[ 2 ] ).replace( /_/g, ' ' ),
 			origCategory: matches[ 2 ],
-			sortkey: ve.decodeURIComponentIntoArticleTitle( rawSortkey ),
+			sortkey: ve.safeDecodeURIComponent( rawSortkey ).replace( /_/g, ' ' ),
 			origSortkey: rawSortkey
 		}
 	};
@@ -57,8 +57,8 @@ ve.dm.MWCategoryMetaItem.static.toDomElements = function ( dataElement, doc ) {
 		sortkey = dataElement.attributes.sortkey || '',
 		origCategory = dataElement.attributes.origCategory || '',
 		origSortkey = dataElement.attributes.origSortkey || '',
-		normalizedOrigCategory = ve.decodeURIComponentIntoArticleTitle( origCategory ),
-		normalizedOrigSortkey = ve.decodeURIComponentIntoArticleTitle( origSortkey );
+		normalizedOrigCategory = ve.safeDecodeURIComponent( origCategory ).replace( /_/g, ' ' ),
+		normalizedOrigSortkey = ve.safeDecodeURIComponent( origSortkey ).replace( /_/g, ' ' );
 	if ( normalizedOrigSortkey === sortkey ) {
 		sortkey = origSortkey;
 	} else {

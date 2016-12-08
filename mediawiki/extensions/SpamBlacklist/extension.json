@@ -51,6 +51,9 @@
 		"EditFilterMergedContent": [
 			"SpamBlacklistHooks::filterMergedContent"
 		],
+		"APIEditBeforeSave": [
+			"SpamBlacklistHooks::filterAPIEditBeforeSave"
+		],
 		"EditFilter": [
 			"SpamBlacklistHooks::validate"
 		],
@@ -62,20 +65,10 @@
 		],
 		"ParserOutputStashForEdit": [
 			"SpamBlacklistHooks::onParserOutputStashForEdit"
-		],
-		"UploadVerifyUpload": [
-			"SpamBlacklistHooks::onUploadVerifyUpload"
-		],
-		"ArticleDelete": "SpamBlacklistHooks::onArticleDelete",
-		"ArticleDeleteComplete": "SpamBlacklistHooks::onArticleDeleteComplete"
+		]
 	},
 	"config": {
-		"BlacklistSettings": {
-			"spam": {
-				"files": [ "https://meta.wikimedia.org/w/index.php?title=Spam_blacklist&action=raw&sb_ver=1" ]
-			},
-			"_merge_strategy": "array_plus_2d"
-		},
+		"@doc": "BlacklistSettings are set in SpamBlacklistHooks.php",
 		"LogSpamBlacklistHits": false,
 		"SpamBlacklistEventLogging": false
 	},

@@ -41,7 +41,6 @@ class BackupDumper extends Maintenance {
 	public $revEndId = 0;
 	public $dumpUploads = false;
 	public $dumpUploadFileContents = false;
-	public $orderRevs = false;
 
 	protected $reportingInterval = 100;
 	protected $pageCount = 0;
@@ -272,7 +271,7 @@ class BackupDumper extends Maintenance {
 		} elseif ( is_null( $this->pages ) ) {
 			# Page dumps: all or by page ID range
 			if ( $this->startId || $this->endId ) {
-				$exporter->pagesByRange( $this->startId, $this->endId, $this->orderRevs );
+				$exporter->pagesByRange( $this->startId, $this->endId );
 			} elseif ( $this->revStartId || $this->revEndId ) {
 				$exporter->revsByRange( $this->revStartId, $this->revEndId );
 			} else {
@@ -302,7 +301,7 @@ class BackupDumper extends Maintenance {
 
 		$dbr = $this->forcedDb;
 		if ( $this->forcedDb === null ) {
-			$dbr = wfGetDB( DB_REPLICA );
+			$dbr = wfGetDB( DB_SLAVE );
 		}
 		$this->maxCount = $dbr->selectField( $table, "MAX($field)", '', __METHOD__ );
 		$this->startTime = microtime( true );
@@ -322,7 +321,7 @@ class BackupDumper extends Maintenance {
 		}
 
 		$this->lb = wfGetLBFactory()->newMainLB();
-		$db = $this->lb->getConnection( DB_REPLICA, 'dump' );
+		$db = $this->lb->getConnection( DB_SLAVE, 'dump' );
 
 		// Discourage the server from disconnecting us if it takes a long time
 		// to read out the big ol' batch query.

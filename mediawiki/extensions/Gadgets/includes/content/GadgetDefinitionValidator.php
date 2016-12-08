@@ -23,7 +23,6 @@ class GadgetDefinitionValidator {
 		'module.dependencies' => array( 'is_array', 'array', 'is_string', 'string' ),
 		'module.messages' => array( 'is_array', 'array', 'is_string', 'string' ),
 		'module.position' => array( 'is_string', 'string' ),
-		'module.type' => array( 'is_string', 'string' ),
 	);
 
 	/**

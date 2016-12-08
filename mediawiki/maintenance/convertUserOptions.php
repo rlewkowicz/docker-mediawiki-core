@@ -74,7 +74,7 @@ class ConvertUserOptions extends Maintenance {
 
 	/**
 	 * @param ResultWrapper $res
-	 * @param Database $dbw
+	 * @param DatabaseBase $dbw
 	 * @return null|int
 	 */
 	function convertOptionBatch( $res, $dbw ) {

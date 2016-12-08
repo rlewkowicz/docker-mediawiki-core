@@ -202,7 +202,7 @@ class UploadFromUrl extends UploadBase {
 	 * @return string Path to the file
 	 */
 	protected function makeTemporaryFile() {
-		$tmpFile = TempFSFile::factory( 'URL', 'urlupload_', wfTempDir() );
+		$tmpFile = TempFSFile::factory( 'URL' );
 		$tmpFile->bind( $this );
 
 		return $tmpFile->getPath();

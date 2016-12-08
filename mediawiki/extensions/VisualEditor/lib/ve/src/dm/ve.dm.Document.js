@@ -30,7 +30,7 @@ ve.dm.Document = function VeDmDocument( data, htmlDocument, parentDocument, inte
 	var fullData, result, split, doc, root;
 
 	// Parent constructor
-	ve.dm.Document.super.call( this, new ve.dm.DocumentNode() );
+	ve.Document.call( this, new ve.dm.DocumentNode() );
 
 	// Initialization
 	split = true;
@@ -50,7 +50,6 @@ ve.dm.Document = function VeDmDocument( data, htmlDocument, parentDocument, inte
 	// Properties
 	this.parentDocument = parentDocument;
 	this.completeHistory = [];
-	this.nodesByType = {};
 
 	if ( data instanceof ve.dm.ElementLinearData ) {
 		// Pre-split ElementLinearData
@@ -307,7 +306,6 @@ ve.dm.Document.prototype.buildNodeTree = function () {
 	// The end state is stack = [ [this.documentNode] [ array, of, its, children ] ]
 	// so attach all nodes in stack[1] to the root node
 	ve.batchSplice( this.documentNode, 0, 0, currentStack );
-	this.updateNodesByType( [ this.documentNode ], [] );
 
 	doc.buildingNodeTree = false;
 };
@@ -454,7 +452,7 @@ ve.dm.Document.prototype.shallowCloneFromSelection = function ( selection ) {
 ve.dm.Document.prototype.shallowCloneFromRange = function ( range ) {
 	var i, first, last, firstNode, lastNode,
 		linearData, slice, originalRange, balancedRange,
-		balancedNodes, needsContext, contextElement, isContent,
+		balancedNodes, needsContext,
 		startNode = this.getBranchNodeFromOffset( range.start ),
 		endNode = this.getBranchNodeFromOffset( range.end ),
 		selection = this.selectNodes( range, 'siblings' ),
@@ -477,11 +475,8 @@ ve.dm.Document.prototype.shallowCloneFromRange = function ( range ) {
 
 	if ( selection.length === 0 ) {
 		// Nothing selected
-		linearData = new ve.dm.ElementLinearData( this.getStore(), [
-			{ type: 'paragraph', internal: { generated: 'empty' } },
-			{ type: 'paragraph' }
-		] );
-		originalRange = balancedRange = new ve.Range( 1 );
+		linearData = new ve.dm.ElementLinearData( this.getStore(), [] );
+		originalRange = balancedRange = new ve.Range( 0 );
 	} else if ( startNode === endNode ) {
 		// Nothing to balance
 		balancedNodes = selection;
@@ -530,15 +525,11 @@ ve.dm.Document.prototype.shallowCloneFromRange = function ( range ) {
 		);
 	}
 
-	function nodeNeedsContext( node ) {
-		return node.getParentNodeTypes() !== null || node.isContent();
-	}
-
 	if ( !balancedRange ) {
 		// Check if any of the balanced siblings need more context for insertion anywhere
 		needsContext = false;
 		for ( i = balancedNodes.length - 1; i >= 0; i-- ) {
-			if ( nodeNeedsContext( balancedNodes[ i ].node ) ) {
+			if ( balancedNodes[ i ].node.getParentNodeTypes() !== null ) {
 				needsContext = true;
 				break;
 			}
@@ -547,15 +538,10 @@ ve.dm.Document.prototype.shallowCloneFromRange = function ( range ) {
 		if ( needsContext ) {
 			startNode = balancedNodes[ 0 ].node;
 			// Keep wrapping until the outer node can be inserted anywhere
-			while ( startNode.getParent() && nodeNeedsContext( startNode ) ) {
-				isContent = startNode.isContent();
+			while ( startNode.getParent() && startNode.getParentNodeTypes() !== null ) {
 				startNode = startNode.getParent();
-				contextElement = startNode.getClonedElement();
-				if ( isContent ) {
-					ve.setProp( contextElement, 'internal', 'generated', 'wrapper' );
-				}
-				contextOpenings.push( contextElement );
-				contextClosings.push( { type: '/' + contextElement.type } );
+				contextOpenings.push( startNode.getClonedElement() );
+				contextClosings.push( { type: '/' + startNode.getType() } );
 			}
 		}
 
@@ -596,54 +582,28 @@ ve.dm.Document.prototype.shallowCloneFromRange = function ( range ) {
  * Clone a sub-document from a range in this document. The new document's elements, store and internal list
  * will be clones of the ones in this document.
  *
- * @param {ve.Range} [range] Range of data to clone, clones the whole document if ommitted.
+ * @param {ve.Range} range Range of data to clone
  * @return {ve.dm.Document} New document
  */
 ve.dm.Document.prototype.cloneFromRange = function ( range ) {
-	var listRange = this.getInternalList().getListNode().getOuterRange(),
-		data = ve.copy( this.getFullData( range, true ) );
-	if ( range && ( range.start > listRange.start || range.end < listRange.end ) ) {
+	var data, newDoc,
+		store = this.getStore().clone(),
+		listRange = this.getInternalList().getListNode().getOuterRange();
+
+	data = ve.copy( this.getFullData( range, true ) );
+	if ( range.start > listRange.start || range.end < listRange.end ) {
 		// The range does not include the entire internal list, so add it
 		data = data.concat( this.getFullData( listRange ) );
 	}
-	return this.cloneWithData( data, true );
-};
-
-/**
- * Create a sub-document associated with this document like #cloneFromRange, but without cloning
- * any data from a range in this document: instead, use the specified data.
- *
- * @param {Array|ve.dm.ElementLinearData|ve.dm.FlatLinearData} data Raw linear model data,
- *  ElementLinearData or FlatLinearData
- * @param {boolean} [copyInternalList] Copy the internal list
- * @return {ve.dm.Document} New document
- */
-ve.dm.Document.prototype.cloneWithData = function ( data, copyInternalList ) {
-	var newDoc;
-
-	if ( Array.isArray( data ) ) {
-		data = new ve.dm.FlatLinearData( this.getStore().clone(), data );
-	}
-
 	newDoc = new this.constructor(
-		data,
-		// htmlDocument
-		this.getHtmlDocument(),
-		// parentDocument
-		undefined,
-		// internalList
-		copyInternalList ? this.getInternalList() : undefined,
-		// innerWhitespace
-		undefined,
-		// lang+dir
+		new ve.dm.FlatLinearData( store, data ),
+		this.getHtmlDocument(), undefined, this.getInternalList(), undefined,
 		this.getLang(), this.getDir()
 	);
-	if ( copyInternalList ) {
-		// Record the length of the internal list at the time the slice was created so we can
-		// reconcile additions properly
-		newDoc.origDoc = this;
-		newDoc.origInternalListLength = this.internalList.getItemNodeCount();
-	}
+	// Record the length of the internal list at the time the slice was created so we can
+	// reconcile additions properly
+	newDoc.origDoc = this;
+	newDoc.origInternalListLength = this.internalList.getItemNodeCount();
 	return newDoc;
 };
 
@@ -972,19 +932,16 @@ ve.dm.Document.prototype.getDataFromNode = function ( node ) {
  * @return {ve.dm.Node[]} Array containing the rebuilt/inserted nodes
  */
 ve.dm.Document.prototype.rebuildNodes = function ( parent, index, numNodes, offset, newLength ) {
-	// Get a slice of the document where it's been changed
-	var data = this.data.sliceObject( offset, offset + newLength ),
+	var // Get a slice of the document where it's been changed
+		data = this.data.sliceObject( offset, offset + newLength ),
 		// Build document fragment from data
 		fragment = new this.constructor( data, this.htmlDocument, this ),
 		// Get generated child nodes from the document fragment
-		addedNodes = fragment.getDocumentNode().getChildren(),
-		// Replace nodes in the model tree
-		removedNodes = ve.batchSplice( parent, index, numNodes, addedNodes );
-
-	this.updateNodesByType( addedNodes, removedNodes );
-
+		nodes = fragment.getDocumentNode().getChildren();
+	// Replace nodes in the model tree
+	ve.batchSplice( parent, index, numNodes, nodes );
 	// Return inserted nodes
-	return addedNodes;
+	return nodes;
 };
 
 /**
@@ -999,82 +956,6 @@ ve.dm.Document.prototype.rebuildTree = function () {
 		0,
 		this.data.getLength()
 	);
-};
-
-/**
- * Update the nodes-by-type index
- *
- * @param {ve.dm.Node[]} addedNodes Added nodes
- * @param {ve.dm.Node[]} removedNodes Removed nodes
- */
-ve.dm.Document.prototype.updateNodesByType = function ( addedNodes, removedNodes ) {
-	var doc = this;
-
-	function remove( node ) {
-		var type = node.getType(),
-			nodes = doc.nodesByType[ type ] || [],
-			index = nodes.indexOf( node );
-
-		if ( index !== -1 ) {
-			nodes.splice( index, 1 );
-			if ( !nodes.length ) {
-				delete doc.nodesByType[ type ];
-			}
-		}
-	}
-
-	function add( node ) {
-		var type = node.getType(),
-			nodes = doc.nodesByType[ type ] = doc.nodesByType[ type ] || [];
-
-		nodes.push( node );
-	}
-
-	function traverse( nodes, action ) {
-		nodes.forEach( function ( node ) {
-			if ( node.hasChildren() ) {
-				node.traverse( action );
-			}
-			action( node );
-		} );
-	}
-
-	traverse( removedNodes, remove );
-	traverse( addedNodes, add );
-};
-
-/**
- * Get all nodes in the tree for a specific type
- *
- * If a string type is passed only nodes of that exact type will be returned,
- * if a node class is passed, all sub types will be matched.
- *
- * String type matching will be faster than class matching.
- *
- * @param {string|Function} type Node type name or node constructor
- * @param {boolean} sort Sort nodes by document order
- * @return {ve.dm.Node[]} Nodes of a specific type
- */
-ve.dm.Document.prototype.getNodesByType = function ( type, sort ) {
-	var t, nodeType,
-		nodes = [];
-	if ( type instanceof Function ) {
-		for ( t in this.nodesByType ) {
-			nodeType = ve.dm.nodeFactory.lookup( t );
-			if ( nodeType === type || nodeType.prototype instanceof type ) {
-				nodes = nodes.concat( this.getNodesByType( t ) );
-			}
-		}
-	} else {
-		nodes = this.nodesByType[ type ] || [];
-	}
-
-	if ( sort ) {
-		nodes.sort( function ( a, b ) {
-			return a.getOffset() - b.getOffset();
-		} );
-	}
-	return nodes;
 };
 
 /**
@@ -1440,7 +1321,9 @@ ve.dm.Document.prototype.newFromHtml = function ( html, importRules ) {
 
 	if ( importRules ) {
 		data.sanitize( importRules.external || {} );
-		data.sanitize( importRules.all || {} );
+		if ( importRules.all ) {
+			data.sanitize( importRules.all );
+		}
 	}
 
 	data.remapInternalListKeys( this.getInternalList() );

@@ -21,7 +21,7 @@ class SearchNearMatchResultSet extends SearchResultSet {
 			return false;
 		}
 		$this->fetched = true;
-		return SearchResult::newFromTitle( $this->result, $this );
+		return SearchResult::newFromTitle( $this->result );
 	}
 
 	public function rewind() {

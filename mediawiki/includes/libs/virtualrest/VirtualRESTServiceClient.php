@@ -45,9 +45,9 @@
  */
 class VirtualRESTServiceClient {
 	/** @var MultiHttpClient */
-	private $http;
-	/** @var array Map of (prefix => VirtualRESTService|array) */
-	private $instances = [];
+	protected $http;
+	/** @var VirtualRESTService[] Map of (prefix => VirtualRESTService) */
+	protected $instances = [];
 
 	const VALID_MOUNT_REGEX = '#^/[0-9a-z]+/([0-9a-z]+/)*$#';
 
@@ -61,23 +61,14 @@ class VirtualRESTServiceClient {
 	/**
 	 * Map a prefix to service handler
 	 *
-	 * If $instance is in array, it must have these keys:
-	 *   - class : string; fully qualified VirtualRESTService class name
-	 *   - config : array; map of parameters that is the first __construct() argument
-	 *
 	 * @param string $prefix Virtual path
-	 * @param VirtualRESTService|array $instance Service or info to yield the service
+	 * @param VirtualRESTService $instance
 	 */
-	public function mount( $prefix, $instance ) {
+	public function mount( $prefix, VirtualRESTService $instance ) {
 		if ( !preg_match( self::VALID_MOUNT_REGEX, $prefix ) ) {
 			throw new UnexpectedValueException( "Invalid service mount point '$prefix'." );
 		} elseif ( isset( $this->instances[$prefix] ) ) {
 			throw new UnexpectedValueException( "A service is already mounted on '$prefix'." );
-		}
-		if ( !( $instance instanceof VirtualRESTService ) ) {
-			if ( !isset( $instance['class'] ) || !isset( $instance['config'] ) ) {
-				throw new UnexpectedValueException( "Missing 'class' or 'config' ('$prefix')." );
-			}
 		}
 		$this->instances[$prefix] = $instance;
 	}
@@ -113,7 +104,7 @@ class VirtualRESTServiceClient {
 		};
 
 		$matches = []; // matching prefixes (mount points)
-		foreach ( $this->instances as $prefix => $unused ) {
+		foreach ( $this->instances as $prefix => $service ) {
 			if ( strpos( $path, $prefix ) === 0 ) {
 				$matches[] = $prefix;
 			}
@@ -121,8 +112,8 @@ class VirtualRESTServiceClient {
 		usort( $matches, $cmpFunc );
 
 		// Return the most specific prefix and corresponding service
-		return $matches
-			? [ $matches[0], $this->getInstance( $matches[0] ) ]
+		return isset( $matches[0] )
+			? [ $matches[0], $this->instances[$matches[0]] ]
 			: [ null, null ];
 	}
 
@@ -225,7 +216,7 @@ class VirtualRESTServiceClient {
 			// defer the original or to set a proxy response to the original.
 			$newReplaceReqsByService = [];
 			foreach ( $replaceReqsByService as $prefix => $servReqs ) {
-				$service = $this->getInstance( $prefix );
+				$service = $this->instances[$prefix];
 				foreach ( $service->onRequests( $servReqs, $idFunc ) as $index => $req ) {
 					// Services use unique IDs for replacement requests
 					if ( isset( $servReqs[$index] ) || isset( $origPending[$index] ) ) {
@@ -246,6 +237,8 @@ class VirtualRESTServiceClient {
 					$checkReqIndexesByPrefix[$prefix][$index] = 1;
 				}
 			}
+			// Update index of requests to inspect for replacement
+			$replaceReqsByService = $newReplaceReqsByService;
 			// Run the actual work HTTP requests
 			foreach ( $this->http->runMulti( $executeReqs ) as $index => $ranReq ) {
 				$doneReqs[$index] = $ranReq;
@@ -259,7 +252,7 @@ class VirtualRESTServiceClient {
 			// forced by setting 'response' rather than actually be sent over the wire.
 			$newReplaceReqsByService = [];
 			foreach ( $checkReqIndexesByPrefix as $prefix => $servReqIndexes ) {
-				$service = $this->getInstance( $prefix );
+				$service = $this->instances[$prefix];
 				// $doneReqs actually has the requests (with 'response' set)
 				$servReqs = array_intersect_key( $doneReqs, $servReqIndexes );
 				foreach ( $service->onResponses( $servReqs, $idFunc ) as $index => $req ) {
@@ -296,27 +289,5 @@ class VirtualRESTServiceClient {
 		}
 
 		return $responses;
-	}
-
-	/**
-	 * @param string $prefix
-	 * @return VirtualRESTService
-	 */
-	private function getInstance( $prefix ) {
-		if ( !isset( $this->instances[$prefix] ) ) {
-			throw new RuntimeException( "No service registered at prefix '{$prefix}'." );
-		}
-
-		if ( !( $this->instances[$prefix] instanceof VirtualRESTService ) ) {
-			$config = $this->instances[$prefix]['config'];
-			$class = $this->instances[$prefix]['class'];
-			$service = new $class( $config );
-			if ( !( $service instanceof VirtualRESTService ) ) {
-				throw new UnexpectedValueException( "Registered service has the wrong class." );
-			}
-			$this->instances[$prefix] = $service;
-		}
-
-		return $this->instances[$prefix];
 	}
 }

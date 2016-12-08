@@ -4,8 +4,7 @@
 			"ArnoLagrange",
 			"Tlustulimu",
 			"Yekrats",
-			"KuboF",
-			"Robin van der Vliet"
+			"KuboF"
 		]
 	},
 	"renameuser": "Alinomi uzanton",
@@ -21,7 +20,7 @@
 	"renameuserwarnings": "Avertoj:",
 	"renameuserconfirm": "Jes, alinomu la uzanton",
 	"renameusersubmit": "Ek",
-	"renameuser-submit-blocklog": "Montri forbarprotokolon de la uzanto",
+	"renameuser-submit-blocklog": "Montru forbarprotokolon de la uzulo",
 	"renameusererrordoesnotexist": "La uzanto \"<nowiki>$1</nowiki>\" ne ekzistas",
 	"renameusererrorexists": "La uzanto \"<nowiki>$1</nowiki>\" jam ekzistas",
 	"renameusererrorinvalid": "La salutnomo \"<nowiki>$1</nowiki>\" estas malvalida",

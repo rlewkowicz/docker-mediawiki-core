@@ -53,11 +53,6 @@ class TitleBlacklistHooks {
 			$blacklisted = TitleBlacklist::singleton()->userCannot( $title, $user, $action );
 			if ( $blacklisted instanceof TitleBlacklistEntry ) {
 				$errmsg = $blacklisted->getErrorMessage( 'edit' );
-				$params = array(
-					$blacklisted->getRaw(),
-					$title->getFullText()
-				);
-				ApiResult::setIndexedTagName( $params, 'param' );
 				$result = ApiMessage::create(
 					wfMessage(
 						$errmsg,
@@ -66,10 +61,7 @@ class TitleBlacklistHooks {
 					),
 					'titleblacklist-forbidden',
 					array(
-						'message' => array(
-							'key' => $errmsg,
-							'params' => $params,
-						),
+						'message' => $errmsg,
 						'line' => $blacklisted->getRaw(),
 						// As $errmsg usually represents a non-default message here, and ApiBase uses
 						// ->inLanguage( 'en' )->useDatabase( false ) for all messages, it will never result in
@@ -105,10 +97,6 @@ class TitleBlacklistHooks {
 		}
 
 		$params = $blacklisted->getParams();
-		if ( isset( $params['autoconfirmed'] ) ) {
-			return true;
-		}
-
 		$msg = wfMessage( 'titleblacklist-warning' );
 		$notices['titleblacklist'] = $msg->rawParams(
 			htmlspecialchars( $blacklisted->getRaw() ) )->parseAsBlock();
@@ -183,19 +171,11 @@ class TitleBlacklistHooks {
 				self::logFilterHitUsername( $creatingUser, $title, $blacklisted->getRaw() );
 			}
 			$message = $blacklisted->getErrorMessage( 'new-account' );
-			$params = [
-				$blacklisted->getRaw(),
-				$userName,
-			];
-			ApiResult::setIndexedTagName( $params, 'param' );
 			return StatusValue::newFatal( ApiMessage::create(
 				[ $message, $blacklisted->getRaw(), $userName ],
 				'titleblacklist-forbidden',
 				[
-					'message' => [
-						'key' => $message,
-						'params' => $params,
-					],
+					'message' => $message,
 					'line' => $blacklisted->getRaw(),
 					// The text of the message probably isn't useful API info, so do this instead
 					'info' => 'TitleBlacklist prevents this username from being created',
@@ -272,12 +252,12 @@ class TitleBlacklistHooks {
 	}
 
 	/**
-	 * PageContentSaveComplete hook
+	 * ArticleSaveComplete hook
 	 *
 	 * @param Article $article
 	 */
 	public static function clearBlacklist( &$article, &$user,
-		$content, $summary, $isminor, $iswatch, $section )
+		$text, $summary, $isminor, $iswatch, $section )
 	{
 		$title = $article->getTitle();
 		if ( $title->getNamespace() == NS_MEDIAWIKI && $title->getDBkey() == 'Titleblacklist' ) {
@@ -356,6 +336,17 @@ class TitleBlacklistHooks {
 			$logid = $logEntry->insert();
 			$logEntry->publish( $logid );
 		}
+	}
+
+	/**
+	 * Add phpunit tests
+	 *
+	 * @param array &$files List of test cases and directories to search
+	 * @return bool
+	 */
+	public static function unitTestsList( &$files ) {
+		$files = array_merge( $files, glob( __DIR__ . '/tests/*Test.php' ) );
+		return true;
 	}
 
 	/**

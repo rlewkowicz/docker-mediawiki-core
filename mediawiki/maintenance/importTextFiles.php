@@ -56,23 +56,14 @@ class ImportTextFiles extends Maintenance {
 		$prefix = $this->getOption( 'prefix', '' );
 
 		// Get all the arguments. A loop is required since Maintenance doesn't
-		// support an arbitrary number of arguments.
+		// suppport an arbitrary number of arguments.
 		$files = [];
 		$i = 0;
 		while ( $arg = $this->getArg( $i++ ) ) {
 			if ( file_exists( $arg ) ) {
 				$files[$arg] = file_get_contents( $arg );
 			} else {
-				// use glob to support the Windows shell, which doesn't automatically
-				// expand wildcards
-				$found = false;
-				foreach ( glob( $arg ) as $filename ) {
-					$found = true;
-					$files[$filename] = file_get_contents( $filename );
-				}
-				if ( !$found ) {
-					$this->error( "Fatal error: The file '$arg' does not exist!", 1 );
-				}
+				$this->error( "Fatal error: The file '$arg' does not exist!", 1 );
 			}
 		};
 
@@ -103,16 +94,16 @@ class ImportTextFiles extends Maintenance {
 			$timestamp = $useTimestamp ? wfTimestamp( TS_UNIX, filemtime( $file ) ) : wfTimestampNow();
 
 			$title = Title::newFromText( $pageName );
-			// Have to check for # manually, since it gets interpreted as a fragment
-			if ( !$title || $title->hasFragment() ) {
+			$exists = $title->exists();
+			$oldRevID = $title->getLatestRevID();
+			$oldRev = $oldRevID ? Revision::newFromId( $oldRevID ) : null;
+
+			if ( !$title ) {
 				$this->error( "Invalid title $pageName. Skipping.\n" );
 				$skipCount++;
 				continue;
 			}
 
-			$exists = $title->exists();
-			$oldRevID = $title->getLatestRevID();
-			$oldRev = $oldRevID ? Revision::newFromId( $oldRevID ) : null;
 			$actualTitle = $title->getPrefixedText();
 
 			if ( $exists ) {

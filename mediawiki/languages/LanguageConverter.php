@@ -18,7 +18,6 @@
  * @file
  * @ingroup Language
  */
-use MediaWiki\MediaWikiServices;
 
 /**
  * Base class for language conversion.
@@ -48,9 +47,7 @@ class LanguageConverter {
 	];
 
 	public $mMainLanguageCode;
-	public $mVariants;
-	public $mVariantFallbacks;
-	public $mVariantNames;
+	public $mVariants, $mVariantFallbacks, $mVariantNames;
 	public $mTablesLoaded = false;
 	public $mTables;
 	// 'bidirectional' 'unidirectional' 'disable' for each variant
@@ -553,8 +550,8 @@ class LanguageConverter {
 			$variant = $this->getPreferredVariant();
 		}
 
-		$cache = MediaWikiServices::getInstance()->getLocalServerObjectCache();
-		$key = $cache->makeKey( 'languageconverter', 'namespace-text', $index, $variant );
+		$cache = ObjectCache::newAccelerator( CACHE_NONE );
+		$key = wfMemcKey( 'languageconverter', 'namespace-text', $index, $variant );
 		$nsVariantText = $cache->get( $key );
 		if ( $nsVariantText !== false ) {
 			return $nsVariantText;
@@ -1089,11 +1086,11 @@ class LanguageConverter {
 			//  -{zh-hans:<span style="font-size:120%;">xxx</span>;zh-hant:\
 			// 	<span style="font-size:120%;">yyy</span>;}-
 			// we should split it as:
-			//  [
+			//  array(
 			// 	  [0] => 'zh-hans:<span style="font-size:120%;">xxx</span>'
 			// 	  [1] => 'zh-hant:<span style="font-size:120%;">yyy</span>'
 			// 	  [2] => ''
-			//  ]
+			// 	 )
 			$pat = '/;\s*(?=';
 			foreach ( $this->mVariants as $variant ) {
 				// zh-hans:xxx;zh-hant:yyy

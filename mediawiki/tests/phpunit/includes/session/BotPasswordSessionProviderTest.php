@@ -65,10 +65,11 @@ class BotPasswordSessionProviderTest extends MediaWikiTestCase {
 	public function addDBDataOnce() {
 		$passwordFactory = new \PasswordFactory();
 		$passwordFactory->init( \RequestContext::getMain()->getConfig() );
-		$passwordHash = $passwordFactory->newFromPlaintext( 'foobaz' );
+		// A is unsalted MD5 (thus fast) ... we don't care about security here, this is test only
+		$passwordFactory->setDefaultType( 'A' );
+		$pwhash = $passwordFactory->newFromPlaintext( 'foobaz' );
 
-		$sysop = static::getTestSysop()->getUser();
-		$userId = \CentralIdLookup::factory( 'local' )->centralIdFromName( $sysop->getName() );
+		$userId = \CentralIdLookup::factory( 'local' )->centralIdFromName( 'UTSysop' );
 
 		$dbw = wfGetDB( DB_MASTER );
 		$dbw->delete(
@@ -81,7 +82,7 @@ class BotPasswordSessionProviderTest extends MediaWikiTestCase {
 			[
 				'bp_user' => $userId,
 				'bp_app_id' => 'BotPasswordSessionProvider',
-				'bp_password' => $passwordHash->toString(),
+				'bp_password' => $pwhash->toString(),
 				'bp_token' => 'token!',
 				'bp_restrictions' => '{"IPAddresses":["127.0.0.0/8"]}',
 				'bp_grants' => '["test"]',
@@ -183,7 +184,7 @@ class BotPasswordSessionProviderTest extends MediaWikiTestCase {
 
 	public function testNewSessionInfoForRequest() {
 		$provider = $this->getProvider();
-		$user = static::getTestSysop()->getUser();
+		$user = \User::newFromName( 'UTSysop' );
 		$request = $this->getMock( 'FauxRequest', [ 'getIP' ] );
 		$request->expects( $this->any() )->method( 'getIP' )
 			->will( $this->returnValue( '127.0.0.1' ) );
@@ -210,7 +211,7 @@ class BotPasswordSessionProviderTest extends MediaWikiTestCase {
 		$provider = $this->getProvider();
 		$provider->setLogger( $logger );
 
-		$user = static::getTestSysop()->getUser();
+		$user = \User::newFromName( 'UTSysop' );
 		$request = $this->getMock( 'FauxRequest', [ 'getIP' ] );
 		$request->expects( $this->any() )->method( 'getIP' )
 			->will( $this->returnValue( '127.0.0.1' ) );

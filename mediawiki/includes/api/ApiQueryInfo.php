@@ -23,7 +23,6 @@
  *
  * @file
  */
-use MediaWiki\MediaWikiServices;
 use MediaWiki\Linker\LinkTarget;
 
 /**
@@ -92,7 +91,7 @@ class ApiQueryInfo extends ApiQueryBase {
 	 * The prototype for a token function is func($pageid, $title)
 	 * it should return a token or false (permission denied)
 	 * @deprecated since 1.24
-	 * @return array [ tokenname => function ]
+	 * @return array Array(tokenname => function)
 	 */
 	protected function getTokenFunctions() {
 		// Don't call the hooks twice
@@ -761,7 +760,7 @@ class ApiQueryInfo extends ApiQueryBase {
 		$this->watched = [];
 		$this->notificationtimestamps = [];
 
-		$store = MediaWikiServices::getInstance()->getWatchedItemStore();
+		$store = WatchedItemStore::getDefaultInstance();
 		$timestamps = $store->getNotificationTimestampsBatch( $user, $this->everything );
 
 		if ( $this->fld_watched ) {
@@ -801,7 +800,7 @@ class ApiQueryInfo extends ApiQueryBase {
 			$countOptions['minimumWatchers'] = $unwatchedPageThreshold;
 		}
 
-		$this->watchers = MediaWikiServices::getInstance()->getWatchedItemStore()->countWatchersMultiple(
+		$this->watchers = WatchedItemStore::getDefaultInstance()->countWatchersMultiple(
 			$this->everything,
 			$countOptions
 		);
@@ -868,8 +867,8 @@ class ApiQueryInfo extends ApiQueryBase {
 				)
 			);
 		}
-		$store = MediaWikiServices::getInstance()->getWatchedItemStore();
-		$this->visitingwatchers = $store->countVisitingWatchersMultiple(
+
+		$this->visitingwatchers = WatchedItemStore::getDefaultInstance()->countVisitingWatchersMultiple(
 			$titlesWithThresholds,
 			!$canUnwatchedpages ? $unwatchedPageThreshold : null
 		);

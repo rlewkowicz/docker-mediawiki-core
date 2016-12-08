@@ -117,10 +117,9 @@ ve.dm.MWTransclusionNode.static.toDataElement = function ( domElements, converte
 };
 
 ve.dm.MWTransclusionNode.static.toDomElements = function ( dataElement, doc, converter ) {
-	var els, i, len, span, value,
+	var els, i, len, span, index,
 		store = converter.getStore(),
-		originalMw = dataElement.attributes.originalMw,
-		originalDomElements = store.value( dataElement.originalDomElementsIndex );
+		originalMw = dataElement.attributes.originalMw;
 
 	function wrapTextNode( node ) {
 		var wrapper;
@@ -135,23 +134,23 @@ ve.dm.MWTransclusionNode.static.toDomElements = function ( dataElement, doc, con
 	// If the transclusion is unchanged just send back the
 	// original DOM elements so selser can skip over it
 	if (
-		originalDomElements &&
+		dataElement.originalDomElements &&
 		originalMw && ve.compare( dataElement.attributes.mw, JSON.parse( originalMw ) )
 	) {
 		// originalDomElements is also used for CE rendering so return a copy
-		els = ve.copyDomElements( originalDomElements, doc );
+		els = ve.copyDomElements( dataElement.originalDomElements, doc );
 	} else {
 		if (
 			converter.isForClipboard() &&
 			// Use getHashObjectForRendering to get the rendering from the store
-			( value = store.value( store.indexOfValue( null, OO.getHash( [ this.getHashObjectForRendering( dataElement ), undefined ] ) ) ) )
+			( index = store.indexOfHash( OO.getHash( [ this.getHashObjectForRendering( dataElement ), undefined ] ) ) ) !== null
 		) {
 			// For the clipboard use the current DOM contents so the user has something
 			// meaningful to paste into external applications
-			els = ve.copyDomElements( value, doc );
+			els = ve.copyDomElements( store.value( index ), doc );
 			els[ 0 ] = wrapTextNode( els[ 0 ] );
-		} else if ( originalDomElements ) {
-			els = [ doc.createElement( originalDomElements[ 0 ].nodeName ) ];
+		} else if ( dataElement.originalDomElements ) {
+			els = [ doc.createElement( dataElement.originalDomElements[ 0 ].nodeName ) ];
 		} else {
 			els = [ doc.createElement( 'span' ) ];
 		}
@@ -194,9 +193,17 @@ ve.dm.MWTransclusionNode.static.toDomElements = function ( dataElement, doc, con
 
 /** */
 ve.dm.MWTransclusionNode.static.cloneElement = function () {
-	// Parent method
-	var clone = ve.dm.MWTransclusionNode.super.static.cloneElement.apply( this, arguments );
+	var i, len,
+		// Parent method
+		clone = ve.dm.MWTransclusionNode.super.static.cloneElement.apply( this, arguments );
+
 	delete clone.attributes.originalMw;
+	// Remove about attribute to prevent about grouping of duplicated transclusions
+	if ( clone.originalDomElements ) {
+		for ( i = 0, len = clone.originalDomElements.length; i < len; i++ ) {
+			clone.originalDomElements[ i ].removeAttribute( 'about' );
+		}
+	}
 	return clone;
 };
 
@@ -267,41 +274,6 @@ ve.dm.MWTransclusionNode.static.escapeParameter = function ( param ) {
 		}
 	}
 	return output;
-};
-
-/**
- * Get the wikitext for this transclusion.
- *
- * @static
- * @param {Object} content MW data content
- * @return {string} Wikitext like `{{foo|1=bar|baz=quux}}`
- */
-ve.dm.MWTransclusionNode.static.getWikitext = function ( content ) {
-	var i, len, part, template, param,
-		wikitext = '';
-
-	// Normalize to multi template format
-	if ( content.params ) {
-		content = { parts: [ { template: content } ] };
-	}
-	// Build wikitext from content
-	for ( i = 0, len = content.parts.length; i < len; i++ ) {
-		part = content.parts[ i ];
-		if ( part.template ) {
-			// Template
-			template = part.template;
-			wikitext += '{{' + template.target.wt;
-			for ( param in template.params ) {
-				wikitext += '|' + param + '=' +
-					this.escapeParameter( template.params[ param ].wt );
-			}
-			wikitext += '}}';
-		} else {
-			// Plain wikitext
-			wikitext += part;
-		}
-	}
-	return wikitext;
 };
 
 /* Methods */
@@ -386,13 +358,38 @@ ve.dm.MWTransclusionNode.prototype.getPartsList = function () {
 };
 
 /**
- * Wrapper for static method
+ * Get the wikitext for this transclusion.
  *
  * @method
  * @return {string} Wikitext like `{{foo|1=bar|baz=quux}}`
  */
 ve.dm.MWTransclusionNode.prototype.getWikitext = function () {
-	return this.constructor.static.getWikitext( this.getAttribute( 'mw' ) );
+	var i, len, part, template, param,
+		content = this.getAttribute( 'mw' ),
+		wikitext = '';
+
+	// Normalize to multi template format
+	if ( content.params ) {
+		content = { parts: [ { template: content } ] };
+	}
+	// Build wikitext from content
+	for ( i = 0, len = content.parts.length; i < len; i++ ) {
+		part = content.parts[ i ];
+		if ( part.template ) {
+			// Template
+			template = part.template;
+			wikitext += '{{' + template.target.wt;
+			for ( param in template.params ) {
+				wikitext += '|' + param + '=' +
+					this.constructor.static.escapeParameter( template.params[ param ].wt );
+			}
+			wikitext += '}}';
+		} else {
+			// Plain wikitext
+			wikitext += part;
+		}
+	}
+	return wikitext;
 };
 
 /* Concrete subclasses */
@@ -408,7 +405,7 @@ ve.dm.MWTransclusionNode.prototype.getWikitext = function () {
  */
 ve.dm.MWTransclusionBlockNode = function VeDmMWTransclusionBlockNode() {
 	// Parent constructor
-	ve.dm.MWTransclusionBlockNode.super.apply( this, arguments );
+	ve.dm.MWTransclusionNode.apply( this, arguments );
 };
 
 OO.inheritClass( ve.dm.MWTransclusionBlockNode, ve.dm.MWTransclusionNode );
@@ -428,7 +425,7 @@ ve.dm.MWTransclusionBlockNode.static.name = 'mwTransclusionBlock';
  */
 ve.dm.MWTransclusionInlineNode = function VeDmMWTransclusionInlineNode() {
 	// Parent constructor
-	ve.dm.MWTransclusionInlineNode.super.apply( this, arguments );
+	ve.dm.MWTransclusionNode.apply( this, arguments );
 };
 
 OO.inheritClass( ve.dm.MWTransclusionInlineNode, ve.dm.MWTransclusionNode );

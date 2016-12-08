@@ -132,7 +132,7 @@ class ApiErrorFormatterTest extends MediaWikiLangTestCase {
 						'err' => [
 							[
 								'code' => 'mainpage',
-								'key' => 'mainpage',
+								'message' => 'mainpage',
 								'params' => [ $I => 'param' ]
 							],
 							$I => 'error',
@@ -142,7 +142,7 @@ class ApiErrorFormatterTest extends MediaWikiLangTestCase {
 						'string' => [
 							[
 								'code' => 'mainpage',
-								'key' => 'mainpage',
+								'message' => 'mainpage',
 								'params' => [ $I => 'param' ]
 							],
 							$I => 'warning',
@@ -154,7 +154,7 @@ class ApiErrorFormatterTest extends MediaWikiLangTestCase {
 						'errWithData' => [
 							[
 								'code' => 'overriddenCode',
-								'key' => 'mainpage',
+								'message' => 'mainpage',
 								'params' => [ $I => 'param' ],
 								'overriddenData' => true
 							],
@@ -165,7 +165,7 @@ class ApiErrorFormatterTest extends MediaWikiLangTestCase {
 						'messageWithData' => [
 							[
 								'code' => 'overriddenCode',
-								'key' => 'mainpage',
+								'message' => 'mainpage',
 								'params' => [ $I => 'param' ],
 								'overriddenData' => true
 							],
@@ -174,7 +174,7 @@ class ApiErrorFormatterTest extends MediaWikiLangTestCase {
 						'message' => [
 							[
 								'code' => 'mainpage',
-								'key' => 'mainpage',
+								'message' => 'mainpage',
 								'params' => [ $I => 'param' ]
 							],
 							$I => 'warning',
@@ -182,12 +182,12 @@ class ApiErrorFormatterTest extends MediaWikiLangTestCase {
 						'foo' => [
 							[
 								'code' => 'mainpage',
-								'key' => 'mainpage',
+								'message' => 'mainpage',
 								'params' => [ $I => 'param' ]
 							],
 							[
 								'code' => 'parentheses',
-								'key' => 'parentheses',
+								'message' => 'parentheses',
 								'params' => [ 'foobar', $I => 'param' ]
 							],
 							$I => 'warning',
@@ -199,12 +199,12 @@ class ApiErrorFormatterTest extends MediaWikiLangTestCase {
 						'status' => [
 							[
 								'code' => 'mainpage',
-								'key' => 'mainpage',
+								'message' => 'mainpage',
 								'params' => [ $I => 'param' ]
 							],
 							[
 								'code' => 'parentheses',
-								'key' => 'parentheses',
+								'message' => 'parentheses',
 								'params' => [ 'foobar', $I => 'param' ]
 							],
 							$I => 'error',
@@ -214,17 +214,17 @@ class ApiErrorFormatterTest extends MediaWikiLangTestCase {
 						'status' => [
 							[
 								'code' => 'mainpage',
-								'key' => 'mainpage',
+								'message' => 'mainpage',
 								'params' => [ $I => 'param' ]
 							],
 							[
 								'code' => 'parentheses',
-								'key' => 'parentheses',
+								'message' => 'parentheses',
 								'params' => [ 'foobar', $I => 'param' ]
 							],
 							[
 								'code' => 'overriddenCode',
-								'key' => 'mainpage',
+								'message' => 'mainpage',
 								'params' => [ $I => 'param' ],
 								'overriddenData' => true
 							],

@@ -5,7 +5,6 @@ class LoginPage
 
   page_url 'Special:UserLogin'
 
-  element(:error_message, css: 'div#userloginForm div.error')
   div(:feedback, class: 'errorbox')
   button(:login, id: 'wpLoginAttempt')
   li(:logout, id: 'pt-logout')

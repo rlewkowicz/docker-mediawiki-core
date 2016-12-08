@@ -26,7 +26,7 @@ ve.ui.MediaSizeWidget = function VeUiMediaSizeWidget( scalable, config ) {
 	this.scalable = scalable;
 
 	// Parent constructor
-	ve.ui.MediaSizeWidget.super.call( this, config );
+	OO.ui.Widget.call( this, config );
 
 	// Properties
 	this.ratio = {};

@@ -50,8 +50,7 @@ class UnwatchAction extends WatchAction {
 	}
 
 	public function onSuccess() {
-		$msgKey = $this->getTitle()->isTalkPage() ? 'removedwatchtext-talk' : 'removedwatchtext';
-		$this->getOutput()->addWikiMsg( $msgKey, $this->getTitle()->getPrefixedText() );
+		$this->getOutput()->addWikiMsg( 'removedwatchtext', $this->getTitle()->getPrefixedText() );
 	}
 
 	public function doesWrites() {

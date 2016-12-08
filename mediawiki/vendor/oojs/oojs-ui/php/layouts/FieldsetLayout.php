@@ -12,10 +12,6 @@ class FieldsetLayout extends Layout {
 	use LabelElement;
 	use GroupElement;
 
-	/* Static Properties */
-
-	public static $tagName = 'fieldset';
-
 	/**
 	 * @param array $config Configuration options
 	 * @param FieldLayout[] $config['items'] Items to add
@@ -26,16 +22,13 @@ class FieldsetLayout extends Layout {
 
 		// Traits
 		$this->initializeIconElement( $config );
-		$this->initializeLabelElement( array_merge( $config, [
-			'labelElement' => new Tag( 'legend' )
-		] ) );
+		$this->initializeLabelElement( $config );
 		$this->initializeGroupElement( $config );
 
 		// Initialization
-		$this->group->addClasses( [ 'oo-ui-fieldsetLayout-group' ] );
 		$this
 			->addClasses( [ 'oo-ui-fieldsetLayout' ] )
-			->prependContent( $this->label, $this->icon, $this->group );
+			->prependContent( $this->icon, $this->label, $this->group );
 		if ( isset( $config['items'] ) ) {
 			$this->addItems( $config['items'] );
 		}

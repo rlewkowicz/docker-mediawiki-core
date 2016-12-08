@@ -26,7 +26,7 @@
  *
  * @since 1.26
  */
-class DBAccessObjectUtils implements IDBAccessObject {
+class DBAccessObjectUtils {
 	/**
 	 * @param integer $bitfield
 	 * @param integer $flags IDBAccessObject::READ_* constant
@@ -37,45 +37,23 @@ class DBAccessObjectUtils implements IDBAccessObject {
 	}
 
 	/**
-	 * Get an appropriate DB index, options, and fallback DB index for a query
+	 * Get an appropriate DB index and options for a query
 	 *
-	 * The fallback DB index and options are to be used if the entity is not found
-	 * with the initial DB index, typically querying the master DB to avoid lag
-	 *
-	 * @param integer $bitfield Bitfield of IDBAccessObject::READ_* constants
-	 * @return array List of DB indexes and options in this order:
-	 *   - DB_MASTER or DB_REPLICA constant for the initial query
-	 *   - SELECT options array for the initial query
-	 *   - DB_MASTER constant for the fallback query; null if no fallback should happen
-	 *   - SELECT options array for the fallback query; empty if no fallback should happen
+	 * @param integer $bitfield
+	 * @return array (DB_MASTER/DB_SLAVE, SELECT options array)
 	 */
 	public static function getDBOptions( $bitfield ) {
-		if ( self::hasFlags( $bitfield, self::READ_LATEST_IMMUTABLE ) ) {
-			$index = DB_REPLICA; // override READ_LATEST if set
-			$fallbackIndex = DB_MASTER;
-		} elseif ( self::hasFlags( $bitfield, self::READ_LATEST ) ) {
-			$index = DB_MASTER;
-			$fallbackIndex = null;
-		} else {
-			$index = DB_REPLICA;
-			$fallbackIndex = null;
+		$index = self::hasFlags( $bitfield, IDBAccessObject::READ_LATEST )
+			? DB_MASTER
+			: DB_SLAVE;
+
+		$options = [];
+		if ( self::hasFlags( $bitfield, IDBAccessObject::READ_EXCLUSIVE ) ) {
+			$options[] = 'FOR UPDATE';
+		} elseif ( self::hasFlags( $bitfield, IDBAccessObject::READ_LOCKING ) ) {
+			$options[] = 'LOCK IN SHARE MODE';
 		}
 
-		$lockingOptions = [];
-		if ( self::hasFlags( $bitfield, self::READ_EXCLUSIVE ) ) {
-			$lockingOptions[] = 'FOR UPDATE';
-		} elseif ( self::hasFlags( $bitfield, self::READ_LOCKING ) ) {
-			$lockingOptions[] = 'LOCK IN SHARE MODE';
-		}
-
-		if ( $fallbackIndex !== null ) {
-			$options = []; // locks on DB_REPLICA make no sense
-			$fallbackOptions = $lockingOptions;
-		} else {
-			$options = $lockingOptions;
-			$fallbackOptions = []; // no fallback
-		}
-
-		return [ $index, $options, $fallbackIndex, $fallbackOptions ];
+		return [ $index, $options ];
 	}
 }

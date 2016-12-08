@@ -42,7 +42,7 @@ class LanguageWa extends Language {
 	 * @param bool $tc
 	 * @return string
 	 */
-	public function date( $ts, $adj = false, $format = true, $tc = false ) {
+	function date( $ts, $adj = false, $format = true, $tc = false ) {
 		$ts = wfTimestamp( TS_MW, $ts );
 		if ( $adj ) {
 			$ts = $this->userAdjust( $ts, $tc );
@@ -89,7 +89,7 @@ class LanguageWa extends Language {
 	 * @param bool $tc
 	 * @return string
 	 */
-	public function timeanddate( $ts, $adj = false, $format = true, $tc = false ) {
+	function timeanddate( $ts, $adj = false, $format = true, $tc = false ) {
 		if ( $adj ) {
 			$ts = $this->userAdjust( $ts, $tc );
 		}

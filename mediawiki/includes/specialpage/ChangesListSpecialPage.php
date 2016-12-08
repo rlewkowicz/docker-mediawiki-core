@@ -340,7 +340,7 @@ abstract class ChangesListSpecialPage extends SpecialPage {
 	 * @return IDatabase
 	 */
 	protected function getDB() {
-		return wfGetDB( DB_REPLICA );
+		return wfGetDB( DB_SLAVE );
 	}
 
 	/**
@@ -368,7 +368,7 @@ abstract class ChangesListSpecialPage extends SpecialPage {
 	/**
 	 * Build and output the actual changes list.
 	 *
-	 * @param ResultWrapper $rows Database rows
+	 * @param array $rows Database rows
 	 * @param FormOptions $opts
 	 */
 	abstract public function outputChangesList( $rows, $opts );
@@ -475,10 +475,7 @@ abstract class ChangesListSpecialPage extends SpecialPage {
 	protected function addModules() {
 		$out = $this->getOutput();
 		// Styles and behavior for the legend box (see makeLegend())
-		$out->addModuleStyles( [
-			'mediawiki.special.changeslist.legend',
-			'mediawiki.special.changeslist',
-		] );
+		$out->addModuleStyles( 'mediawiki.special.changeslist.legend' );
 		$out->addModules( 'mediawiki.special.changeslist.legend.js' );
 	}
 

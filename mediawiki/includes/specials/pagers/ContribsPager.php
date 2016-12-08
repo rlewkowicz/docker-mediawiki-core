@@ -64,17 +64,16 @@ class ContribsPager extends ReverseChronologicalPager {
 		$this->deletedOnly = !empty( $options['deletedOnly'] );
 		$this->topOnly = !empty( $options['topOnly'] );
 		$this->newOnly = !empty( $options['newOnly'] );
-		$this->hideMinor = !empty( $options['hideMinor'] );
 
 		$year = isset( $options['year'] ) ? $options['year'] : false;
 		$month = isset( $options['month'] ) ? $options['month'] : false;
 		$this->getDateCond( $year, $month );
 
-		// Most of this code will use the 'contributions' group DB, which can map to replica DBs
+		// Most of this code will use the 'contributions' group DB, which can map to slaves
 		// with extra user based indexes or partioning by user. The additional metadata
-		// queries should use a regular replica DB since the lookup pattern is not all by user.
-		$this->mDbSecondary = wfGetDB( DB_REPLICA ); // any random replica DB
-		$this->mDb = wfGetDB( DB_REPLICA, 'contributions' );
+		// queries should use a regular slave since the lookup pattern is not all by user.
+		$this->mDbSecondary = wfGetDB( DB_SLAVE ); // any random slave
+		$this->mDb = wfGetDB( DB_SLAVE, 'contributions' );
 	}
 
 	function getDefaultQuery() {
@@ -224,11 +223,6 @@ class ContribsPager extends ReverseChronologicalPager {
 					]
 				];
 			}
-			// (T140537) Disallow looking too far in the past for 'newbies' queries. If the user requested
-			// a timestamp offset far in the past such that there are no edits by users with user_ids in
-			// the range, we would end up scanning all revisions from that offset until start of time.
-			$condition[] = 'rev_timestamp > ' .
-				$this->mDb->addQuotes( $this->mDb->timestamp( wfTimestamp() - 30 * 24 * 60 * 60 ) );
 		} else {
 			$uid = User::idFromName( $this->target );
 			if ( $uid ) {
@@ -250,10 +244,6 @@ class ContribsPager extends ReverseChronologicalPager {
 
 		if ( $this->newOnly ) {
 			$condition[] = 'rev_parent_id = 0';
-		}
-
-		if ( $this->hideMinor ) {
-			$condition[] = 'rev_minor_edit = 0';
 		}
 
 		return [ $tables, $index, $condition, $join_conds ];
@@ -376,9 +366,8 @@ class ContribsPager extends ReverseChronologicalPager {
 			# Mark current revisions
 			$topmarktext = '';
 			$user = $this->getUser();
-			if ( $row->rev_id === $row->page_latest ) {
+			if ( $row->rev_id == $row->page_latest ) {
 				$topmarktext .= '<span class="mw-uctop">' . $this->messages['uctop'] . '</span>';
-				$classes[] = 'mw-contributions-current';
 				# Add rollback link
 				if ( !$row->page_is_new && $page->quickUserCan( 'rollback', $user )
 					&& $page->quickUserCan( 'edit', $user )
@@ -458,13 +447,16 @@ class ContribsPager extends ReverseChronologicalPager {
 				$userlink = '';
 			}
 
-			$flags = [];
 			if ( $rev->getParentId() === 0 ) {
-				$flags[] = ChangesList::flag( 'newpage' );
+				$nflag = ChangesList::flag( 'newpage' );
+			} else {
+				$nflag = '';
 			}
 
 			if ( $rev->isMinor() ) {
-				$flags[] = ChangesList::flag( 'minor' );
+				$mflag = ChangesList::flag( 'minor' );
+			} else {
+				$mflag = '';
 			}
 
 			$del = Linker::getRevDeleteLink( $user, $rev, $page );
@@ -475,6 +467,15 @@ class ContribsPager extends ReverseChronologicalPager {
 			$diffHistLinks = $this->msg( 'parentheses' )
 				->rawParams( $difftext . $this->messages['pipe-separator'] . $histlink )
 				->escaped();
+			$ret = "{$del}{$d} {$diffHistLinks}{$chardiff}{$nflag}{$mflag} ";
+			$ret .= "{$link}{$userlink} {$comment} {$topmarktext}";
+
+			# Denote if username is redacted for this edit
+			if ( $rev->isDeleted( Revision::DELETED_USER ) ) {
+				$ret .= " <strong>" .
+					$this->msg( 'rev-deleted-user-contribs' )->escaped() .
+					"</strong>";
+			}
 
 			# Tags, if any.
 			list( $tagSummary, $newClasses ) = ChangeTags::formatSummaryRow(
@@ -483,49 +484,20 @@ class ContribsPager extends ReverseChronologicalPager {
 				$this->getContext()
 			);
 			$classes = array_merge( $classes, $newClasses );
-
-			Hooks::run( 'SpecialContributions::formatRow::flags', [ $this->getContext(), $row, &$flags ] );
-
-			$templateParams = [
-				'del' => $del,
-				'timestamp' => $d,
-				'diffHistLinks' => $diffHistLinks,
-				'charDifference' => $chardiff,
-				'flags' => $flags,
-				'articleLink' => $link,
-				'userlink' => $userlink,
-				'logText' => $comment,
-				'topmarktext' => $topmarktext,
-				'tagSummary' => $tagSummary,
-			];
-
-			# Denote if username is redacted for this edit
-			if ( $rev->isDeleted( Revision::DELETED_USER ) ) {
-				$templateParams['rev-deleted-user-contribs'] =
-					$this->msg( 'rev-deleted-user-contribs' )->escaped();
-			}
-
-			$templateParser = new TemplateParser();
-			$ret = $templateParser->processTemplate(
-				'SpecialContributionsLine',
-				$templateParams
-			);
+			$ret .= " $tagSummary";
 		}
 
 		// Let extensions add data
 		Hooks::run( 'ContributionsLineEnding', [ $this, &$ret, $row, &$classes ] );
 
-		// TODO: Handle exceptions in the catch block above.  Do any extensions rely on
-		// receiving empty rows?
-
 		if ( $classes === [] && $ret === '' ) {
 			wfDebug( "Dropping Special:Contribution row that could not be formatted\n" );
-			return "<!-- Could not format Special:Contribution row. -->\n";
+			$ret = "<!-- Could not format Special:Contribution row. -->\n";
+		} else {
+			$ret = Html::rawElement( 'li', [ 'class' => $classes ], $ret ) . "\n";
 		}
 
-		// FIXME: The signature of the ContributionsLineEnding hook makes it
-		// very awkward to move this LI wrapper into the template.
-		return Html::rawElement( 'li', [ 'class' => $classes ], $ret ) . "\n";
+		return $ret;
 	}
 
 	/**

@@ -25,8 +25,6 @@
  */
 use MediaWiki\Linker\LinkTarget;
 
-use MediaWiki\MediaWikiServices;
-
 /**
  * This module processes the email notifications when the current page is
  * changed. It looks up the table watchlist to find out which users are watching
@@ -94,7 +92,7 @@ class EmailNotification {
 		if ( !$config->get( 'EnotifWatchlist' ) && !$config->get( 'ShowUpdatedMarker' ) ) {
 			return [];
 		}
-		return MediaWikiServices::getInstance()->getWatchedItemStore()->updateNotificationTimestamp(
+		return WatchedItemStore::getDefaultInstance()->updateNotificationTimestamp(
 			$editor,
 			$linkTarget,
 			$timestamp
@@ -127,7 +125,7 @@ class EmailNotification {
 		$config = RequestContext::getMain()->getConfig();
 		$watchers = [];
 		if ( $config->get( 'EnotifWatchlist' ) || $config->get( 'ShowUpdatedMarker' ) ) {
-			$watchers = MediaWikiServices::getInstance()->getWatchedItemStore()->updateNotificationTimestamp(
+			$watchers = WatchedItemStore::getDefaultInstance()->updateNotificationTimestamp(
 				$editor,
 				$title,
 				$timestamp

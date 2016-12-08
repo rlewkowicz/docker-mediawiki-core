@@ -126,8 +126,8 @@ class TemporaryPasswordPrimaryAuthenticationProvider
 			return AuthenticationResponse::newAbstain();
 		}
 
-		$dbr = wfGetDB( DB_REPLICA );
-		$row = $dbr->selectRow(
+		$dbw = wfGetDB( DB_MASTER );
+		$row = $dbw->selectRow(
 			'user',
 			[
 				'user_id', 'user_newpassword', 'user_newpass_time',
@@ -140,7 +140,7 @@ class TemporaryPasswordPrimaryAuthenticationProvider
 		}
 
 		$status = $this->checkPasswordValidity( $username, $req->password );
-		if ( !$status->isOK() ) {
+		if ( !$status->isOk() ) {
 			// Fatal, can't log in
 			return AuthenticationResponse::newFail( $status->getMessage() );
 		}
@@ -165,8 +165,8 @@ class TemporaryPasswordPrimaryAuthenticationProvider
 			return false;
 		}
 
-		$dbr = wfGetDB( DB_REPLICA );
-		$row = $dbr->selectRow(
+		$dbw = wfGetDB( DB_MASTER );
+		$row = $dbw->selectRow(
 			'user',
 			[ 'user_newpassword', 'user_newpass_time' ],
 			[ 'user_name' => $username ],
@@ -303,14 +303,7 @@ class TemporaryPasswordPrimaryAuthenticationProvider
 		);
 
 		if ( $sendMail ) {
-			// Send email after DB commit
-			$dbw->onTransactionIdle(
-				function () use ( $req ) {
-					/** @var TemporaryPasswordAuthenticationRequest $req */
-					$this->sendPasswordResetEmail( $req );
-				},
-				__METHOD__
-			);
+			$this->sendPasswordResetEmail( $req );
 		}
 	}
 
@@ -377,13 +370,7 @@ class TemporaryPasswordPrimaryAuthenticationProvider
 		$this->providerChangeAuthenticationData( $req );
 
 		if ( $mailpassword ) {
-			// Send email after DB commit
-			wfGetDB( DB_MASTER )->onTransactionIdle(
-				function () use ( $user, $creator, $req ) {
-					$this->sendNewAccountEmail( $user, $creator, $req->password );
-				},
-				__METHOD__
-			);
+			$this->sendNewAccountEmail( $user, $creator, $req->password );
 		}
 
 		return $mailpassword ? 'byemail' : null;

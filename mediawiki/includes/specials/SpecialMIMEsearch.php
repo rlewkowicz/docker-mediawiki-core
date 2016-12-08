@@ -35,7 +35,7 @@ class MIMEsearchPage extends QueryPage {
 	}
 
 	public function isExpensive() {
-		return false;
+		return true;
 	}
 
 	function isSyndicated() {
@@ -106,26 +106,21 @@ class MIMEsearchPage extends QueryPage {
 	}
 
 	/**
-	 * Generate and output the form
+	 * Return HTML to put just before the results.
 	 */
 	function getPageHeader() {
-		$formDescriptor = [
-			'mime' => [
-				'type' => 'text',
-				'name' => 'mime',
-				'label-message' => 'mimetype',
-				'required' => true,
-				'default' => $this->mime,
-			],
-		];
-
-		$form = HTMLForm::factory( 'ooui', $formDescriptor, $this->getContext() )
-			->setWrapperLegendMsg( 'mimesearch' )
-			->setSubmitTextMsg( 'ilsubmit' )
-			->setAction( $this->getPageTitle()->getLocalURL() )
-			->setMethod( 'get' )
-			->prepareForm()
-			->displayForm( false );
+		return Xml::openElement(
+				'form',
+				[ 'id' => 'specialmimesearch', 'method' => 'get', 'action' => wfScript() ]
+			) .
+			Xml::openElement( 'fieldset' ) .
+			Html::hidden( 'title', $this->getPageTitle()->getPrefixedText() ) .
+			Xml::element( 'legend', null, $this->msg( 'mimesearch' )->text() ) .
+			Xml::inputLabel( $this->msg( 'mimetype' )->text(), 'mime', 'mime', 20, $this->mime ) .
+			' ' .
+			Xml::submitButton( $this->msg( 'ilsubmit' )->text() ) .
+					Xml::closeElement( 'fieldset' ) .
+					Xml::closeElement( 'form' );
 	}
 
 	public function execute( $par ) {
@@ -138,7 +133,7 @@ class MIMEsearchPage extends QueryPage {
 		) {
 			$this->setHeaders();
 			$this->outputHeader();
-			$this->getPageHeader();
+			$this->getOutput()->addHTML( $this->getPageHeader() );
 			return;
 		}
 

@@ -184,7 +184,7 @@ class SpecialVersion extends SpecialPage {
 				wfMessage( 'version-poweredby-others' )->text() . ']]';
 		}
 
-		$translatorsLink = '[https://translatewiki.net/wiki/Translating:MediaWiki/Credits ' .
+		$translatorsLink = '[//translatewiki.net/wiki/Translating:MediaWiki/Credits ' .
 			wfMessage( 'version-poweredby-translators' )->text() . ']';
 
 		$authorList = [
@@ -209,7 +209,7 @@ class SpecialVersion extends SpecialPage {
 	 * @return string
 	 */
 	public static function softwareInformation() {
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 
 		// Put the software in an array of form 'name' => 'version'. All messages should
 		// be loaded here, so feel free to use wfMessage in the 'name'. Raw HTML or
@@ -633,7 +633,7 @@ class SpecialVersion extends SpecialPage {
 			usort( $wgExtensionCredits[$type], [ $this, 'compare' ] );
 
 			foreach ( $wgExtensionCredits[$type] as $extension ) {
-				$out .= $this->getCreditsForExtension( $type, $extension );
+				$out .= $this->getCreditsForExtension( $extension );
 			}
 		}
 
@@ -669,12 +669,11 @@ class SpecialVersion extends SpecialPage {
 	 *  - Description of extension (descriptionmsg or description)
 	 *  - List of authors (author) and link to a ((AUTHORS)|(CREDITS))(\.txt)? file if it exists
 	 *
-	 * @param string $type Category name of the extension
 	 * @param array $extension
 	 *
 	 * @return string Raw HTML
 	 */
-	public function getCreditsForExtension( $type, array $extension ) {
+	public function getCreditsForExtension( array $extension ) {
 		$out = $this->getOutput();
 
 		// We must obtain the information for all the bits and pieces!
@@ -831,7 +830,7 @@ class SpecialVersion extends SpecialPage {
 		// Finally! Create the table
 		$html = Html::openElement( 'tr', [
 				'class' => 'mw-version-ext',
-				'id' => Sanitizer::escapeId( 'mw-version-ext-' . $type . '-' . $extension['name'] )
+				'id' => Sanitizer::escapeId( 'mw-version-ext-' . $extension['name'] )
 			]
 		);
 

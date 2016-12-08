@@ -25,7 +25,11 @@ class MathCaptcha extends SimpleCaptcha {
 		];
 	}
 
-	function getFormInformation( $tabIndex = 1 ) {
+	/**
+	 * Produce a nice little form
+	 * @param OutputPage $out
+	 */
+	function getForm( OutputPage $out, $tabIndex = 1 ) {
 		list( $sum, $answer ) = $this->pickSum();
 		$index = $this->storeCaptcha( [ 'answer' => $answer ] );
 
@@ -36,7 +40,7 @@ class MathCaptcha extends SimpleCaptcha {
 			'required'
 		] ) . '</td></tr></table>';
 		$form .= Html::hidden( 'wpCaptchaId', $index );
-		return [ 'html' => $form ];
+		return $form;
 	}
 
 	/** Pick a random sum */

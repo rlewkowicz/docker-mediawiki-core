@@ -100,10 +100,8 @@ class ApiHelp extends ApiBase {
 		}
 
 		$out = $context->getOutput();
-		$out->addModuleStyles( [
-			'mediawiki.hlist',
-			'mediawiki.apihelp',
-		] );
+		$out->addModuleStyles( 'mediawiki.hlist' );
+		$out->addModuleStyles( 'mediawiki.apihelp' );
 		if ( !empty( $options['toc'] ) ) {
 			$out->addModules( 'mediawiki.toc' );
 		}
@@ -311,11 +309,11 @@ class ApiHelp extends ApiBase {
 				if ( count( $modules ) === 1 && $m === $modules[0] &&
 					!( !empty( $options['submodules'] ) && $m->getModuleManager() )
 				) {
-					$link = Html::element( 'b', [ 'dir' => 'ltr', 'lang' => 'en' ], $name );
+					$link = Html::element( 'b', null, $name );
 				} else {
 					$link = SpecialPage::getTitleFor( 'ApiHelp', $m->getModulePath() )->getLocalURL();
 					$link = Html::element( 'a',
-						[ 'href' => $link, 'class' => 'apihelp-linktrail', 'dir' => 'ltr', 'lang' => 'en' ],
+						[ 'href' => $link, 'class' => 'apihelp-linktrail' ],
 						$name
 					);
 					$any = true;
@@ -350,8 +348,7 @@ class ApiHelp extends ApiBase {
 				if ( isset( $sourceInfo['namemsg'] ) ) {
 					$extname = $context->msg( $sourceInfo['namemsg'] )->text();
 				} else {
-					// Probably English, so wrap it.
-					$extname = Html::element( 'span', [ 'dir' => 'ltr', 'lang' => 'en' ], $sourceInfo['name'] );
+					$extname = $sourceInfo['name'];
 				}
 				$help['flags'] .= Html::rawElement( 'li', null,
 					self::wrap(
@@ -362,9 +359,7 @@ class ApiHelp extends ApiBase {
 
 				$link = SpecialPage::getTitleFor( 'Version', 'License/' . $sourceInfo['name'] );
 				if ( isset( $sourceInfo['license-name'] ) ) {
-					$msg = $context->msg( 'api-help-license', $link,
-						Html::element( 'span', [ 'dir' => 'ltr', 'lang' => 'en' ], $sourceInfo['license-name'] )
-					);
+					$msg = $context->msg( 'api-help-license', $link, $sourceInfo['license-name'] );
 				} elseif ( SpecialVersion::getExtLicenseFileName( dirname( $sourceInfo['path'] ) ) ) {
 					$msg = $context->msg( 'api-help-license-noname', $link );
 				} else {
@@ -406,7 +401,7 @@ class ApiHelp extends ApiBase {
 				$help['help-urls'] .= Html::openElement( 'ul' );
 				foreach ( $urls as $url ) {
 					$help['help-urls'] .= Html::rawElement( 'li', null,
-						Html::element( 'a', [ 'href' => $url, 'dir' => 'ltr' ], $url )
+						Html::element( 'a', [ 'href' => $url ], $url )
 					);
 				}
 				$help['help-urls'] .= Html::closeElement( 'ul' );
@@ -435,9 +430,8 @@ class ApiHelp extends ApiBase {
 						$settings = [ ApiBase::PARAM_DFLT => $settings ];
 					}
 
-					$help['parameters'] .= Html::rawElement( 'dt', null,
-						Html::element( 'span', [ 'dir' => 'ltr', 'lang' => 'en' ], $module->encodeParamName( $name ) )
-					);
+					$help['parameters'] .= Html::element( 'dt', null,
+						$module->encodeParamName( $name ) );
 
 					// Add description
 					$description = [];
@@ -492,9 +486,8 @@ class ApiHelp extends ApiBase {
 							$links = isset( $settings[ApiBase::PARAM_VALUE_LINKS] )
 								? $settings[ApiBase::PARAM_VALUE_LINKS]
 								: [];
-							$values = array_map( function ( $v ) use ( $links ) {
-								// We can't know whether this contains LTR or RTL text.
-								$ret = $v === '' ? $v : Html::element( 'span', [ 'dir' => 'auto' ], $v );
+							$type = array_map( function ( $v ) use ( $links ) {
+								$ret = wfEscapeWikiText( $v );
 								if ( isset( $links[$v] ) ) {
 									$ret = "[[{$links[$v]}|$ret]]";
 								}
@@ -502,17 +495,17 @@ class ApiHelp extends ApiBase {
 							}, $type );
 							$i = array_search( '', $type, true );
 							if ( $i === false ) {
-								$values = $context->getLanguage()->commaList( $values );
+								$type = $context->getLanguage()->commaList( $type );
 							} else {
-								unset( $values[$i] );
-								$values = $context->msg( 'api-help-param-list-can-be-empty' )
-									->numParams( count( $values ) )
-									->params( $context->getLanguage()->commaList( $values ) )
+								unset( $type[$i] );
+								$type = $context->msg( 'api-help-param-list-can-be-empty' )
+									->numParams( count( $type ) )
+									->params( $context->getLanguage()->commaList( $type ) )
 									->parse();
 							}
 							$info[] = $context->msg( 'api-help-param-list' )
 								->params( $multi ? 2 : 1 )
-								->params( $values )
+								->params( $type )
 								->parse();
 							$hintPipeSeparated = false;
 						} else {
@@ -532,8 +525,7 @@ class ApiHelp extends ApiBase {
 										$prefix = $module->isMain()
 											? '' : ( $module->getModulePath() . '+' );
 										$submodules = array_map( function ( $name ) use ( $prefix ) {
-											$text = Html::element( 'span', [ 'dir' => 'ltr', 'lang' => 'en' ], $name );
-											return "[[Special:ApiHelp/{$prefix}{$name}|{$text}]]";
+											return "[[Special:ApiHelp/{$prefix}{$name}|{$name}]]";
 										}, $submodules );
 									}
 									$count = count( $submodules );
@@ -656,9 +648,8 @@ class ApiHelp extends ApiBase {
 						$info[] = $context->msg( 'api-help-param-default-empty' )
 							->parse();
 					} elseif ( $default !== null && $default !== false ) {
-						// We can't know whether this contains LTR or RTL text.
 						$info[] = $context->msg( 'api-help-param-default' )
-							->params( Html::element( 'span', [ 'dir' => 'auto' ], $default ) )
+							->params( wfEscapeWikiText( $default ) )
 							->parse();
 					}
 
@@ -730,7 +721,7 @@ class ApiHelp extends ApiBase {
 					$sandbox = SpecialPage::getTitleFor( 'ApiSandbox' )->getLocalURL() . '#' . $qs;
 					$help['examples'] .= Html::rawElement( 'dt', null, $msg->parse() );
 					$help['examples'] .= Html::rawElement( 'dd', null,
-						Html::element( 'a', [ 'href' => $link, 'dir' => 'ltr' ], "api.php?$qs" ) . ' ' .
+						Html::element( 'a', [ 'href' => $link ], "api.php?$qs" ) . ' ' .
 						Html::rawElement( 'a', [ 'href' => $sandbox ],
 							$context->msg( 'api-help-open-in-apisandbox' )->parse() )
 					);

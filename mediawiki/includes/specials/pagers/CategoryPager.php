@@ -18,7 +18,6 @@
  * @file
  * @ingroup Pager
  */
-use MediaWiki\Linker\LinkRenderer;
 
 /**
  * @ingroup Pager
@@ -26,16 +25,16 @@ use MediaWiki\Linker\LinkRenderer;
 class CategoryPager extends AlphabeticPager {
 
 	/**
-	 * @var LinkRenderer
+	 * @var PageLinkRenderer
 	 */
 	protected $linkRenderer;
 
 	/**
 	 * @param IContextSource $context
 	 * @param string $from
-	 * @param LinkRenderer $linkRenderer
+	 * @param PageLinkRenderer $linkRenderer
 	 */
-	public function __construct( IContextSource $context, $from, LinkRenderer $linkRenderer
+	public function __construct( IContextSource $context, $from, PageLinkRenderer $linkRenderer
 	) {
 		parent::__construct( $context );
 		$from = str_replace( ' ', '_', $from );
@@ -75,7 +74,7 @@ class CategoryPager extends AlphabeticPager {
 		$this->mResult->rewind();
 
 		foreach ( $this->mResult as $row ) {
-			$batch->addObj( new TitleValue( NS_CATEGORY, $row->cat_title ) );
+			$batch->addObj( Title::makeTitleSafe( NS_CATEGORY, $row->cat_title ) );
 		}
 		$batch->execute();
 		$this->mResult->rewind();
@@ -86,7 +85,7 @@ class CategoryPager extends AlphabeticPager {
 	function formatRow( $result ) {
 		$title = new TitleValue( NS_CATEGORY, $result->cat_title );
 		$text = $title->getText();
-		$link = $this->linkRenderer->makeLink( $title, $text );
+		$link = $this->linkRenderer->renderHtmlLink( $title, $text );
 
 		$count = $this->msg( 'nmembers' )->numParams( $result->cat_pages )->escaped();
 		return Html::rawElement( 'li', null, $this->getLanguage()->specialList( $link, $count ) ) . "\n";

@@ -6,19 +6,25 @@
  */
 class TestUser {
 	/**
+	 * @deprecated Since 1.25. Use TestUser::getUser()->getName()
+	 * @private
 	 * @var string
 	 */
-	private $username;
+	public $username;
 
 	/**
+	 * @deprecated Since 1.25. Use TestUser::getPassword()
+	 * @private
 	 * @var string
 	 */
-	private $password;
+	public $password;
 
 	/**
+	 * @deprecated Since 1.25. Use TestUser::getUser()
+	 * @private
 	 * @var User
 	 */
-	private $user;
+	public $user;
 
 	private function assertNotReal() {
 		global $wgDBprefix;
@@ -72,12 +78,6 @@ class TestUser {
 			$this->user->removeGroup( $group );
 		}
 		if ( $change ) {
-			// Disable CAS check before saving. The User object may have been initialized from cached
-			// information that may be out of whack with the database during testing. If tests were
-			// perfectly isolated, this would not happen. But if it does happen, let's just ignore the
-			// inconsistency, and just write the data we want - during testing, we are not worried
-			// about data loss.
-			$this->user->mTouched = '';
 			$this->user->saveSettings();
 		}
 	}
@@ -129,32 +129,20 @@ class TestUser {
 			throw new MWException( "Passed User has not been added to the database yet!" );
 		}
 
-		$dbw = wfGetDB( DB_MASTER );
-		$row = $dbw->selectRow(
+		$passwordFactory = new PasswordFactory();
+		$passwordFactory->init( RequestContext::getMain()->getConfig() );
+		// A is unsalted MD5 (thus fast) ... we don't care about security here, this is test only
+		$passwordFactory->setDefaultType( 'A' );
+		$pwhash = $passwordFactory->newFromPlaintext( $password );
+		wfGetDB( DB_MASTER )->update(
 			'user',
-			[ 'user_password' ],
+			[ 'user_password' => $pwhash->toString() ],
 			[ 'user_id' => $user->getId() ],
 			__METHOD__
 		);
-		if ( !$row ) {
-			throw new MWException( "Passed User has an ID but is not in the database?" );
-		}
-
-		$passwordFactory = new PasswordFactory();
-		$passwordFactory->init( RequestContext::getMain()->getConfig() );
-		if ( !$passwordFactory->newFromCiphertext( $row->user_password )->equals( $password ) ) {
-			$passwordHash = $passwordFactory->newFromPlaintext( $password );
-			$dbw->update(
-				'user',
-				[ 'user_password' => $passwordHash->toString() ],
-				[ 'user_id' => $user->getId() ],
-				__METHOD__
-			);
-		}
 	}
 
 	/**
-	 * @since 1.25
 	 * @return User
 	 */
 	public function getUser() {
@@ -162,7 +150,6 @@ class TestUser {
 	}
 
 	/**
-	 * @since 1.25
 	 * @return string
 	 */
 	public function getPassword() {

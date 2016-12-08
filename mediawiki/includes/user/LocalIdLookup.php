@@ -60,8 +60,10 @@ class LocalIdLookup extends CentralIdLookup {
 		}
 
 		$audience = $this->checkAudience( $audience );
-		list( $index, $options ) = DBAccessObjectUtils::getDBOptions( $flags );
-		$db = wfGetDB( $index );
+		$db = wfGetDB( ( $flags & self::READ_LATEST ) ? DB_MASTER : DB_SLAVE );
+		$options = ( ( $flags & self::READ_LOCKING ) == self::READ_LOCKING )
+			? [ 'LOCK IN SHARE MODE' ]
+			: [];
 
 		$tables = [ 'user' ];
 		$fields = [ 'user_id', 'user_name' ];
@@ -91,8 +93,10 @@ class LocalIdLookup extends CentralIdLookup {
 		}
 
 		$audience = $this->checkAudience( $audience );
-		list( $index, $options ) = DBAccessObjectUtils::getDBOptions( $flags );
-		$db = wfGetDB( $index );
+		$db = wfGetDB( ( $flags & self::READ_LATEST ) ? DB_MASTER : DB_SLAVE );
+		$options = ( ( $flags & self::READ_LOCKING ) == self::READ_LOCKING )
+			? [ 'LOCK IN SHARE MODE' ]
+			: [];
 
 		$tables = [ 'user' ];
 		$fields = [ 'user_id', 'user_name' ];

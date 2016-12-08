@@ -5,15 +5,13 @@
 // author : Tal Ater : https://github.com/TalAter
 
 (function (factory) {
-    // Comment out broken wrapper, see T145382
-    /*if (typeof define === 'function' && define.amd) {
+    if (typeof define === 'function' && define.amd) {
         define(['moment'], factory); // AMD
     } else if (typeof exports === 'object') {
         module.exports = factory(require('../moment')); // Node
     } else {
         factory((typeof global !== 'undefined' ? global : this).moment); // node or other global
-    }*/
-    factory(this.moment);
+    }
 }(function (moment) {
     return moment.defineLocale('he', {
         months : 'ינואר_פברואר_מרץ_אפריל_מאי_יוני_יולי_אוגוסט_ספטמבר_אוקטובר_נובמבר_דצמבר'.split('_'),

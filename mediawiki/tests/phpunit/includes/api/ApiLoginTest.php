@@ -17,7 +17,7 @@ class ApiLoginTest extends ApiTestCase {
 			'wsTokenSecrets' => [ 'login' => 'foobar' ],
 		];
 		$data = $this->doApiRequest( [ 'action' => 'login',
-			'lgname' => '', 'lgpassword' => self::$users['sysop']->getPassword(),
+			'lgname' => '', 'lgpassword' => self::$users['sysop']->password,
 			'lgtoken' => (string)( new MediaWiki\Session\Token( 'foobar', '' ) )
 		], $session );
 		$this->assertEquals( 'Failed', $data[0]['login']['result'] );
@@ -27,7 +27,6 @@ class ApiLoginTest extends ApiTestCase {
 		global $wgServer;
 
 		$user = self::$users['sysop'];
-		$userName = $user->getUser()->getName();
 		$user->getUser()->logout();
 
 		if ( !isset( $wgServer ) ) {
@@ -35,7 +34,7 @@ class ApiLoginTest extends ApiTestCase {
 		}
 		$ret = $this->doApiRequest( [
 			"action" => "login",
-			"lgname" => $userName,
+			"lgname" => $user->username,
 			"lgpassword" => "bad",
 		] );
 
@@ -51,7 +50,7 @@ class ApiLoginTest extends ApiTestCase {
 			[
 				"action" => "login",
 				"lgtoken" => $token,
-				"lgname" => $userName,
+				"lgname" => $user->username,
 				"lgpassword" => "badnowayinhell",
 			],
 			$ret[2]
@@ -73,14 +72,12 @@ class ApiLoginTest extends ApiTestCase {
 		}
 
 		$user = self::$users['sysop'];
-		$userName = $user->getUser()->getName();
-		$password = $user->getPassword();
 		$user->getUser()->logout();
 
 		$ret = $this->doApiRequest( [
 				"action" => "login",
-				"lgname" => $userName,
-				"lgpassword" => $password,
+				"lgname" => $user->username,
+				"lgpassword" => $user->password,
 			]
 		);
 
@@ -96,8 +93,8 @@ class ApiLoginTest extends ApiTestCase {
 			[
 				"action" => "login",
 				"lgtoken" => $token,
-				"lgname" => $userName,
-				"lgpassword" => $password,
+				"lgname" => $user->username,
+				"lgpassword" => $user->password,
 			],
 			$ret[2]
 		);
@@ -123,14 +120,12 @@ class ApiLoginTest extends ApiTestCase {
 			$this->markTestIncomplete( 'This test needs $wgServer to be set in LocalSettings.php' );
 		}
 		$user = self::$users['sysop'];
-		$userName = $user->getUser()->getName();
-		$password = $user->getPassword();
 
 		$req = MWHttpRequest::factory( self::$apiUrl . "?action=login&format=xml",
 			[ "method" => "POST",
 				"postData" => [
-					"lgname" => $userName,
-					"lgpassword" => $password
+					"lgname" => $user->username,
+					"lgpassword" => $user->password
 				]
 			],
 			__METHOD__
@@ -149,8 +144,8 @@ class ApiLoginTest extends ApiTestCase {
 
 		$req->setData( [
 			"lgtoken" => $token,
-			"lgname" => $userName,
-			"lgpassword" => $password ] );
+			"lgname" => $user->username,
+			"lgpassword" => $user->password ] );
 		$req->execute();
 
 		$cj = $req->getCookieJar();
@@ -165,14 +160,11 @@ class ApiLoginTest extends ApiTestCase {
 	}
 
 	public function testRunLogin() {
-		$user = self::$users['sysop'];
-		$userName = $user->getUser()->getName();
-		$password = $user->getPassword();
-
+		$sysopUser = self::$users['sysop'];
 		$data = $this->doApiRequest( [
 			'action' => 'login',
-			'lgname' => $userName,
-			'lgpassword' => $password ] );
+			'lgname' => $sysopUser->username,
+			'lgpassword' => $sysopUser->password ] );
 
 		$this->assertArrayHasKey( "login", $data[0] );
 		$this->assertArrayHasKey( "result", $data[0]['login'] );
@@ -182,12 +174,13 @@ class ApiLoginTest extends ApiTestCase {
 		$data = $this->doApiRequest( [
 			'action' => 'login',
 			"lgtoken" => $token,
-			"lgname" => $userName,
-			"lgpassword" => $password ], $data[2] );
+			"lgname" => $sysopUser->username,
+			"lgpassword" => $sysopUser->password ], $data[2] );
 
 		$this->assertArrayHasKey( "login", $data[0] );
 		$this->assertArrayHasKey( "result", $data[0]['login'] );
 		$this->assertEquals( "Success", $data[0]['login']['result'] );
+		$this->assertArrayHasKey( 'lgtoken', $data[0]['login'] );
 	}
 
 	public function testBotPassword() {
@@ -230,11 +223,11 @@ class ApiLoginTest extends ApiTestCase {
 		$centralId = CentralIdLookup::factory()->centralIdFromLocalUser( $user->getUser() );
 		$this->assertNotEquals( 0, $centralId, 'sanity check' );
 
-		$password = 'ngfhmjm64hv0854493hsj5nncjud2clk';
 		$passwordFactory = new PasswordFactory();
 		$passwordFactory->init( RequestContext::getMain()->getConfig() );
 		// A is unsalted MD5 (thus fast) ... we don't care about security here, this is test only
-		$passwordHash = $passwordFactory->newFromPlaintext( $password );
+		$passwordFactory->setDefaultType( 'A' );
+		$pwhash = $passwordFactory->newFromPlaintext( 'foobaz' );
 
 		$dbw = wfGetDB( DB_MASTER );
 		$dbw->insert(
@@ -242,7 +235,7 @@ class ApiLoginTest extends ApiTestCase {
 			[
 				'bp_user' => $centralId,
 				'bp_app_id' => 'foo',
-				'bp_password' => $passwordHash->toString(),
+				'bp_password' => $pwhash->toString(),
 				'bp_token' => '',
 				'bp_restrictions' => MWRestrictions::newDefault()->toJson(),
 				'bp_grants' => '["test"]',
@@ -250,12 +243,12 @@ class ApiLoginTest extends ApiTestCase {
 			__METHOD__
 		);
 
-		$lgName = $user->getUser()->getName() . BotPassword::getSeparator() . 'foo';
+		$lgName = $user->username . BotPassword::getSeparator() . 'foo';
 
 		$ret = $this->doApiRequest( [
 			'action' => 'login',
 			'lgname' => $lgName,
-			'lgpassword' => $password,
+			'lgpassword' => 'foobaz',
 		] );
 
 		$result = $ret[0];
@@ -270,7 +263,7 @@ class ApiLoginTest extends ApiTestCase {
 			'action' => 'login',
 			'lgtoken' => $token,
 			'lgname' => $lgName,
-			'lgpassword' => $password,
+			'lgpassword' => 'foobaz',
 		], $ret[2] );
 
 		$result = $ret[0];

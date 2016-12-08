@@ -230,7 +230,7 @@ class WebPHandler extends BitmapHandler {
 		if ( $file === null ) {
 			$metadata = self::getMetadata( $file, $path );
 		}
-		if ( $metadata === false && $file instanceof File ) {
+		if ( $metadata === false ) {
 			$metadata = $file->getMetadata();
 		}
 

@@ -821,12 +821,26 @@ ve.dm.MWImageModel.prototype.getCurrentDimensions = function () {
  */
 ve.dm.MWImageModel.prototype.getCaptionDocument = function () {
 	if ( !this.captionDoc ) {
-		this.captionDoc = this.parentDoc.cloneWithData( [
-			{ type: 'paragraph', internal: { generated: 'wrapper' } },
-			{ type: '/paragraph' },
-			{ type: 'internalList' },
-			{ type: '/internalList' }
-		] );
+		this.captionDoc = new ve.dm.Document(
+			[
+				{ type: 'paragraph', internal: { generated: 'wrapper' } },
+				{ type: '/paragraph' },
+				{ type: 'internalList' },
+				{ type: '/internalList' }
+			],
+			// htmlDocument
+			this.parentDoc.getHtmlDocument(),
+			// parentDocument
+			null,
+			// internalList
+			null,
+			// innerWhitespace
+			null,
+			// lang
+			this.parentDoc.getLang(),
+			// dir
+			this.parentDoc.getDir()
+		);
 	}
 	return this.captionDoc;
 };

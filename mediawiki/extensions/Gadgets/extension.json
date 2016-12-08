@@ -76,8 +76,8 @@
 		"GadgetDefinitionDeletionUpdate": "includes/content/GadgetDefinitionDeletionUpdate.php"
 	},
 	"Hooks": {
-		"PageContentSaveComplete": [
-			"GadgetHooks::onPageContentSaveComplete"
+		"ArticleSaveComplete": [
+			"GadgetHooks::articleSaveComplete"
 		],
 		"BeforePageDisplay": [
 			"GadgetHooks::beforePageDisplay"
@@ -102,6 +102,9 @@
 		],
 		"ResourceLoaderRegisterModules": [
 			"GadgetHooks::registerModules"
+		],
+		"UnitTestsList": [
+			"GadgetHooks::onUnitTestsList"
 		],
 		"wgQueryPages": [
 			"GadgetHooks::onwgQueryPages"

@@ -29,10 +29,10 @@ class SpecialSearchTest extends MediaWikiTestCase {
 			$this->newUserWithSearchNS( $userOptions )
 		);
 		/*
-		$context->setRequest( new FauxRequest( [
+		$context->setRequest( new FauxRequest( array(
 			'ns5'=>true,
 			'ns6'=>true,
-		] ));
+		) ));
 		 */
 		$context->setRequest( new FauxRequest( $requested ) );
 		$search = new SpecialSearch();

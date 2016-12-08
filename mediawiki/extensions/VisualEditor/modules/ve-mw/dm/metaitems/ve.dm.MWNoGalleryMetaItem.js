@@ -13,9 +13,9 @@
  * @constructor
  * @param {Object} element Reference to element in meta-linmod
  */
-ve.dm.MWNoGalleryMetaItem = function VeDmMWNoGalleryMetaItem() {
+ve.dm.MWNoGalleryMetaItem = function VeDmMWNoGalleryMetaItem( element ) {
 	// Parent constructor
-	ve.dm.MWNoGalleryMetaItem.super.apply( this, arguments );
+	ve.dm.MetaItem.call( this, element );
 };
 
 /* Inheritance */

@@ -25,7 +25,7 @@ ve.ui.MWParameterPage = function VeUiMWParameterPage( parameter, name, config ) 
 	}, config );
 
 	// Parent constructor
-	ve.ui.MWParameterPage.super.call( this, name, config );
+	OO.ui.PageLayout.call( this, name, config );
 
 	// Properties
 	this.edited = false;
@@ -105,7 +105,8 @@ ve.ui.MWParameterPage = function VeUiMWParameterPage( parameter, name, config ) 
 		);
 	this.$more
 		.addClass( 've-ui-mwParameterPage-more' )
-		.append( this.addButton.$element );
+		.append( this.addButton.$element )
+		.focus( this.onAddButtonFocus.bind( this ) );
 	this.$element
 		.addClass( 've-ui-mwParameterPage' )
 		.append( this.$info, this.$field, this.$actions, this.$more );
@@ -341,9 +342,9 @@ ve.ui.MWParameterPage.prototype.onLabelClick = function () {
 /**
  * @inheritdoc
  */
-ve.ui.MWParameterPage.prototype.setOutlineItem = function () {
+ve.ui.MWParameterPage.prototype.setOutlineItem = function ( outlineItem ) {
 	// Parent method
-	ve.ui.MWParameterPage.super.prototype.setOutlineItem.apply( this, arguments );
+	OO.ui.PageLayout.prototype.setOutlineItem.call( this, outlineItem );
 
 	if ( this.outlineItem ) {
 		this.outlineItem
