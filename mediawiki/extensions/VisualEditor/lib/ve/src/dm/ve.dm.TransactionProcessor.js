@@ -54,7 +54,6 @@ ve.dm.TransactionProcessor.processors = {};
  * Get the next operation.
  *
  * @method
- * @return {Object|boolean} The next operation, or false if there isn't one
  */
 ve.dm.TransactionProcessor.prototype.nextOperation = function () {
 	return this.operations[ this.operationIndex++ ] || false;
@@ -428,9 +427,6 @@ ve.dm.TransactionProcessor.processors.annotate = function ( op ) {
 		throw new Error( 'Invalid annotation method ' + op.method );
 	}
 	annotation = this.document.getStore().value( op.index );
-	if ( !annotation ) {
-		throw new Error( 'No annotation stored for ' + op.index );
-	}
 	if ( op.bias === 'start' ) {
 		target.push( annotation );
 	} else {

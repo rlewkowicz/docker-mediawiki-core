@@ -10,7 +10,7 @@ QUnit.module( 've.dm.TransactionProcessor' );
 
 QUnit.test( 'commit', function ( assert ) {
 	var i, originalData, originalDoc,
-		msg, testDoc, txBuilder, tx, expectedData, expectedDoc,
+		msg, testDoc, tx, expectedData, expectedDoc,
 		n = 0,
 		store = ve.dm.example.createExampleDocument().getStore(),
 		bold = ve.dm.example.createAnnotation( ve.dm.example.bold ),
@@ -597,8 +597,8 @@ QUnit.test( 'commit', function ( assert ) {
 					data.splice( 32, 1 ); // remove '/listItem'
 					data.splice( 20, 1 ); // remove 'listItem'
 					data.splice( 17, 1 ); // remove '/listItem'
-					data.splice( 5, 1 ); // remove 'listItem'
-					data.splice( 2, 1 ); // remove 'list'
+					data.splice(  5, 1 ); // remove 'listItem'
+					data.splice(  2, 1 ); // remove 'list'
 				}
 			},
 			'inserting trailing metadata (1)': {
@@ -683,8 +683,7 @@ QUnit.test( 'commit', function ( assert ) {
 		);
 		testDoc.buildNodeTree();
 
-		txBuilder = new ve.dm.TransactionBuilder();
-		tx = null;
+		tx = new ve.dm.Transaction();
 		for ( i = 0; i < cases[ msg ].calls.length; i++ ) {
 			// some calls need the document as its first argument
 			if ( /^(pushReplace$|new)/.test( cases[ msg ].calls[ i ][ 0 ] ) ) {
@@ -692,13 +691,10 @@ QUnit.test( 'commit', function ( assert ) {
 			}
 			// special case static methods of Transaction
 			if ( /^new/.test( cases[ msg ].calls[ i ][ 0 ] ) ) {
-				tx = ve.dm.TransactionBuilder.static[ cases[ msg ].calls[ i ][ 0 ] ].apply( null, cases[ msg ].calls[ i ].slice( 1 ) );
+				tx = ve.dm.Transaction[ cases[ msg ].calls[ i ][ 0 ] ].apply( null, cases[ msg ].calls[ i ].slice( 1 ) );
 				break;
 			}
-			txBuilder[ cases[ msg ].calls[ i ][ 0 ] ].apply( txBuilder, cases[ msg ].calls[ i ].slice( 1 ) );
-		}
-		if ( tx === null ) {
-			tx = txBuilder.getTransaction();
+			tx[ cases[ msg ].calls[ i ][ 0 ] ].apply( tx, cases[ msg ].calls[ i ].slice( 1 ) );
 		}
 
 		if ( 'expected' in cases[ msg ] ) {
@@ -726,8 +722,8 @@ QUnit.test( 'commit', function ( assert ) {
 				'rollback (tree): ' + msg
 			);
 		} else if ( 'exception' in cases[ msg ] ) {
+			/*jshint loopfunc:true */
 			assert.throws(
-				// eslint-disable-next-line no-loop-func
 				function () {
 					testDoc.commit( tx );
 				},

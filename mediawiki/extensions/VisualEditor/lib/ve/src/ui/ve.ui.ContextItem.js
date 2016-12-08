@@ -125,8 +125,6 @@ ve.ui.ContextItem.prototype.getFragment = function () {
 	return this.fragment;
 };
 
-/* eslint-disable valid-jsdoc */
-
 /**
  * Setup the item.
  *

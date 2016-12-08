@@ -119,6 +119,8 @@ ve.ce.FocusableNode.prototype.createHighlight = function () {
  * @method
  */
 ve.ce.FocusableNode.prototype.onFocusableSetup = function () {
+	var rAF = window.requestAnimationFrame || setTimeout;
+
 	// Exit if already setup or not attached
 	if ( this.isFocusableSetup || !this.root ) {
 		return;
@@ -144,11 +146,7 @@ ve.ce.FocusableNode.prototype.onFocusableSetup = function () {
 	// handles mousedown events.
 	if ( !this.$element.is( this.$focusable ) ) {
 		this.$element.on( {
-			'mousedown.ve-ce-focusableNode': function ( e ) {
-				if ( !ve.isContentEditable( e.target ) ) {
-					e.preventDefault();
-				}
-			}
+			'mousedown.ve-ce-focusableNode': function ( e ) { e.preventDefault(); }
 		} );
 	}
 
@@ -160,7 +158,7 @@ ve.ce.FocusableNode.prototype.onFocusableSetup = function () {
 			.find( 'img:not([width]),img:not([height])' )
 			.addBack( 'img:not([width]),img:not([height])' )
 			.on( 'load', this.updateInvisibleIcon.bind( this ) );
-		this.updateInvisibleIcon();
+		rAF( this.updateInvisibleIcon.bind( this ) );
 	}
 
 	this.isFocusableSetup = true;
@@ -176,31 +174,20 @@ ve.ce.FocusableNode.prototype.onFocusableSetup = function () {
  * @method
  */
 ve.ce.FocusableNode.prototype.updateInvisibleIcon = function () {
-	var showIcon,
-		rAF = window.requestAnimationFrame || setTimeout,
-		node = this;
-
 	if ( !this.constructor.static.iconWhenInvisible ) {
 		return;
 	}
-
-	showIcon = !this.hasRendering();
-
-	// Defer updating the DOM. If we don't do this, the hasRendering() call for the next
-	// FocusableNode will force a reflow, which is slow.
-	rAF( function () {
-		if ( showIcon ) {
-			if ( !node.$icon ) {
-				node.$icon = node.createInvisibleIcon();
-			}
-			node.$element.first()
-				.addClass( 've-ce-focusableNode-invisible' )
-				.prepend( node.$icon );
-		} else if ( node.$icon ) {
-			node.$element.first().removeClass( 've-ce-focusableNode-invisible' );
-			node.$icon.detach();
+	if ( !this.hasRendering() ) {
+		if ( !this.$icon ) {
+			this.$icon = this.createInvisibleIcon();
 		}
-	} );
+		this.$element.first()
+			.addClass( 've-ce-focusableNode-invisible' )
+			.prepend( this.$icon );
+	} else if ( this.$icon ) {
+		this.$element.first().removeClass( 've-ce-focusableNode-invisible' );
+		this.$icon.detach();
+	}
 };
 
 /**
@@ -315,7 +302,7 @@ ve.ce.FocusableNode.prototype.onFocusableDblClick = function () {
 ve.ce.FocusableNode.prototype.executeCommand = function () {
 	var command, surface;
 	if ( !this.model.isInspectable() ) {
-		return;
+		return false;
 	}
 	surface = this.focusableSurface.getSurface();
 	command = surface.commandRegistry.getCommandForNode( this );

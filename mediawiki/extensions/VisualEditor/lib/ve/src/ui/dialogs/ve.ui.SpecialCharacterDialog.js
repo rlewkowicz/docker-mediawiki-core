@@ -36,8 +36,6 @@ ve.ui.SpecialCharacterDialog.static.size = 'full';
 
 ve.ui.SpecialCharacterDialog.static.padded = false;
 
-ve.ui.SpecialCharacterDialog.static.handlesSource = true;
-
 /* Methods */
 
 /**

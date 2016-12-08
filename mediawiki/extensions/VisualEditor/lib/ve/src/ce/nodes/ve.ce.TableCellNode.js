@@ -131,10 +131,6 @@ ve.ce.TableCellNode.prototype.onSetup = function () {
 
 /**
  * Handle attribute changes to keep the live HTML element updated.
- *
- * @param {string} key Attribute name
- * @param {Mixed} from Old value
- * @param {Mixed} to Old value
  */
 ve.ce.TableCellNode.prototype.onAttributeChange = function ( key, from, to ) {
 	switch ( key ) {

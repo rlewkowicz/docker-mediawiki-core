@@ -164,9 +164,6 @@ ve.dm.Annotation.prototype.isGenerated = function () {
 
 /**
  * Compare two annotations using #getComparableObject
- *
- * @param {ve.dm.Annotation} annotation Other annotation to compare against
- * @return {boolean} Annotation is comparable
  */
 ve.dm.Annotation.prototype.compareTo = function ( annotation ) {
 	return ve.compare(

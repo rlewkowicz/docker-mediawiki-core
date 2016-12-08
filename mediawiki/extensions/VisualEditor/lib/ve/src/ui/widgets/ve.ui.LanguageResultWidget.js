@@ -30,7 +30,6 @@ OO.inheritClass( ve.ui.LanguageResultWidget, OO.ui.OptionWidget );
 
 /* Methods */
 
-// eslint-disable-next-line valid-jsdoc
 /**
  * Update labels based on query
  *

@@ -12,18 +12,13 @@
  *
  * @constructor
  * @param {ve.dm.Document} doc Document model to create surface for
- * @param {Object} [config] Configuration options
- * @cfg {boolean} [sourceMode] Source editing mode
  */
-ve.dm.Surface = function VeDmSurface( doc, config ) {
-	config = config || {};
-
+ve.dm.Surface = function VeDmSurface( doc ) {
 	// Mixin constructors
 	OO.EventEmitter.call( this );
 
 	// Properties
 	this.documentModel = doc;
-	this.sourceMode = !!config.sourceMode;
 	this.metaList = new ve.dm.MetaList( this );
 	this.selection = new ve.dm.NullSelection( this.getDocument() );
 	this.selectionBefore = new ve.dm.NullSelection( this.getDocument() );
@@ -42,7 +37,6 @@ ve.dm.Surface = function VeDmSurface( doc, config ) {
 	this.transacting = false;
 	this.queueingContextChanges = false;
 	this.contextChangeQueued = false;
-	this.author = null;
 
 	// Events
 	this.getDocument().connect( this, {
@@ -482,11 +476,7 @@ ve.dm.Surface.prototype.getTranslatedSelection = function () {
  * @return {ve.dm.SurfaceFragment} Surface fragment
  */
 ve.dm.Surface.prototype.getFragment = function ( selection, noAutoSelect, excludeInsertions ) {
-	selection = selection || this.selection;
-	// TODO: Use a factory pattery to generate fragments
-	return this.sourceMode ?
-		new ve.dm.SourceSurfaceFragment( this, selection, noAutoSelect, excludeInsertions ) :
-		new ve.dm.SurfaceFragment( this, selection, noAutoSelect, excludeInsertions );
+	return new ve.dm.SurfaceFragment( this, selection || this.selection, noAutoSelect, excludeInsertions );
 };
 
 /**
@@ -642,7 +632,6 @@ ve.dm.Surface.prototype.fixupRangeForLinks = function ( range ) {
  */
 ve.dm.Surface.prototype.setSelection = function ( selection ) {
 	var insertionAnnotations, selectedNode, range, selectedAnnotations,
-		rangeFocus, oldRangeFocus, focusRangeMovingBack,
 		oldSelection = this.selection,
 		branchNodes = {},
 		selectionChange = false,
@@ -696,23 +685,6 @@ ve.dm.Surface.prototype.setSelection = function ( selection ) {
 		if ( !selectedAnnotations.compareTo( this.selectedAnnotations ) ) {
 			this.selectedAnnotations = selectedAnnotations;
 			contextChange = true;
-		}
-
-		// Did the annotations at the focus point of a non-collapsed selection
-		// change? (i.e. did the selection move in/out of an annotation as it
-		// expanded?)
-		if ( selectionChange && !range.isCollapsed() && oldSelection instanceof ve.dm.LinearSelection ) {
-			rangeFocus = new ve.Range( range.to );
-			oldRangeFocus = new ve.Range( oldSelection.getRange().to );
-			focusRangeMovingBack = rangeFocus.to < oldRangeFocus.to;
-			// If we're moving back in the document, getInsertionAnnotationsFromRange
-			// needs to be told to fetch the annotations after the cursor, otherwise
-			// it'll trigger one position too soon.
-			if (
-				!linearData.getInsertionAnnotationsFromRange( rangeFocus, focusRangeMovingBack ).compareTo( linearData.getInsertionAnnotationsFromRange( oldRangeFocus, focusRangeMovingBack ) )
-			) {
-				contextChange = true;
-			}
 		}
 	} else if ( selection instanceof ve.dm.TableSelection ) {
 		selectedNode = selection.getMatrixCells()[ 0 ].node;
@@ -959,7 +931,7 @@ ve.dm.Surface.prototype.redo = function () {
  * @fires documentUpdate
  */
 ve.dm.Surface.prototype.onDocumentTransact = function ( tx ) {
-	this.setSelection( this.getSelection().translateByTransactionWithAuthor( tx, this.author ) );
+	this.setSelection( this.getSelection().translateByTransaction( tx ) );
 	this.emit( 'documentUpdate', tx );
 };
 
@@ -1023,26 +995,23 @@ ve.dm.Surface.prototype.onDocumentPreSynchronize = function ( tx ) {
 /**
  * Get a minimal set of ranges which have been modified by changes to the surface.
  *
- * @param {boolean} [includeCollapsed] Include collapsed ranges (removed content)
- * @param {boolean} [includeInternalList] Include changes within the internal list
  * @return {ve.Range[]} Modified ranges
  */
-ve.dm.Surface.prototype.getModifiedRanges = function ( includeCollapsed, includeInternalList ) {
-	var doc = this.getDocument(),
-		ranges = [],
+ve.dm.Surface.prototype.getModifiedRanges = function () {
+	var ranges = [],
 		compactRanges = [],
 		lastRange = null;
 
 	this.getHistory().forEach( function ( stackItem ) {
 		stackItem.transactions.forEach( function ( tx ) {
-			var newRange = tx.getModifiedRange( doc, includeInternalList );
+			var newRange = tx.getModifiedRange( this.documentModel );
 			// newRange will by null for no-ops
 			if ( newRange ) {
 				// Translate previous ranges by the current transaction
 				ranges.forEach( function ( range, i, arr ) {
 					arr[ i ] = tx.translateRange( range, true );
 				} );
-				if ( includeCollapsed || !newRange.isCollapsed() ) {
+				if ( !newRange.isCollapsed() ) {
 					ranges.push( newRange );
 				}
 			}
@@ -1050,7 +1019,7 @@ ve.dm.Surface.prototype.getModifiedRanges = function ( includeCollapsed, include
 	} );
 
 	ranges.sort( function ( a, b ) { return a.start - b.start; } ).forEach( function ( range ) {
-		if ( includeCollapsed || !range.isCollapsed() ) {
+		if ( !range.isCollapsed() ) {
 			if ( lastRange && lastRange.touchesRange( range ) ) {
 				compactRanges.pop();
 				range = lastRange.expand( range );
@@ -1061,22 +1030,4 @@ ve.dm.Surface.prototype.getModifiedRanges = function ( includeCollapsed, include
 	} );
 
 	return compactRanges;
-};
-
-/**
- * Get the author id
- *
- * @return {string} The author id
- */
-ve.dm.Surface.prototype.getAuthor = function () {
-	return this.author;
-};
-
-/**
- * Set the author id
- *
- * @param {string} author The new author id
- */
-ve.dm.Surface.prototype.setAuthor = function ( author ) {
-	this.author = author;
 };

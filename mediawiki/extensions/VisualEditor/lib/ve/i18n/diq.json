@@ -8,8 +8,7 @@
 			"Mirzali",
 			"Se4598",
 			"Kumkumuk",
-			"Asmen",
-			"1917 Ekim Devrimi"
+			"Asmen"
 		]
 	},
 	"visualeditor": "Vurnayoğê vênayışi",
@@ -41,13 +40,6 @@
 	"visualeditor-content-select-all": "Pêrıne weçine",
 	"visualeditor-contextitemwidget-label-remove": "Bestere",
 	"visualeditor-contextitemwidget-label-secondary": "Bıvurne",
-	"visualeditor-debugbar-close": "Racın",
-	"visualeditor-debugbar-inputdebug": "xeta weçinayışa deqewtan",
-	"visualeditor-debugbar-logrange": "Qeyd",
-	"visualeditor-debugbar-showmodel": "Modeli bıvin",
-	"visualeditor-debugbar-startfilibuster": "Filibuster",
-	"visualeditor-debugbar-stopfilibuster": "Filibusteri vındarn",
-	"visualeditor-debugbar-updatemodel": "vurnayışi rocane kı",
 	"visualeditor-dialog-action-apply": "Tetbiqa vırnayışa",
 	"visualeditor-dialog-action-cancel": "Bıtexelne",
 	"visualeditor-dialog-action-done": "Qeyd ke",

@@ -158,10 +158,10 @@ ve.dm.example.language = function ( lang, dir ) {
 
 ve.dm.example.annIndex = function ( tagName, text ) {
 	var ann = ve.copy( {
-		b: ve.dm.example.bold,
-		i: ve.dm.example.italic,
-		u: ve.dm.example.underline
-	}[ tagName ] );
+			b: ve.dm.example.bold,
+			i: ve.dm.example.italic,
+			u: ve.dm.example.underline
+		}[ tagName ] );
 
 	ann.originalDomElementsIndex = ve.dm.IndexValueStore.prototype.indexOfValue( null, '<' + tagName + '>' + text + '</' + tagName + '>' );
 	return ve.dm.IndexValueStore.prototype.indexOfValue( ann );
@@ -1622,7 +1622,7 @@ ve.dm.example.domToDataCases = {
 		ceHtml: ve.dm.example.blockSlug +
 			'<figure class="ve-ce-branchNode ve-ce-focusableNode ve-ce-imageNode ve-ce-blockImageNode" contenteditable="false">' +
 				'<img src="https://upload.wikimedia.org/wikipedia/commons/b/b3/Wikipedia-logo-v2-en.svg" alt="Example" style="width: 100px; height: 50px;">' +
-				'<figcaption class="ve-ce-branchNode ve-ce-activeNode" contenteditable="true" spellcheck="true">' +
+				'<figcaption class="ve-ce-branchNode">' +
 					'<p class="ve-ce-branchNode ve-ce-contentBranchNode ve-ce-paragraphNode ve-ce-generated-wrapper">caption</p>' +
 				'</figcaption>' +
 			'</figure>' +
@@ -3441,41 +3441,6 @@ ve.dm.example.domToDataCases = {
 		],
 		normalizedBody: '<p><!--&#62;Foo-bar-&#45;>b&#38;r&#45;--></p>',
 		clipboardBody: '<p><span rel="ve:Comment" data-ve-comment=">Foo-bar-->b&amp;r-">&nbsp;</span></p>'
-	},
-	'article and sections': {
-		body: '<article><header>Foo</header><section>Bar</section><footer>Baz</footer></article>',
-		data: [
-			{ type: 'article' },
-			{ type: 'section', attributes: { style: 'header' } },
-			{ type: 'paragraph', internal: { generated: 'wrapper' } },
-			'F', 'o', 'o',
-			{ type: '/paragraph' },
-			{ type: '/section' },
-			{ type: 'section', attributes: { style: 'section' } },
-			{ type: 'paragraph', internal: { generated: 'wrapper' } },
-			'B', 'a', 'r',
-			{ type: '/paragraph' },
-			{ type: '/section' },
-			{ type: 'section', attributes: { style: 'footer' } },
-			{ type: 'paragraph', internal: { generated: 'wrapper' } },
-			'B', 'a', 'z',
-			{ type: '/paragraph' },
-			{ type: '/section' },
-			{ type: '/article' },
-			{ type: 'internalList' },
-			{ type: '/internalList' }
-		],
-		ceHtml: '<article class="ve-ce-branchNode ve-ce-articleNode" contenteditable="false">' +
-			'<header class="ve-ce-branchNode ve-ce-activeNode ve-ce-sectionNode" contenteditable="true" spellcheck="true">' +
-			'<p class="ve-ce-branchNode ve-ce-contentBranchNode ve-ce-paragraphNode ve-ce-generated-wrapper">Foo</p>' +
-			'</header>' +
-			'<section class="ve-ce-branchNode ve-ce-activeNode ve-ce-sectionNode" contenteditable="true" spellcheck="true">' +
-			'<p class="ve-ce-branchNode ve-ce-contentBranchNode ve-ce-paragraphNode ve-ce-generated-wrapper">Bar</p>' +
-			'</section>' +
-			'<footer class="ve-ce-branchNode ve-ce-activeNode ve-ce-sectionNode" contenteditable="true" spellcheck="true">' +
-			'<p class="ve-ce-branchNode ve-ce-contentBranchNode ve-ce-paragraphNode ve-ce-generated-wrapper">Baz</p>' +
-			'</footer>' +
-			'</article>'
 	},
 	'other block nodes': {
 		body: '<center>Foo</center><hr><blockquote>Bar</blockquote>',

@@ -69,6 +69,7 @@ ve.ce.TextState.static.getChunks = function ( element ) {
 		// If appropriate, step into first child and loop
 		// If no next sibling, step out until there is (breaking if we leave element)
 		// Step to next sibling and loop
+		// jscs:disable disallowEmptyBlocks
 		if ( node.nodeType === Node.TEXT_NODE ) {
 			add( node.data.replace( /\u00A0/g, ' ' ) );
 		} else if (
@@ -419,5 +420,5 @@ ve.ce.TextState.prototype.getChangeTransaction = function ( prev, modelDoc, mode
 		ve.batchPush( newData, data );
 	}
 
-	return ve.dm.TransactionBuilder.static.newFromReplacement( modelDoc, removeRange, newData );
+	return ve.dm.Transaction.newFromReplacement( modelDoc, removeRange, newData );
 };
