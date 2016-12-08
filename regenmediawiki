@@ -51,6 +51,7 @@ pruneExtentions (){
 	VisualEditor$
 	END
 	)`; do rm -rf $i; done
+	sed -i 's/branch = ./branch = REL1_27/g' .gitmodules
 	git add -A
 	git commit . -m 'doot'
 	git submodule update --init --recursive --remote
