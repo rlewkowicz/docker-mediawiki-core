@@ -53,7 +53,7 @@ pruneExtentions (){
 	)`; do rm -rf $i; done
 	git add -A
 	git commit . -m 'doot'
-	git submodule update --init --recursive
+	git submodule update --init --recursive --remote
 }
 
 mergeSkinsAndExtentions (){
