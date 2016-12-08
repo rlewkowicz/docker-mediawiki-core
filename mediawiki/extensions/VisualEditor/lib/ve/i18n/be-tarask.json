@@ -6,8 +6,7 @@
 			"Чаховіч Уладзіслаў",
 			"Red Winged Duck",
 			"Jim-by",
-			"Renessaince",
-			"Kareyac"
+			"Renessaince"
 		]
 	},
 	"visualeditor": "VisualEditor",
@@ -37,7 +36,6 @@
 	"visualeditor-content-select-all": "Выбраць усё",
 	"visualeditor-contextitemwidget-label-remove": "Выдаліць",
 	"visualeditor-contextitemwidget-label-secondary": "Рэдагаваць",
-	"visualeditor-debugbar-close": "Закрыць",
 	"visualeditor-dialog-action-apply": "Ужыць зьмены",
 	"visualeditor-dialog-action-cancel": "Скасаваць",
 	"visualeditor-dialog-action-done": "Зроблена",

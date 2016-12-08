@@ -35,9 +35,7 @@ ve.init.sa.Target = function VeInitSaTarget( config ) {
 	// Parent constructor
 	ve.init.sa.Target.super.call( this, config );
 
-	this.$element
-		.addClass( 've-init-sa-target' )
-		.attr( 'lang', ve.init.platform.getUserLanguages()[ 0 ] );
+	this.$element.addClass( 've-init-sa-target' );
 };
 
 /* Inheritance */

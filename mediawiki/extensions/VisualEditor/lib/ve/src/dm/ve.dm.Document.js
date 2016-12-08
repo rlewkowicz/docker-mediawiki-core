@@ -50,7 +50,6 @@ ve.dm.Document = function VeDmDocument( data, htmlDocument, parentDocument, inte
 	// Properties
 	this.parentDocument = parentDocument;
 	this.completeHistory = [];
-	this.storeLengthAtHistoryLength = [ 0 ];
 	this.nodesByType = {};
 
 	if ( data instanceof ve.dm.ElementLinearData ) {
@@ -341,7 +340,6 @@ ve.dm.Document.prototype.commit = function ( transaction, isStaging ) {
 		doc.emit( 'presynchronize', transaction );
 	} );
 	this.completeHistory.push( transaction );
-	this.storeLengthAtHistoryLength[ this.completeHistory.length ] = this.store.getLength();
 	this.emit( 'transact', transaction );
 };
 
@@ -450,153 +448,142 @@ ve.dm.Document.prototype.shallowCloneFromSelection = function ( selection ) {
  *
  * The new document's elements, internal list and store will only contain references to data within the slice.
  *
- * @param {ve.Range} [range] Range of data to slice; defaults to whole document
+ * @param {ve.Range} range Range of data to slice
  * @return {ve.dm.DocumentSlice} New document
  */
 ve.dm.Document.prototype.shallowCloneFromRange = function ( range ) {
-	var listRange, i, first, last, firstNode, lastNode,
+	var i, first, last, firstNode, lastNode,
 		linearData, slice, originalRange, balancedRange,
 		balancedNodes, needsContext, contextElement, isContent,
-		startNode, endNode, selection,
+		startNode = this.getBranchNodeFromOffset( range.start ),
+		endNode = this.getBranchNodeFromOffset( range.end ),
+		selection = this.selectNodes( range, 'siblings' ),
 		balanceOpenings = [],
 		balanceClosings = [],
 		contextOpenings = [],
 		contextClosings = [];
 
-	listRange = this.getInternalList().getListNode().getOuterRange();
+	// Fix up selection to remove empty items in unwrapped nodes
+	// TODO: fix this is selectNodes
+	while ( selection[ 0 ] && selection[ 0 ].range && selection[ 0 ].range.isCollapsed() && !selection[ 0 ].node.isWrapped() ) {
+		selection.shift();
+	}
 
-	if ( !range ) {
-		// Default to the whole document
-		linearData = this.data.sliceObject();
-		originalRange = balancedRange = new ve.Range( 0, listRange.start );
+	i = selection.length - 1;
+	while ( selection[ i ] && selection[ i ].range && selection[ i ].range.isCollapsed() && !selection[ i ].node.isWrapped() ) {
+		selection.pop();
+		i--;
+	}
+
+	if ( selection.length === 0 ) {
+		// Nothing selected
+		linearData = new ve.dm.ElementLinearData( this.getStore(), [
+			{ type: 'paragraph', internal: { generated: 'empty' } },
+			{ type: 'paragraph' }
+		] );
+		originalRange = balancedRange = new ve.Range( 1 );
+	} else if ( startNode === endNode ) {
+		// Nothing to balance
+		balancedNodes = selection;
 	} else {
-		startNode = this.getBranchNodeFromOffset( range.start );
-		endNode = this.getBranchNodeFromOffset( range.end );
-		selection = this.selectNodes( range, 'siblings' );
-
-		// Fix up selection to remove empty items in unwrapped nodes
-		// TODO: fix this is selectNodes
-		while ( selection[ 0 ] && selection[ 0 ].range && selection[ 0 ].range.isCollapsed() && !selection[ 0 ].node.isWrapped() ) {
-			selection.shift();
+		// Selection is not balanced
+		first = selection[ 0 ];
+		last = selection[ selection.length - 1 ];
+		firstNode = first.node;
+		lastNode = last.node;
+		while ( !firstNode.isWrapped() ) {
+			firstNode = firstNode.getParent();
+		}
+		while ( !lastNode.isWrapped() ) {
+			lastNode = lastNode.getParent();
 		}
 
-		i = selection.length - 1;
-		while ( selection[ i ] && selection[ i ].range && selection[ i ].range.isCollapsed() && !selection[ i ].node.isWrapped() ) {
-			selection.pop();
-			i--;
-		}
-
-		if ( selection.length === 0 || range.isCollapsed() ) {
-			// Nothing selected
-			linearData = new ve.dm.ElementLinearData( this.getStore(), [
-				{ type: 'paragraph', internal: { generated: 'empty' } },
-				{ type: 'paragraph' }
-			] );
-			originalRange = balancedRange = new ve.Range( 1 );
-		} else if ( startNode === endNode ) {
-			// Nothing to balance
-			balancedNodes = selection;
-		} else {
-			// Selection is not balanced
-			first = selection[ 0 ];
-			last = selection[ selection.length - 1 ];
-			firstNode = first.node;
-			lastNode = last.node;
-			while ( !firstNode.isWrapped() ) {
-				firstNode = firstNode.getParent();
-			}
-			while ( !lastNode.isWrapped() ) {
-				lastNode = lastNode.getParent();
-			}
-
-			if ( first.range ) {
-				while ( true ) {
-					while ( !startNode.isWrapped() ) {
-						startNode = startNode.getParent();
-					}
-					balanceOpenings.push( startNode.getClonedElement() );
-					if ( startNode === firstNode ) {
-						break;
-					}
+		if ( first.range ) {
+			while ( true ) {
+				while ( !startNode.isWrapped() ) {
 					startNode = startNode.getParent();
 				}
-			}
-
-			if ( last !== first && last.range ) {
-				while ( true ) {
-					while ( !endNode.isWrapped() ) {
-						endNode = endNode.getParent();
-					}
-					balanceClosings.push( { type: '/' + endNode.getType() } );
-					if ( endNode === lastNode ) {
-						break;
-					}
-					endNode = endNode.getParent();
-				}
-			}
-
-			balancedNodes = this.selectNodes(
-				new ve.Range( firstNode.getOuterRange().start, lastNode.getOuterRange().end ),
-				'covered'
-			);
-		}
-
-		// eslint-disable-next-line no-inner-declarations
-		function nodeNeedsContext( node ) {
-			return node.getParentNodeTypes() !== null || node.isContent();
-		}
-
-		if ( !balancedRange ) {
-			// Check if any of the balanced siblings need more context for insertion anywhere
-			needsContext = false;
-			for ( i = balancedNodes.length - 1; i >= 0; i-- ) {
-				if ( nodeNeedsContext( balancedNodes[ i ].node ) ) {
-					needsContext = true;
+				balanceOpenings.push( startNode.getClonedElement() );
+				if ( startNode === firstNode ) {
 					break;
 				}
+				startNode = startNode.getParent();
 			}
-
-			if ( needsContext ) {
-				startNode = balancedNodes[ 0 ].node;
-				// Keep wrapping until the outer node can be inserted anywhere
-				while ( startNode.getParent() && nodeNeedsContext( startNode ) ) {
-					isContent = startNode.isContent();
-					startNode = startNode.getParent();
-					contextElement = startNode.getClonedElement();
-					if ( isContent ) {
-						ve.setProp( contextElement, 'internal', 'generated', 'wrapper' );
-					}
-					contextOpenings.push( contextElement );
-					contextClosings.push( { type: '/' + contextElement.type } );
-				}
-			}
-
-			// Final data:
-			//  contextOpenings + balanceOpenings + data slice + balanceClosings + contextClosings
-			linearData = new ve.dm.ElementLinearData(
-				this.getStore(),
-				contextOpenings.reverse()
-					.concat( balanceOpenings.reverse() )
-					.concat( this.data.slice( range.start, range.end ) )
-					.concat( balanceClosings )
-					.concat( contextClosings )
-			);
-			originalRange = new ve.Range(
-				contextOpenings.length + balanceOpenings.length,
-				contextOpenings.length + balanceOpenings.length + range.getLength()
-			);
-			balancedRange = new ve.Range(
-				contextOpenings.length,
-				contextOpenings.length + balanceOpenings.length + range.getLength() + balanceClosings.length
-			);
 		}
 
-		// Shallow copy over the internal list
-		ve.batchSplice(
-			linearData.data, linearData.getLength(), 0,
-			this.getData( listRange )
+		if ( last !== first && last.range ) {
+			while ( true ) {
+				while ( !endNode.isWrapped() ) {
+					endNode = endNode.getParent();
+				}
+				balanceClosings.push( { type: '/' + endNode.getType() } );
+				if ( endNode === lastNode ) {
+					break;
+				}
+				endNode = endNode.getParent();
+			}
+		}
+
+		balancedNodes = this.selectNodes(
+			new ve.Range( firstNode.getOuterRange().start, lastNode.getOuterRange().end ),
+			'covered'
 		);
 	}
+
+	function nodeNeedsContext( node ) {
+		return node.getParentNodeTypes() !== null || node.isContent();
+	}
+
+	if ( !balancedRange ) {
+		// Check if any of the balanced siblings need more context for insertion anywhere
+		needsContext = false;
+		for ( i = balancedNodes.length - 1; i >= 0; i-- ) {
+			if ( nodeNeedsContext( balancedNodes[ i ].node ) ) {
+				needsContext = true;
+				break;
+			}
+		}
+
+		if ( needsContext ) {
+			startNode = balancedNodes[ 0 ].node;
+			// Keep wrapping until the outer node can be inserted anywhere
+			while ( startNode.getParent() && nodeNeedsContext( startNode ) ) {
+				isContent = startNode.isContent();
+				startNode = startNode.getParent();
+				contextElement = startNode.getClonedElement();
+				if ( isContent ) {
+					ve.setProp( contextElement, 'internal', 'generated', 'wrapper' );
+				}
+				contextOpenings.push( contextElement );
+				contextClosings.push( { type: '/' + contextElement.type } );
+			}
+		}
+
+		// Final data:
+		//  contextOpenings + balanceOpenings + data slice + balanceClosings + contextClosings
+		linearData = new ve.dm.ElementLinearData(
+			this.getStore(),
+			contextOpenings.reverse()
+				.concat( balanceOpenings.reverse() )
+				.concat( this.data.slice( range.start, range.end ) )
+				.concat( balanceClosings )
+				.concat( contextClosings )
+		);
+		originalRange = new ve.Range(
+			contextOpenings.length + balanceOpenings.length,
+			contextOpenings.length + balanceOpenings.length + range.getLength()
+		);
+		balancedRange = new ve.Range(
+			contextOpenings.length,
+			contextOpenings.length + balanceOpenings.length + range.getLength() + balanceClosings.length
+		);
+	}
+
+	// Copy over the internal list
+	ve.batchSplice(
+		linearData.data, linearData.getLength(), 0,
+		this.getData( this.getInternalList().getListNode().getOuterRange(), true )
+	);
 
 	// The internalList is rebuilt by the document constructor
 	slice = new ve.dm.DocumentSlice(
@@ -829,7 +816,6 @@ ve.dm.Document.prototype.getRelativeRange = function ( range, direction, unit, e
  * @param {number} offset Offset to start looking at
  * @param {number} direction Direction to look in, +1 or -1
  * @param {number} limit Stop looking after reaching certain offset
- * @return {ve.dm.Node|null} Nearest focusable node, or null if not found
  */
 ve.dm.Document.prototype.getNearestFocusableNode = function ( offset, direction, limit ) {
 	// It is never an offset of the node, but just an offset for which getNodeFromOffset should
@@ -1547,32 +1533,11 @@ ve.dm.Document.prototype.getCompleteHistoryLength = function () {
 /**
  * Get all the items in the complete history stack since a specified pointer.
  *
- * @param {number} start Pointer from where to start the slice
- * @return {ve.dm.Transaction[]} Array of transaction objects with undo flag
+ * @param {number} pointer Pointer from where to start the slice
+ * @return {Array} Array of transaction objects with undo flag
  */
-ve.dm.Document.prototype.getCompleteHistorySince = function ( start ) {
-	return this.completeHistory.slice( start );
-};
-
-/**
- * Single change containing most recent transactions in history stack
- *
- * @param {number} start Pointer from where to start slicing transactions
- * @return {ve.dm.Change} Single change containing transactions since pointer
- */
-ve.dm.Document.prototype.getChangeSince = function ( start ) {
-	var t, len, transaction,
-		transactions = [],
-		stores = [];
-	for ( t = start, len = this.completeHistory.length; t < len; t++ ) {
-		transaction = this.completeHistory[ t ];
-		transactions.push( transaction );
-		stores.push( this.store.slice(
-			this.storeLengthAtHistoryLength[ t ],
-			this.storeLengthAtHistoryLength[ t + 1 ]
-		) );
-	}
-	return new ve.dm.Change( start, transactions, stores, {} );
+ve.dm.Document.prototype.getCompleteHistorySince = function ( pointer ) {
+	return this.completeHistory.slice( pointer );
 };
 
 /**

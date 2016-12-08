@@ -87,53 +87,49 @@ ve.dm.Converter.static.openAndCloseAnnotations = function ( currentSet, targetSe
 	// Close annotations as needed
 	// Go through annotationStack from bottom to top (low to high),
 	// and find the first annotation that's not in annotations.
-	if ( currentSet.getLength() ) {
-		targetSetOpen = targetSet.clone();
-		for ( i = 0, len = currentSet.getLength(); i < len; i++ ) {
-			index = currentSet.getIndex( i );
-			// containsComparableForSerialization is expensive,
-			// so do a simple contains check first
-			if (
-				targetSetOpen.containsIndex( index ) ||
-				targetSetOpen.containsComparableForSerialization( currentSet.get( i ) )
-			) {
-				targetSetOpen.removeIndex( index );
-			} else {
-				startClosingAt = i;
-				break;
-			}
+	targetSetOpen = targetSet.clone();
+	for ( i = 0, len = currentSet.getLength(); i < len; i++ ) {
+		index = currentSet.getIndex( i );
+		// containsComparableForSerialization is expensive,
+		// so do a simple contains check first
+		if (
+			targetSetOpen.containsIndex( index ) ||
+			targetSetOpen.containsComparableForSerialization( currentSet.get( i ) )
+		) {
+			targetSetOpen.removeIndex( index );
+		} else {
+			startClosingAt = i;
+			break;
 		}
-		if ( startClosingAt !== undefined ) {
-			// Close all annotations from top to bottom (high to low)
-			// until we reach startClosingAt
-			for ( i = currentSet.getLength() - 1; i >= startClosingAt; i-- ) {
-				close( currentSet.get( i ) );
-				// Remove from currentClone
-				currentSet.removeAt( i );
-			}
+	}
+	if ( startClosingAt !== undefined ) {
+		// Close all annotations from top to bottom (high to low)
+		// until we reach startClosingAt
+		for ( i = currentSet.getLength() - 1; i >= startClosingAt; i-- ) {
+			close( currentSet.get( i ) );
+			// Remove from currentClone
+			currentSet.removeAt( i );
 		}
 	}
 
-	if ( targetSet.getLength() ) {
-		currentSetOpen = currentSet.clone();
-		// Open annotations as needed
-		for ( i = 0, len = targetSet.getLength(); i < len; i++ ) {
-			index = targetSet.getIndex( i );
-			// containsComparableForSerialization is expensive,
-			// so do a simple contains check first
-			if (
-				currentSetOpen.containsIndex( index ) ||
-				currentSetOpen.containsComparableForSerialization( targetSet.get( i ) )
-			) {
-				// If an annotation is already open remove it from the currentSetOpen list
-				// as it may exist multiple times in the targetSet, and so may need to be
-				// opened again
-				currentSetOpen.removeIndex( index );
-			} else {
-				open( targetSet.get( i ) );
-				// Add to currentClone
-				currentSet.pushIndex( index );
-			}
+	currentSetOpen = currentSet.clone();
+	// Open annotations as needed
+	for ( i = 0, len = targetSet.getLength(); i < len; i++ ) {
+		index = targetSet.getIndex( i );
+		// containsComparableForSerialization is expensive,
+		// so do a simple contains check first
+		if (
+			currentSetOpen.containsIndex( index ) ||
+			currentSetOpen.containsComparableForSerialization( targetSet.get( i ) )
+		) {
+			// If an annotation is already open remove it from the currentSetOpen list
+			// as it may exist multiple times in the targetSet, and so may need to be
+			// opened again
+			currentSetOpen.removeIndex( index );
+		} else {
+			open( targetSet.get( i ) );
+			// Add to currentClone
+			currentSet.pushIndex( index );
 		}
 	}
 };
@@ -409,7 +405,6 @@ ve.dm.Converter.prototype.createDataElements = function ( modelClass, domElement
  *
  * @method
  * @param {Object} dataAnnotation Annotation object
- * @param {HTMLDocument} doc HTML document to create element with
  * @return {HTMLElement} HTML DOM node
  */
 ve.dm.Converter.prototype.getDomElementFromDataAnnotation = function ( dataAnnotation, doc ) {
@@ -1214,6 +1209,35 @@ ve.dm.Converter.prototype.getDomSubtreeFromData = function ( data, container, in
 		return dataSlice;
 	}
 
+	function removeInternalNodes() {
+		var dataCopy, endOffset;
+		// See if there is an internalList in the data, and if there is one, remove it
+		// Removing it here prevents unwanted interactions with whitespace preservation
+		for ( i = 0; i < dataLen; i++ ) {
+			if (
+				data[ i ].type && data[ i ].type.charAt( 0 ) !== '/' &&
+				ve.dm.nodeFactory.lookup( data[ i ].type ) &&
+				ve.dm.nodeFactory.isNodeInternal( data[ i ].type )
+			) {
+				// Copy data if we haven't already done so
+				if ( !dataCopy ) {
+					dataCopy = data.slice();
+				}
+				endOffset = findEndOfNode( i );
+				// Remove this node's data from dataCopy
+				dataCopy.splice( i - ( dataLen - dataCopy.length ),  endOffset - i );
+				// Move i such that it will be at endOffset in the next iteration
+				i = endOffset - 1;
+			}
+		}
+		if ( dataCopy ) {
+			data = dataCopy;
+			dataLen = data.length;
+		}
+	}
+
+	removeInternalNodes();
+
 	for ( i = 0; i < dataLen; i++ ) {
 		if ( typeof data[ i ] === 'string' ) {
 			// Text
@@ -1406,14 +1430,8 @@ ve.dm.Converter.prototype.getDomSubtreeFromData = function ( data, container, in
 							if ( domElement.childNodes.length === 0 && (
 									// then check that we are the last child
 									// before unwrapping (and therefore destroying)
-									data[ i + 1 ] === undefined ||
-									data[ i + 1 ].type.charAt( 0 ) === '/' ||
-									// Document ends when we encounter the internal list
-									(
-										data[ i + 1 ].type &&
-										!this.metaItemFactory.lookup( data[ i + 1 ].type ) &&
-										this.nodeFactory.isNodeInternal( data[ i + 1 ].type )
-									)
+									i === data.length - 1 ||
+									data[ i + 1 ].type.charAt( 0 ) === '/'
 								)
 							) {
 								doUnwrap = true;
@@ -1472,9 +1490,6 @@ ve.dm.Converter.prototype.getDomSubtreeFromData = function ( data, container, in
 				// Create node from data
 				if ( this.metaItemFactory.lookup( data[ i ].type ) ) {
 					isContentNode = canContainContentStack[ canContainContentStack.length - 1 ];
-				} else if ( this.nodeFactory.isNodeInternal( data[ i ].type ) ) {
-					// Reached the internal list, finish
-					break;
 				} else {
 					canContainContentStack.push(
 						// if the last item was true then this item must inherit it

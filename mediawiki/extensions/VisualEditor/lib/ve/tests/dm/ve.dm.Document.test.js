@@ -637,24 +637,8 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 	var i, expectedData, slice, range, doc,
 		cases = [
 			{
-				msg: 'no range',
-				range: undefined,
-				expected: ve.copy( ve.dm.example.data.slice( 0, -2 ) )
-			},
-			{
-				msg: 'collapsed range',
+				msg: 'empty range',
 				range: new ve.Range( 2 ),
-				expected: [
-					{ type: 'paragraph', internal: { generated: 'empty' } },
-					{ type: 'paragraph' }
-				],
-				originalRange: new ve.Range( 1 ),
-				balancedRange: new ve.Range( 1 )
-			},
-			{
-				doc: 'alienWithEmptyData',
-				msg: 'collapsed range in empty paragraph',
-				range: new ve.Range( 1 ),
 				expected: [
 					{ type: 'paragraph', internal: { generated: 'empty' } },
 					{ type: 'paragraph' }
@@ -908,13 +892,13 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 
 QUnit.test( 'protection against double application of transactions', 1, function ( assert ) {
 	var testDocument = ve.dm.example.createExampleDocument(),
-		txBuilder = new ve.dm.TransactionBuilder();
-	txBuilder.pushRetain( 1 );
-	txBuilder.pushReplace( testDocument, 1, 0, [ 'H', 'e', 'l', 'l', 'o' ] );
-	testDocument.commit( txBuilder.getTransaction() );
+		tx = new ve.dm.Transaction();
+	tx.pushRetain( 1 );
+	tx.pushReplace( testDocument, 1, 0, [ 'H', 'e', 'l', 'l', 'o' ] );
+	testDocument.commit( tx );
 	assert.throws(
 		function () {
-			testDocument.commit( txBuilder.getTransaction() );
+			testDocument.commit( tx );
 		},
 		Error,
 		'exception thrown when trying to commit an already-committed transaction'
@@ -957,57 +941,6 @@ QUnit.test( 'getNearestCursorOffset', function ( assert ) {
 				expected[ dir ][ i ],
 				'Direction: ' + dir + ' Offset: ' + i
 			);
-		}
-	}
-} );
-
-QUnit.test( 'Selection equality', function ( assert ) {
-	var selections, i, iLen, j, jLen, iSel, jSel, doc;
-	doc = new ve.dm.Document( [
-		{ type: 'paragraph' }, 'h', 'i', { type: '/paragraph' },
-		{ type: 'table' },
-		{ type: 'tableSection' },
-		{ type: 'tableRow' },
-		{ type: 'tableCell', attributes: { colspan: 2, rowspan: 2 } },
-		{ type: '/tableCell' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: '/tableRow' },
-		{ type: 'tableRow' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: '/tableRow' },
-		{ type: 'tableRow' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: '/tableRow' },
-		{ type: '/tableSection' },
-		{ type: '/table' }
-	] );
-	selections = [
-		new ve.dm.LinearSelection( doc, new ve.Range( 1, 1 ) ),
-		new ve.dm.LinearSelection( doc, new ve.Range( 1, 3 ) ),
-		new ve.dm.LinearSelection( doc, new ve.Range( 3, 1 ) ),
-		new ve.dm.TableSelection( doc, new ve.Range( 4, 25 ), 0, 1, 2, 2, true ),
-		new ve.dm.NullSelection( doc ),
-		undefined,
-		null,
-		'foo'
-	];
-	QUnit.expect( selections.length * ( selections.length - 3 ) );
-	for ( i = 0, iLen = selections.length; i < iLen; i++ ) {
-		iSel = selections[ i ];
-		if ( !( iSel instanceof ve.dm.Selection ) ) {
-			continue;
-		}
-		iSel = iSel.clone();
-		for ( j = 0, jLen = selections.length; j < jLen; j++ ) {
-			jSel = selections[ j ];
-			assert.strictEqual( iSel.equals( jSel ), i === j, 'Selections ' + i + ' and ' + j );
 		}
 	}
 } );

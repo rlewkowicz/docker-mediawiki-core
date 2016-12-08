@@ -1,12 +1,12 @@
 /*!
- * OOjs UI v0.18.2
+ * OOjs UI v0.17.9
  * https://www.mediawiki.org/wiki/OOjs_UI
  *
  * Copyright 2011–2016 OOjs UI Team and other contributors.
  * Released under the MIT license
  * http://oojs.mit-license.org
  *
- * Date: 2016-12-06T23:32:53Z
+ * Date: 2016-09-13T18:30:02Z
  */
 ( function ( OO ) {
 
@@ -261,18 +261,6 @@ OO.ui.debounce = function ( func, wait, immediate ) {
 };
 
 /**
- * Puts a console warning with provided message.
- *
- * @param {string} message
- */
-OO.ui.warnDeprecation = function ( message ) {
-	if ( OO.getProp( window, 'console', 'warn' ) !== undefined ) {
-		// eslint-disable-next-line no-console
-		console.warn( message );
-	}
-};
-
-/**
  * Returns a function, that, when invoked, will only be triggered at most once
  * during a given window of time. If called again during that window, it will
  * wait until the window ends and then trigger itself again.
@@ -322,6 +310,30 @@ OO.ui.throttle = function ( func, wait ) {
  */
 OO.ui.now = Date.now || function () {
 	return new Date().getTime();
+};
+
+/**
+ * Proxy for `node.addEventListener( eventName, handler, true )`.
+ *
+ * @param {HTMLElement} node
+ * @param {string} eventName
+ * @param {Function} handler
+ * @deprecated since 0.15.0
+ */
+OO.ui.addCaptureEventListener = function ( node, eventName, handler ) {
+	node.addEventListener( eventName, handler, true );
+};
+
+/**
+ * Proxy for `node.removeEventListener( eventName, handler, true )`.
+ *
+ * @param {HTMLElement} node
+ * @param {string} eventName
+ * @param {Function} handler
+ * @deprecated since 0.15.0
+ */
+OO.ui.removeCaptureEventListener = function ( node, eventName, handler ) {
+	node.removeEventListener( eventName, handler, true );
 };
 
 /**
@@ -414,7 +426,7 @@ OO.ui.infuse = function ( idOrNode ) {
 		}
 		return message;
 	};
-}() );
+} )();
 
 /**
  * Package a message and arguments for deferred resolution.
@@ -735,7 +747,6 @@ OO.ui.Element.static.unsafeInfuse = function ( idOrNode, domPromise ) {
 	// pick up dynamic state, like focus, value of form inputs, scroll position, etc.
 	state = cls.static.gatherPreInfuseState( $elem[ 0 ], data );
 	// rebuild widget
-	// eslint-disable-next-line new-cap
 	obj = new cls( data );
 	// now replace old DOM with this new DOM.
 	if ( top ) {
@@ -1599,6 +1610,7 @@ OO.ui.Theme.prototype.getElementClasses = function () {
  * For elements with theme logic hooks, this should be called any time there's a state change.
  *
  * @param {OO.ui.Element} element Element for which to update classes
+ * @return {Object.<string,string[]>} Categorized class names with `on` and `off` lists
  */
 OO.ui.Theme.prototype.updateElementClasses = function ( element ) {
 	var $elements = $( [] ),
@@ -1859,18 +1871,13 @@ OO.ui.mixin.ButtonElement.prototype.setButtonElement = function ( $button ) {
 
 	this.$button = $button
 		.addClass( 'oo-ui-buttonElement-button' )
+		.attr( { role: 'button' } )
 		.on( {
 			mousedown: this.onMouseDownHandler,
 			keydown: this.onKeyDownHandler,
 			click: this.onClickHandler,
 			keypress: this.onKeyPressHandler
 		} );
-
-	// Add `role="button"` on `<a>` elements, where it's needed
-	// `toUppercase()` is added for XHTML documents
-	if ( this.$button.prop( 'tagName' ).toUpperCase() === 'A' ) {
-		this.$button.attr( 'role', 'button' );
-	}
 };
 
 /**
@@ -3386,14 +3393,31 @@ OO.mixinClass( OO.ui.ButtonWidget, OO.ui.mixin.FlaggedElement );
 OO.mixinClass( OO.ui.ButtonWidget, OO.ui.mixin.TabIndexedElement );
 OO.mixinClass( OO.ui.ButtonWidget, OO.ui.mixin.AccessKeyedElement );
 
-/* Static Properties */
+/* Methods */
 
 /**
  * @inheritdoc
  */
-OO.ui.ButtonWidget.static.cancelButtonMouseDownEvents = false;
+OO.ui.ButtonWidget.prototype.onMouseDown = function ( e ) {
+	if ( !this.isDisabled() ) {
+		// Remove the tab-index while the button is down to prevent the button from stealing focus
+		this.$button.removeAttr( 'tabindex' );
+	}
 
-/* Methods */
+	return OO.ui.mixin.ButtonElement.prototype.onMouseDown.call( this, e );
+};
+
+/**
+ * @inheritdoc
+ */
+OO.ui.ButtonWidget.prototype.onMouseUp = function ( e ) {
+	if ( !this.isDisabled() ) {
+		// Restore the tab-index after the button is up to restore the button's accessibility
+		this.$button.attr( 'tabindex', this.tabIndex );
+	}
+
+	return OO.ui.mixin.ButtonElement.prototype.onMouseUp.call( this, e );
+};
 
 /**
  * Get hyperlink location.
@@ -4308,7 +4332,8 @@ OO.mixinClass( OO.ui.PopupWidget, OO.ui.mixin.ClippableElement );
 OO.ui.PopupWidget.prototype.onMouseDown = function ( e ) {
 	if (
 		this.isVisible() &&
-		!OO.ui.contains( this.$element.add( this.$autoCloseIgnore ).get(), e.target, true )
+		!$.contains( this.$element[ 0 ], e.target ) &&
+		( !this.$autoCloseIgnore || !this.$autoCloseIgnore.has( e.target ).length )
 	) {
 		this.toggle( false );
 	}
@@ -4596,7 +4621,7 @@ OO.ui.mixin.PopupElement = function OoUiMixinPopupElement( config ) {
 	this.popup = new OO.ui.PopupWidget( $.extend(
 		{ autoClose: true },
 		config.popup,
-		{ $autoCloseIgnore: this.$element.add( config.popup && config.popup.$autoCloseIgnore ) }
+		{ $autoCloseIgnore: this.$element }
 	) );
 };
 
@@ -7558,6 +7583,18 @@ OO.ui.InputWidget.prototype.getValue = function () {
 };
 
 /**
+ * Set the directionality of the input, either RTL (right-to-left) or LTR (left-to-right).
+ *
+ * @deprecated since v0.13.1; use #setDir directly
+ * @param {boolean} isRTL Directionality is right-to-left
+ * @chainable
+ */
+OO.ui.InputWidget.prototype.setRTL = function ( isRTL ) {
+	this.setDir( isRTL ? 'rtl' : 'ltr' );
+	return this;
+};
+
+/**
  * Set the directionality of the input.
  *
  * @param {string} dir Text directionality: 'ltr', 'rtl' or 'auto'
@@ -8575,7 +8612,7 @@ OO.ui.CheckboxMultiselectInputWidget.prototype.setOptions = function ( options )
  * @constructor
  * @param {Object} [config] Configuration options
  * @cfg {string} [type='text'] The value of the HTML `type` attribute: 'text', 'password', 'search',
- *  'email', 'url', 'date', 'month' or 'number'. Ignored if `multiline` is true.
+ *  'email', 'url', 'date' or 'number'. Ignored if `multiline` is true.
  *
  *  Some values of `type` result in additional behaviors:
  *
@@ -8609,13 +8646,16 @@ OO.ui.TextInputWidget = function OoUiTextInputWidget( config ) {
 		type: 'text',
 		labelPosition: 'after'
 	}, config );
-
 	if ( config.type === 'search' ) {
-		OO.ui.warnDeprecation( 'TextInputWidget: config.type=\'search\' is deprecated. Use the SearchInputWidget instead. See T148471 for details.' );
 		if ( config.icon === undefined ) {
 			config.icon = 'search';
 		}
 		// indicator: 'clear' is set dynamically later, depending on value
+	}
+	if ( config.required ) {
+		if ( config.indicator === undefined ) {
+			config.indicator = 'required';
+		}
 	}
 
 	// Parent constructor
@@ -8630,7 +8670,6 @@ OO.ui.TextInputWidget = function OoUiTextInputWidget( config ) {
 	// Properties
 	this.type = this.getSaneType( config );
 	this.readOnly = false;
-	this.required = false;
 	this.multiline = !!config.multiline;
 	this.autosize = !!config.autosize;
 	this.minRows = config.rows !== undefined ? config.rows : '';
@@ -8674,7 +8713,6 @@ OO.ui.TextInputWidget = function OoUiTextInputWidget( config ) {
 		.addClass( 'oo-ui-textInputWidget oo-ui-textInputWidget-type-' + this.type )
 		.append( this.$icon, this.$indicator );
 	this.setReadOnly( !!config.readOnly );
-	this.setRequired( !!config.required );
 	this.updateSearchIndicator();
 	if ( config.placeholder !== undefined ) {
 		this.$input.attr( 'placeholder', config.placeholder );
@@ -8684,6 +8722,10 @@ OO.ui.TextInputWidget = function OoUiTextInputWidget( config ) {
 	}
 	if ( config.autofocus ) {
 		this.$input.attr( 'autofocus', 'autofocus' );
+	}
+	if ( config.required ) {
+		this.$input.attr( 'required', 'required' );
+		this.$input.attr( 'aria-required', 'true' );
 	}
 	if ( config.autocomplete === false ) {
 		this.$input.attr( 'autocomplete', 'off' );
@@ -8884,42 +8926,6 @@ OO.ui.TextInputWidget.prototype.setReadOnly = function ( state ) {
 };
 
 /**
- * Check if the input is {@link #required required}.
- *
- * @return {boolean}
- */
-OO.ui.TextInputWidget.prototype.isRequired = function () {
-	return this.required;
-};
-
-/**
- * Set the {@link #required required} state of the input.
- *
- * @param {boolean} state Make input required
- * @chainable
- */
-OO.ui.TextInputWidget.prototype.setRequired = function ( state ) {
-	this.required = !!state;
-	if ( this.required ) {
-		this.$input
-			.attr( 'required', 'required' )
-			.attr( 'aria-required', 'true' );
-		if ( this.getIndicator() === null ) {
-			this.setIndicator( 'required' );
-		}
-	} else {
-		this.$input
-			.removeAttr( 'required' )
-			.removeAttr( 'aria-required' );
-		if ( this.getIndicator() === 'required' ) {
-			this.setIndicator( null );
-		}
-	}
-	this.updateSearchIndicator();
-	return this;
-};
-
-/**
  * Support function for making #onElementAttach work across browsers.
  *
  * This whole function could be replaced with one line of code using the DOMNodeInsertedIntoDocument
@@ -9094,7 +9100,6 @@ OO.ui.TextInputWidget.prototype.getSaneType = function ( config ) {
 		'email',
 		'url',
 		'date',
-		'month',
 		'number'
 	];
 	return allowedTypes.indexOf( config.type ) !== -1 ? config.type : 'text';
@@ -9293,6 +9298,30 @@ OO.ui.TextInputWidget.prototype.setValidityFlag = function ( isValid ) {
 };
 
 /**
+ * Check if a value is valid.
+ *
+ * This method returns a promise that resolves with a boolean `true` if the current value is
+ * considered valid according to the supplied {@link #validate validation pattern}.
+ *
+ * @deprecated since v0.12.3
+ * @return {jQuery.Promise} A promise that resolves to a boolean `true` if the value is valid.
+ */
+OO.ui.TextInputWidget.prototype.isValid = function () {
+	var result;
+
+	if ( this.validate instanceof Function ) {
+		result = this.validate( this.getValue() );
+		if ( result && $.isFunction( result.promise ) ) {
+			return result.promise();
+		} else {
+			return $.Deferred().resolve( !!result ).promise();
+		}
+	} else {
+		return $.Deferred().resolve( !!this.getValue().match( this.validate ) ).promise();
+	}
+};
+
+/**
  * Get the validity of current value.
  *
  * This method returns a promise that resolves if the value is valid and rejects if
@@ -9421,99 +9450,6 @@ OO.ui.TextInputWidget.prototype.restorePreInfuseState = function ( state ) {
 };
 
 /**
- * @class
- * @extends OO.ui.TextInputWidget
- *
- * @constructor
- * @param {Object} [config] Configuration options
- */
-OO.ui.SearchInputWidget = function OoUiSearchInputWidget( config ) {
-	config = $.extend( {
-		icon: 'search'
-	}, config );
-
-	// Set type to text so that TextInputWidget doesn't
-	// get stuck in an infinite loop.
-	config.type = 'text';
-
-	// Parent constructor
-	OO.ui.SearchInputWidget.parent.call( this, config );
-
-	// Initialization
-	this.$element.addClass( 'oo-ui-textInputWidget-type-search' );
-	this.updateSearchIndicator();
-	this.connect( this, {
-		disable: 'onDisable'
-	} );
-};
-
-/* Setup */
-
-OO.inheritClass( OO.ui.SearchInputWidget, OO.ui.TextInputWidget );
-
-/* Methods */
-
-/**
- * @inheritdoc
- * @protected
- */
-OO.ui.SearchInputWidget.prototype.getInputElement = function () {
-	return $( '<input>' ).attr( 'type', 'search' );
-};
-
-/**
- * @inheritdoc
- */
-OO.ui.SearchInputWidget.prototype.onIndicatorMouseDown = function ( e ) {
-	if ( e.which === OO.ui.MouseButtons.LEFT ) {
-		// Clear the text field
-		this.setValue( '' );
-		this.$input[ 0 ].focus();
-		return false;
-	}
-};
-
-/**
- * Update the 'clear' indicator displayed on type: 'search' text
- * fields, hiding it when the field is already empty or when it's not
- * editable.
- */
-OO.ui.SearchInputWidget.prototype.updateSearchIndicator = function () {
-	if ( this.getValue() === '' || this.isDisabled() || this.isReadOnly() ) {
-		this.setIndicator( null );
-	} else {
-		this.setIndicator( 'clear' );
-	}
-};
-
-/**
- * @inheritdoc
- */
-OO.ui.SearchInputWidget.prototype.onChange = function () {
-	OO.ui.SearchInputWidget.parent.prototype.onChange.call( this );
-	this.updateSearchIndicator();
-};
-
-/**
- * Handle disable events.
- *
- * @param {boolean} disabled Element is disabled
- * @private
- */
-OO.ui.SearchInputWidget.prototype.onDisable = function () {
-	this.updateSearchIndicator();
-};
-
-/**
- * @inheritdoc
- */
-OO.ui.SearchInputWidget.prototype.setReadOnly = function ( state ) {
-	OO.ui.SearchInputWidget.parent.prototype.setReadOnly.call( this, state );
-	this.updateSearchIndicator();
-	return this;
-};
-
-/**
  * ComboBoxInputWidgets combine a {@link OO.ui.TextInputWidget text input} (where a value
  * can be entered manually) and a {@link OO.ui.MenuSelectWidget menu of options} (from which
  * a value can be chosen instead). Users can choose options from the combo box in one of two ways:
@@ -9575,19 +9511,17 @@ OO.ui.SearchInputWidget.prototype.setReadOnly = function ( state ) {
 OO.ui.ComboBoxInputWidget = function OoUiComboBoxInputWidget( config ) {
 	// Configuration initialization
 	config = $.extend( {
+		indicator: 'down',
 		autocomplete: false
 	}, config );
+	// For backwards-compatibility with ComboBoxWidget config
+	$.extend( config, config.input );
 
 	// Parent constructor
 	OO.ui.ComboBoxInputWidget.parent.call( this, config );
 
 	// Properties
 	this.$overlay = config.$overlay || this.$element;
-	this.dropdownButton = new OO.ui.ButtonWidget( {
-		classes: [ 'oo-ui-comboBoxInputWidget-dropdownButton' ],
-		indicator: 'down',
-		disabled: this.disabled
-	} );
 	this.menu = new OO.ui.FloatingMenuSelectWidget( $.extend(
 		{
 			widget: this,
@@ -9597,14 +9531,17 @@ OO.ui.ComboBoxInputWidget = function OoUiComboBoxInputWidget( config ) {
 		},
 		config.menu
 	) );
+	// For backwards-compatibility with ComboBoxWidget
+	this.input = this;
 
 	// Events
+	this.$indicator.on( {
+		click: this.onIndicatorClick.bind( this ),
+		keypress: this.onIndicatorKeyPress.bind( this )
+	} );
 	this.connect( this, {
 		change: 'onInputChange',
 		enter: 'onInputEnter'
-	} );
-	this.dropdownButton.connect( this, {
-		click: 'onDropdownButtonClick'
 	} );
 	this.menu.connect( this, {
 		choose: 'onMenuChoose',
@@ -9621,12 +9558,8 @@ OO.ui.ComboBoxInputWidget = function OoUiComboBoxInputWidget( config ) {
 	if ( config.options !== undefined ) {
 		this.setOptions( config.options );
 	}
-	this.$field = $( '<div>' )
-		.addClass( 'oo-ui-comboBoxInputWidget-field' )
-		.append( this.$input, this.dropdownButton.$element );
-	this.$element
-		.addClass( 'oo-ui-comboBoxInputWidget' )
-		.append( this.$field );
+	// Extra class for backwards-compatibility with ComboBoxWidget
+	this.$element.addClass( 'oo-ui-comboBoxInputWidget oo-ui-comboBoxWidget' );
 	this.$overlay.append( this.menu.$element );
 	this.onMenuItemsChange();
 };
@@ -9675,6 +9608,34 @@ OO.ui.ComboBoxInputWidget.prototype.onInputChange = function ( value ) {
 };
 
 /**
+ * Handle mouse click events.
+ *
+ * @private
+ * @param {jQuery.Event} e Mouse click event
+ */
+OO.ui.ComboBoxInputWidget.prototype.onIndicatorClick = function ( e ) {
+	if ( !this.isDisabled() && e.which === OO.ui.MouseButtons.LEFT ) {
+		this.menu.toggle();
+		this.$input[ 0 ].focus();
+	}
+	return false;
+};
+
+/**
+ * Handle key press events.
+ *
+ * @private
+ * @param {jQuery.Event} e Key press event
+ */
+OO.ui.ComboBoxInputWidget.prototype.onIndicatorKeyPress = function ( e ) {
+	if ( !this.isDisabled() && ( e.which === OO.ui.Keys.SPACE || e.which === OO.ui.Keys.ENTER ) ) {
+		this.menu.toggle();
+		this.$input[ 0 ].focus();
+		return false;
+	}
+};
+
+/**
  * Handle input enter events.
  *
  * @private
@@ -9683,16 +9644,6 @@ OO.ui.ComboBoxInputWidget.prototype.onInputEnter = function () {
 	if ( !this.isDisabled() ) {
 		this.menu.toggle( false );
 	}
-};
-
-/**
- * Handle button click events.
- *
- * @private
- */
-OO.ui.ComboBoxInputWidget.prototype.onDropdownButtonClick = function () {
-	this.menu.toggle();
-	this.$input[ 0 ].focus();
 };
 
 /**
@@ -9726,9 +9677,6 @@ OO.ui.ComboBoxInputWidget.prototype.setDisabled = function ( disabled ) {
 	// Parent method
 	OO.ui.ComboBoxInputWidget.parent.prototype.setDisabled.call( this, disabled );
 
-	if ( this.dropdownButton ) {
-		this.dropdownButton.setDisabled( this.isDisabled() );
-	}
 	if ( this.menu ) {
 		this.menu.setDisabled( this.isDisabled() );
 	}
@@ -9754,6 +9702,12 @@ OO.ui.ComboBoxInputWidget.prototype.setOptions = function ( options ) {
 
 	return this;
 };
+
+/**
+ * @class
+ * @deprecated since 0.13.2; use OO.ui.ComboBoxInputWidget instead
+ */
+OO.ui.ComboBoxWidget = OO.ui.ComboBoxInputWidget;
 
 /**
  * FieldLayouts are used with OO.ui.FieldsetLayout. Each FieldLayout requires a field-widget,
@@ -9796,7 +9750,7 @@ OO.ui.ComboBoxInputWidget.prototype.setOptions = function ( options ) {
  * @throws {Error} An error is thrown if no widget is specified
  */
 OO.ui.FieldLayout = function OoUiFieldLayout( fieldWidget, config ) {
-	var hasInputWidget, $div;
+	var hasInputWidget, div;
 
 	// Allow passing positional parameters inside the config object
 	if ( OO.isPlainObject( fieldWidget ) && config === undefined ) {
@@ -9836,14 +9790,14 @@ OO.ui.FieldLayout = function OoUiFieldLayout( fieldWidget, config ) {
 			icon: 'info'
 		} );
 
-		$div = $( '<div>' );
+		div = $( '<div>' );
 		if ( config.help instanceof OO.ui.HtmlSnippet ) {
-			$div.html( config.help.toString() );
+			div.html( config.help.toString() );
 		} else {
-			$div.text( config.help );
+			div.text( config.help );
 		}
 		this.popupButtonWidget.getPopup().$body.append(
-			$div.addClass( 'oo-ui-fieldLayout-help-content' )
+			div.addClass( 'oo-ui-fieldLayout-help-content' )
 		);
 		this.$help = this.popupButtonWidget.$element;
 	} else {
@@ -10061,7 +10015,6 @@ OO.ui.FieldLayout.prototype.updateMessages = function () {
  * @constructor
  * @param {OO.ui.Widget} fieldWidget Field widget
  * @param {OO.ui.ButtonWidget} buttonWidget Button widget
- * @param {Object} config
  */
 OO.ui.ActionFieldLayout = function OoUiActionFieldLayout( fieldWidget, buttonWidget, config ) {
 	// Allow passing positional parameters inside the config object
@@ -10137,13 +10090,8 @@ OO.inheritClass( OO.ui.ActionFieldLayout, OO.ui.FieldLayout );
  * @constructor
  * @param {Object} [config] Configuration options
  * @cfg {OO.ui.FieldLayout[]} [items] An array of fields to add to the fieldset. See OO.ui.FieldLayout for more information about fields.
- * @cfg {string|OO.ui.HtmlSnippet} [help] Help text. When help text is specified, a "help" icon will appear
- *  in the upper-right corner of the rendered field; clicking it will display the text in a popup.
- *  For important messages, you are advised to use `notices`, as they are always shown.
  */
 OO.ui.FieldsetLayout = function OoUiFieldsetLayout( config ) {
-	var $div;
-
 	// Configuration initialization
 	config = config || {};
 
@@ -10152,7 +10100,7 @@ OO.ui.FieldsetLayout = function OoUiFieldsetLayout( config ) {
 
 	// Mixin constructors
 	OO.ui.mixin.IconElement.call( this, config );
-	OO.ui.mixin.LabelElement.call( this, $.extend( {}, config, { $label: $( '<div>' ) } ) );
+	OO.ui.mixin.LabelElement.call( this, $.extend( {}, config, { $label: $( '<legend>' ) } ) );
 	OO.ui.mixin.GroupElement.call( this, config );
 
 	if ( config.help ) {
@@ -10162,14 +10110,10 @@ OO.ui.FieldsetLayout = function OoUiFieldsetLayout( config ) {
 			icon: 'info'
 		} );
 
-		$div = $( '<div>' );
-		if ( config.help instanceof OO.ui.HtmlSnippet ) {
-			$div.html( config.help.toString() );
-		} else {
-			$div.text( config.help );
-		}
 		this.popupButtonWidget.getPopup().$body.append(
-			$div.addClass( 'oo-ui-fieldsetLayout-help-content' )
+			$( '<div>' )
+				.text( config.help )
+				.addClass( 'oo-ui-fieldsetLayout-help-content' )
 		);
 		this.$help = this.popupButtonWidget.$element;
 	} else {
@@ -10177,7 +10121,6 @@ OO.ui.FieldsetLayout = function OoUiFieldsetLayout( config ) {
 	}
 
 	// Initialization
-	this.$group.addClass( 'oo-ui-fieldsetLayout-group' );
 	this.$element
 		.addClass( 'oo-ui-fieldsetLayout' )
 		.prepend( this.$label, this.$help, this.$icon, this.$group );

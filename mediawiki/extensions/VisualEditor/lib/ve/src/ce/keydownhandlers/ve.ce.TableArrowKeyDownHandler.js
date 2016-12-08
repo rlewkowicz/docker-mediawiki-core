@@ -140,6 +140,8 @@ ve.ce.TableArrowKeyDownHandler.static.moveTableSelection = function ( surface, r
 	}
 
 	surface.getModel().setSelection( newSelection );
+
+	return true;
 };
 
 /* Registration */

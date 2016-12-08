@@ -55,7 +55,6 @@ ve.ui.LanguageSearchDialog.static.languageSearchWidget = ve.ui.LanguageSearchWid
 ve.ui.LanguageSearchDialog.prototype.initialize = function () {
 	ve.ui.LanguageSearchDialog.super.prototype.initialize.apply( this, arguments );
 
-	// eslint-disable-next-line new-cap
 	this.searchWidget = new this.constructor.static.languageSearchWidget();
 	this.searchWidget.getResults().connect( this, { choose: 'onSearchResultsChoose' } );
 	this.$body.append( this.searchWidget.$element );

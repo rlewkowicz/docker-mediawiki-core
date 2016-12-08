@@ -112,14 +112,7 @@ ve.dm.TableSelection.prototype.expand = function () {
  * @inheritdoc
  */
 ve.dm.TableSelection.prototype.clone = function () {
-	return new this.constructor(
-		this.getDocument(),
-		this.tableRange,
-		this.fromCol,
-		this.fromRow,
-		this.toCol,
-		this.toRow
-	);
+	return new this.constructor( this.getDocument(), this.tableRange, this.fromCol, this.fromRow, this.toCol, this.toRow );
 };
 
 /**
@@ -310,21 +303,6 @@ ve.dm.TableSelection.prototype.translateByTransaction = function ( tx, excludeIn
 };
 
 /**
- * @inheritdoc
- */
-ve.dm.TableSelection.prototype.translateByTransactionWithAuthor = function ( tx, author ) {
-	var newRange = tx.translateRangeWithAuthor( this.tableRange, author );
-
-	if ( newRange.isCollapsed() ) {
-		return new ve.dm.NullSelection( this.getDocument() );
-	}
-	return new this.constructor(
-		this.getDocument(), newRange,
-		this.fromCol, this.fromRow, this.toCol, this.toRow
-	);
-};
-
-/**
  * Check if the selection spans a single cell
  *
  * @return {boolean} The selection spans a single cell
@@ -486,16 +464,13 @@ ve.dm.TableSelection.prototype.newFromAdjustment = function ( fromColOffset, fro
  * @inheritdoc
  */
 ve.dm.TableSelection.prototype.equals = function ( other ) {
-	return this === other || (
-		!!other &&
-		other.constructor === this.constructor &&
+	return other instanceof ve.dm.TableSelection &&
 		this.getDocument() === other.getDocument() &&
 		this.tableRange.equals( other.tableRange ) &&
 		this.fromCol === other.fromCol &&
 		this.fromRow === other.fromRow &&
 		this.toCol === other.toCol &&
-		this.toRow === other.toRow
-	);
+		this.toRow === other.toRow;
 };
 
 /**
