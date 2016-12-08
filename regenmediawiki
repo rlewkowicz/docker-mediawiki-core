@@ -1,9 +1,5 @@
-cd distribution-files/
+# -*- mode: Shell Script -*-
 rm -rf mediawiki
-git clone --depth 1 -b REL1_28 --single-branch https://gerrit.wikimedia.org/r/p/mediawiki/extensions/VisualEditor.git
-cd VisualEditor
-git submodule update --init
-cd ..
 git clone --depth 1 -b  REL1_28 --single-branch https://github.com/wikimedia/mediawiki.git
 git clone --depth 1 -b REL1_28 --single-branch https://github.com/wikimedia/mediawiki-extensions.git
 git clone --depth 1 -b REL1_28 --single-branch https://github.com/wikimedia/mediawiki-skins-Vector.git
@@ -27,6 +23,7 @@ SpamBlacklist$
 SyntaxHighlight_GeSHi$
 TitleBlacklist$
 WikiEditor$
+VisualEditor$
 END
 )`; do sed -i "s/branch \= \./\x00/g; /\[submodule \"$i\"\]/,/[^\x00]*\x00/d; s/\x00/branch \= \./g" .gitmodules; done
 for i in `ls | egrep -vwf <(cat <<END
@@ -48,6 +45,7 @@ SpamBlacklist$
 SyntaxHighlight_GeSHi$
 TitleBlacklist$
 WikiEditor$
+VisualEditor$
 END
 )`; do rm -rf $i; done
 git add -A
@@ -55,7 +53,6 @@ git commit . -m 'doot'
 git submodule update --init --recursive
 cd ..
 mv mediawiki-skins-Vector mediawiki/skins/Vector
-mv VisualEditor mediawiki-extensions/VisualEditor
 rm -rf mediawiki/extensions
 mv mediawiki-extensions mediawiki/extensions
 cd mediawiki
@@ -65,7 +62,7 @@ for i in `find $(pwd)/../../skins/ -type d -maxdepth 1`;do cd "$i"; composer ins
 cd ../../..
 for i in `find $(pwd) -name '\.git*'`; do rm -rf $i; done
 cd ..
-git remote set-url origin git@github.com:rlewkowicz/docker-mediawiki-stack.git
+git remote set-url origin git@github.com:rlewkowicz/docker-mediawiki-core.git
 git add -A
 git commit . -m "$(date)"
 git branch --set-upstream-to=origin/master master
