@@ -57,7 +57,7 @@ class ForeignDBFile extends LocalFile {
 	 * @param string $srcPath
 	 * @param int $flags
 	 * @param array $options
-	 * @return Status
+	 * @return FileRepoStatus
 	 * @throws MWException
 	 */
 	function publish( $srcPath, $flags = 0, array $options = [] ) {
@@ -84,7 +84,7 @@ class ForeignDBFile extends LocalFile {
 	/**
 	 * @param array $versions
 	 * @param bool $unsuppress
-	 * @return Status
+	 * @return FileRepoStatus
 	 * @throws MWException
 	 */
 	function restore( $versions = [], $unsuppress = false ) {
@@ -95,7 +95,7 @@ class ForeignDBFile extends LocalFile {
 	 * @param string $reason
 	 * @param bool $suppress
 	 * @param User|null $user
-	 * @return Status
+	 * @return FileRepoStatus
 	 * @throws MWException
 	 */
 	function delete( $reason, $suppress = false, $user = null ) {
@@ -104,7 +104,7 @@ class ForeignDBFile extends LocalFile {
 
 	/**
 	 * @param Title $target
-	 * @return Status
+	 * @return FileRepoStatus
 	 * @throws MWException
 	 */
 	function move( $target ) {

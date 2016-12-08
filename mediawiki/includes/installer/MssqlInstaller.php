@@ -182,7 +182,7 @@ class MssqlInstaller extends DatabaseInstaller {
 			return $status;
 		}
 		/**
-		 * @var $conn Database
+		 * @var $conn DatabaseBase
 		 */
 		$conn = $status->value;
 
@@ -212,7 +212,7 @@ class MssqlInstaller extends DatabaseInstaller {
 		}
 
 		try {
-			$db = Database::factory( 'mssql', [
+			$db = DatabaseBase::factory( 'mssql', [
 				'host' => $this->getVar( 'wgDBserver' ),
 				'user' => $user,
 				'password' => $password,
@@ -240,7 +240,7 @@ class MssqlInstaller extends DatabaseInstaller {
 			return;
 		}
 		/**
-		 * @var $conn Database
+		 * @var $conn DatabaseBase
 		 */
 		$conn = $status->value;
 		$conn->selectDB( $this->getVar( 'wgDBname' ) );
@@ -261,7 +261,7 @@ class MssqlInstaller extends DatabaseInstaller {
 		if ( !$status->isOK() ) {
 			return false;
 		}
-		/** @var $conn Database */
+		/** @var $conn DatabaseBase */
 		$conn = $status->value;
 
 		// We need the server-level ALTER ANY LOGIN permission to create new accounts
@@ -457,7 +457,7 @@ class MssqlInstaller extends DatabaseInstaller {
 			}
 
 			try {
-				Database::factory( 'mssql', [
+				DatabaseBase::factory( 'mssql', [
 					'host' => $this->getVar( 'wgDBserver' ),
 					'user' => $user,
 					'password' => $password,
@@ -491,7 +491,7 @@ class MssqlInstaller extends DatabaseInstaller {
 		if ( !$status->isOK() ) {
 			return $status;
 		}
-		/** @var Database $conn */
+		/** @var DatabaseBase $conn */
 		$conn = $status->value;
 		$dbName = $this->getVar( 'wgDBname' );
 		$schemaName = $this->getVar( 'wgDBmwschema' );

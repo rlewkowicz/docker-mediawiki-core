@@ -4,21 +4,8 @@
 	"intro": "@import '../../../../src/styles/common';",
 	"variants": {
 		"invert": {
-			"color": "#fff",
+			"color": "#ffffff",
 			"global": true
-		},
-		"progressive": {
-			"color": "#36c",
-			"global": true
-		},
-		"constructive": {
-			"color": "#36c"
-		},
-		"destructive": {
-			"color": "#c33"
-		},
-		"warning": {
-			"color": "#ff5d00"
 		}
 	},
 	"images": {
@@ -48,7 +35,6 @@
 		"speechBubbles": { "file": {
 			"ltr": "images/icons/speechBubbles-ltr.svg",
 			"rtl": "images/icons/speechBubbles-rtl.svg"
-		} },
-		"tray": { "file": "images/icons/tray.svg" }
+		} }
 	}
 }

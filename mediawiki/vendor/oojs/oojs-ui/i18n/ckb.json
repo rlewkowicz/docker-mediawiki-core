@@ -4,8 +4,7 @@
 			"Calak",
 			"Muhammed taha",
 			"Serwan",
-			"Pirehelokan",
-			"Sarchia"
+			"Pirehelokan"
 		]
 	},
 	"ooui-toolbar-more": "زیاتر",
@@ -17,7 +16,5 @@
 	"ooui-dialog-process-dismiss": "لێگەڕان",
 	"ooui-dialog-process-retry": "دیسان ھەوڵ بدە",
 	"ooui-dialog-process-continue": "درێژە بدە",
-	"ooui-selectfile-button-select": "پەڕگەیەک دەستنیشان بکە",
-	"ooui-selectfile-placeholder": "ھیچ فایلێک ھەڵنەبژێراوە",
-	"ooui-selectfile-dragdrop-placeholder": "پەڕگەکان بخەرە ئێرە"
+	"ooui-selectfile-placeholder": "ھیچ فایلێک ھەڵنەبژێراوە"
 }

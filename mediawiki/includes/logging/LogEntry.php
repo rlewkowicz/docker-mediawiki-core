@@ -705,39 +705,39 @@ class ManualLogEntry extends LogEntryBase {
 	 *
 	 * @param int $newId Id of the log entry.
 	 * @param string $to One of: rcandudp (default), rc, udp
+	 * @return RecentChange|null
 	 */
 	public function publish( $newId, $to = 'rcandudp' ) {
-		DeferredUpdates::addCallableUpdate(
-			function () use ( $newId, $to ) {
-				$log = new LogPage( $this->getType() );
-				if ( !$log->isRestricted() ) {
-					$rc = $this->getRecentChange( $newId );
+		$log = new LogPage( $this->getType() );
+		if ( $log->isRestricted() ) {
+			return null;
+		}
 
-					if ( $to === 'rc' || $to === 'rcandudp' ) {
-						// save RC, passing tags so they are applied there
-						$tags = $this->getTags();
-						if ( is_null( $tags ) ) {
-							$tags = [];
-						}
-						$rc->addTags( $tags );
-						$rc->save( 'pleasedontudp' );
-					}
+		$rc = $this->getRecentChange( $newId );
 
-					if ( $to === 'udp' || $to === 'rcandudp' ) {
-						$rc->notifyRCFeeds();
-					}
+		if ( $to === 'rc' || $to === 'rcandudp' ) {
+			$rc->save( 'pleasedontudp' );
+		}
 
-					// Log the autopatrol if the log entry is patrollable
-					if ( $this->getIsPatrollable() &&
-						$rc->getAttribute( 'rc_patrolled' ) === 1
-					) {
-						PatrolLog::record( $rc, true, $this->getPerformer() );
-					}
-				}
-			},
-			DeferredUpdates::POSTSEND,
-			wfGetDB( DB_MASTER )
-		);
+		if ( $to === 'udp' || $to === 'rcandudp' ) {
+			$rc->notifyRCFeeds();
+		}
+
+		// Log the autopatrol if the log entry is patrollable
+		if ( $this->getIsPatrollable() &&
+			$rc->getAttribute( 'rc_patrolled' ) === 1 ) {
+			PatrolLog::record( $rc, true, $this->getPerformer() );
+		}
+
+		// Add change tags to the log entry and (if applicable) the associated revision
+		$tags = $this->getTags();
+		if ( !is_null( $tags ) ) {
+			$rcId = $rc->getAttribute( 'rc_id' );
+			$revId = $this->getAssociatedRevId(); // Use null if $revId is 0
+			ChangeTags::addTags( $tags, $rcId, $revId > 0 ? $revId : null, $newId );
+		}
+
+		return $rc;
 	}
 
 	public function getType() {

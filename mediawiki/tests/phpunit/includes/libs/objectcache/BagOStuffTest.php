@@ -1,7 +1,4 @@
 <?php
-
-use Wikimedia\ScopedCallback;
-
 /**
  * @author Matthias Mullie <mmullie@wikimedia.org>
  * @group BagOStuff
@@ -142,20 +139,6 @@ class BagOStuffTest extends MediaWikiTestCase {
 	}
 
 	/**
-	 * @covers BagOStuff::changeTTL
-	 */
-	public function testChangeTTL() {
-		$key = wfMemcKey( 'test' );
-		$value = 'meow';
-
-		$this->cache->add( $key, $value );
-		$this->assertTrue( $this->cache->changeTTL( $key, 5 ) );
-		$this->assertEquals( $this->cache->get( $key ), $value );
-		$this->cache->delete( $key );
-		$this->assertFalse( $this->cache->changeTTL( $key, 5 ) );
-	}
-
-	/**
 	 * @covers BagOStuff::add
 	 */
 	public function testAdd() {
@@ -254,20 +237,20 @@ class BagOStuffTest extends MediaWikiTestCase {
 		$value1 = $this->cache->getScopedLock( $key, 0 );
 		$value2 = $this->cache->getScopedLock( $key, 0 );
 
-		$this->assertType( ScopedCallback::class, $value1, 'First call returned lock' );
+		$this->assertType( 'ScopedCallback', $value1, 'First call returned lock' );
 		$this->assertNull( $value2, 'Duplicate call returned no lock' );
 
 		unset( $value1 );
 
 		$value3 = $this->cache->getScopedLock( $key, 0 );
-		$this->assertType( ScopedCallback::class, $value3, 'Lock returned callback after release' );
+		$this->assertType( 'ScopedCallback', $value3, 'Lock returned callback after release' );
 		unset( $value3 );
 
 		$value1 = $this->cache->getScopedLock( $key, 0, 5, 'reentry' );
 		$value2 = $this->cache->getScopedLock( $key, 0, 5, 'reentry' );
 
-		$this->assertType( ScopedCallback::class, $value1, 'First reentrant call returned lock' );
-		$this->assertType( ScopedCallback::class, $value1, 'Second reentrant call returned lock' );
+		$this->assertType( 'ScopedCallback', $value1, 'First reentrant call returned lock' );
+		$this->assertType( 'ScopedCallback', $value1, 'Second reentrant call returned lock' );
 	}
 
 	/**

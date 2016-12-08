@@ -14,9 +14,9 @@
  * @constructor
  * @param {Object} [config] Configuration options
  */
-ve.ui.AnnotationInspector = function VeUiAnnotationInspector() {
+ve.ui.AnnotationInspector = function VeUiAnnotationInspector( config ) {
 	// Parent constructor
-	ve.ui.AnnotationInspector.super.apply( this, arguments );
+	ve.ui.FragmentInspector.call( this, config );
 
 	// Properties
 	this.initialSelection = null;
@@ -271,9 +271,6 @@ ve.ui.AnnotationInspector.prototype.getTeardownProcess = function ( data ) {
 			if ( !remove ) {
 				if ( data.action !== 'done' ) {
 					surfaceModel.popStaging();
-					if ( this.previousSelection ) {
-						surfaceModel.setSelection( this.previousSelection );
-					}
 					return;
 				}
 				if ( this.initialSelection.isCollapsed() ) {

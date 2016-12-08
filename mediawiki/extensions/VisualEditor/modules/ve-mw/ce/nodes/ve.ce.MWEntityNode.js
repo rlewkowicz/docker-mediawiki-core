@@ -14,9 +14,9 @@
  * @param {ve.dm.MWEntityNode} model Model to observe
  * @param {Object} [config] Configuration options
  */
-ve.ce.MWEntityNode = function VeCeMWEntityNode() {
+ve.ce.MWEntityNode = function VeCeMWEntityNode( model, config ) {
 	// Parent constructor
-	ve.ce.MWEntityNode.super.apply( this, arguments );
+	ve.ce.LeafNode.call( this, model, config );
 
 	// DOM changes
 	this.$element.addClass( 've-ce-mwEntityNode' );

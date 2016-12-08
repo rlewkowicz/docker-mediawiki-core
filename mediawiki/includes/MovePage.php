@@ -19,8 +19,6 @@
  * @file
  */
 
-use MediaWiki\MediaWikiServices;
-
 /**
  * Handles the backend logic of moving a page from one title
  * to another.
@@ -130,14 +128,6 @@ class MovePage {
 				'bad-target-model',
 				ContentHandler::getLocalizedName( $this->oldTitle->getContentModel() ),
 				ContentHandler::getLocalizedName( $this->newTitle->getContentModel() )
-			);
-		} elseif (
-			!ContentHandler::getForTitle( $this->oldTitle )->canBeUsedOn( $this->newTitle )
-		) {
-			$status->fatal(
-				'content-not-allowed-here',
-				ContentHandler::getLocalizedName( $this->oldTitle->getContentModel() ),
-				$this->newTitle->getPrefixedText()
 			);
 		}
 
@@ -264,7 +254,7 @@ class MovePage {
 		$pageid = $this->oldTitle->getArticleID( Title::GAID_FOR_UPDATE );
 		$protected = $this->oldTitle->isProtected();
 
-		// Do the actual move; if this fails, it will throw an MWException(!)
+		// Do the actual move
 		$nullRevision = $this->moveToInternal( $user, $this->newTitle, $reason, $createRedirect );
 
 		// Refresh the sortkey for this row.  Be careful to avoid resetting
@@ -305,25 +295,19 @@ class MovePage {
 
 		if ( $protected ) {
 			# Protect the redirect title as the title used to be...
-			$res = $dbw->select(
-				'page_restrictions',
-				'*',
+			$dbw->insertSelect( 'page_restrictions', 'page_restrictions',
+				[
+					'pr_page' => $redirid,
+					'pr_type' => 'pr_type',
+					'pr_level' => 'pr_level',
+					'pr_cascade' => 'pr_cascade',
+					'pr_user' => 'pr_user',
+					'pr_expiry' => 'pr_expiry'
+				],
 				[ 'pr_page' => $pageid ],
 				__METHOD__,
-				'FOR UPDATE'
+				[ 'IGNORE' ]
 			);
-			$rowsInsert = [];
-			foreach ( $res as $row ) {
-				$rowsInsert[] = [
-					'pr_page' => $redirid,
-					'pr_type' => $row->pr_type,
-					'pr_level' => $row->pr_level,
-					'pr_cascade' => $row->pr_cascade,
-					'pr_user' => $row->pr_user,
-					'pr_expiry' => $row->pr_expiry
-				];
-			}
-			$dbw->insert( 'page_restrictions', $rowsInsert, __METHOD__, [ 'IGNORE' ] );
 
 			// Build comment for log
 			$comment = wfMessage(
@@ -385,7 +369,7 @@ class MovePage {
 		$oldsnamespace = MWNamespace::getSubject( $this->oldTitle->getNamespace() );
 		$newsnamespace = MWNamespace::getSubject( $this->newTitle->getNamespace() );
 		if ( $oldsnamespace != $newsnamespace || $oldtitle != $newtitle ) {
-			$store = MediaWikiServices::getInstance()->getWatchedItemStore();
+			$store = WatchedItemStore::getDefaultInstance();
 			$store->duplicateAllAssociatedEntries( $this->oldTitle, $this->newTitle );
 		}
 
@@ -406,16 +390,11 @@ class MovePage {
 			$reason,
 			$nullRevision
 		];
-		// Keep each single hook handler atomic
-		DeferredUpdates::addUpdate(
-			new AtomicSectionUpdate(
-				$dbw,
-				__METHOD__,
-				function () use ( $params ) {
-					Hooks::run( 'TitleMoveComplete', $params );
-				}
-			)
-		);
+		$dbw->onTransactionIdle( function () use ( $params, $dbw ) {
+			// Keep each single hook handler atomic
+			$dbw->setFlag( DBO_TRX ); // flag is automatically reset by DB layer
+			Hooks::run( 'TitleMoveComplete', $params );
+		} );
 
 		return Status::newGood();
 	}
@@ -426,7 +405,7 @@ class MovePage {
 	 *
 	 * @fixme This was basically directly moved from Title, it should be split into smaller functions
 	 * @param User $user the User doing the move
-	 * @param Title $nt The page to move to, which should be a redirect or non-existent
+	 * @param Title $nt The page to move to, which should be a redirect or nonexistent
 	 * @param string $reason The reason for the move
 	 * @param bool $createRedirect Whether to leave a redirect at the old title. Does not check
 	 *   if the user has the suppressredirect right
@@ -442,31 +421,6 @@ class MovePage {
 		} else {
 			$moveOverRedirect = false;
 			$logType = 'move';
-		}
-
-		if ( $moveOverRedirect ) {
-			$overwriteMessage = wfMessage(
-					'delete_and_move_reason',
-					$this->oldTitle->getPrefixedText()
-				)->text();
-			$newpage = WikiPage::factory( $nt );
-			$errs = [];
-			$status = $newpage->doDeleteArticleReal(
-				$overwriteMessage,
-				/* $suppress */ false,
-				$nt->getArticleID(),
-				/* $commit */ false,
-				$errs,
-				$user,
-				[],
-				'delete_redir'
-			);
-
-			if ( !$status->isGood() ) {
-				throw new MWException( 'Failed to delete page-move revision: ' . $status );
-			}
-
-			$nt->resetArticleID( false );
 		}
 
 		if ( $createRedirect ) {
@@ -523,6 +477,19 @@ class MovePage {
 
 		$newpage = WikiPage::factory( $nt );
 
+		if ( $moveOverRedirect ) {
+			$newid = $nt->getArticleID();
+			$newcontent = $newpage->getContent();
+
+			# Delete the old redirect. We don't save it to history since
+			# by definition if we've got here it's rather uninteresting.
+			# We have to remove it so that the next step doesn't trigger
+			# a conflict on the unique namespace+title index...
+			$dbw->delete( 'page', [ 'page_id' => $newid ], __METHOD__ );
+
+			$newpage->doDeleteUpdates( $newid, $newcontent );
+		}
+
 		# Save a null revision in the page's history notifying of the move
 		$nullRevision = Revision::newNullRevision( $dbw, $oldid, $comment, true, $user );
 		if ( !is_object( $nullRevision ) ) {
@@ -541,8 +508,8 @@ class MovePage {
 			__METHOD__
 		);
 
+		// clean up the old title before reset article id - bug 45348
 		if ( !$redirectContent ) {
-			// Clean up the old title *before* reset article id - bug 45348
 			WikiPage::onArticleDelete( $this->oldTitle );
 		}
 
@@ -568,7 +535,9 @@ class MovePage {
 			);
 		}
 
-		WikiPage::onArticleCreate( $nt );
+		if ( !$moveOverRedirect ) {
+			WikiPage::onArticleCreate( $nt );
+		}
 
 		# Recreate the redirect, this time in the other direction.
 		if ( $redirectContent ) {

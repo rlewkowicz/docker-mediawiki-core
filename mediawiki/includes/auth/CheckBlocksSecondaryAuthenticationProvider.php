@@ -23,6 +23,7 @@ namespace MediaWiki\Auth;
 
 use Config;
 use StatusValue;
+use User;
 
 /**
  * Check if the user is blocked, and prevent authentication if so.
@@ -74,7 +75,7 @@ class CheckBlocksSecondaryAuthenticationProvider extends AbstractSecondaryAuthen
 		return AuthenticationResponse::newAbstain();
 	}
 
-	public function testUserForCreation( $user, $autocreate, array $options = [] ) {
+	public function testUserForCreation( $user, $autocreate ) {
 		$block = $user->isBlockedFromCreateAccount();
 		if ( $block ) {
 			$errorParams = [

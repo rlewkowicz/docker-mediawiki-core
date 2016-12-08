@@ -8,8 +8,7 @@
 			"Kenrick95",
 			"McDutchie",
 			"Rv77ax",
-			"William Surya Permana",
-			"Rachmat.Wahidi"
+			"William Surya Permana"
 		]
 	},
 	"ooui-outline-control-move-down": "Pindahkan butir ke bawah",
@@ -24,8 +23,6 @@
 	"ooui-dialog-process-dismiss": "Tutup",
 	"ooui-dialog-process-retry": "Coba lagi",
 	"ooui-dialog-process-continue": "Lanjutkan",
-	"ooui-selectfile-button-select": "Pilih berkas",
 	"ooui-selectfile-not-supported": "Peilihan berkas tidak didukung",
-	"ooui-selectfile-placeholder": "Tidak ada berkas yang terpilih",
-	"ooui-selectfile-dragdrop-placeholder": "Letakkan berkas di sini"
+	"ooui-selectfile-placeholder": "Tidak ada berkas yang terpilih"
 }

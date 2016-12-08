@@ -19,7 +19,6 @@
  */
 
 use MediaWiki\Logger\LoggerFactory;
-use MediaWiki\MediaWikiServices;
 
 /**
  * Handler class for MWExceptions
@@ -60,21 +59,70 @@ class MWExceptionHandler {
 	 * @param Exception|Throwable $e
 	 */
 	protected static function report( $e ) {
-		try {
-			// Try and show the exception prettily, with the normal skin infrastructure
-			if ( $e instanceof MWException ) {
-				// Delegate to MWException until all subclasses are handled by
-				// MWExceptionRenderer and MWException::report() has been
-				// removed.
+		global $wgShowExceptionDetails;
+
+		$cmdLine = MWException::isCommandLine();
+
+		if ( $e instanceof MWException ) {
+			try {
+				// Try and show the exception prettily, with the normal skin infrastructure
 				$e->report();
-			} else {
-				MWExceptionRenderer::output( $e, MWExceptionRenderer::AS_PRETTY );
+			} catch ( Exception $e2 ) {
+				// Exception occurred from within exception handler
+				// Show a simpler message for the original exception,
+				// don't try to invoke report()
+				$message = "MediaWiki internal error.\n\n";
+
+				if ( $wgShowExceptionDetails ) {
+					$message .= 'Original exception: ' . self::getLogMessage( $e ) .
+						"\nBacktrace:\n" . self::getRedactedTraceAsString( $e ) .
+						"\n\nException caught inside exception handler: " . self::getLogMessage( $e2 ) .
+						"\nBacktrace:\n" . self::getRedactedTraceAsString( $e2 );
+				} else {
+					$message .= "Exception caught inside exception handler.\n\n" .
+						"Set \$wgShowExceptionDetails = true; at the bottom of LocalSettings.php " .
+						"to show detailed debugging information.";
+				}
+
+				$message .= "\n";
+
+				if ( $cmdLine ) {
+					self::printError( $message );
+				} else {
+					echo nl2br( htmlspecialchars( $message ) ) . "\n";
+				}
 			}
-		} catch ( Exception $e2 ) {
-			// Exception occurred from within exception handler
-			// Show a simpler message for the original exception,
-			// don't try to invoke report()
-			MWExceptionRenderer::output( $e, MWExceptionRenderer::AS_RAW, $e2 );
+		} else {
+			$message = "Exception encountered, of type \"" . get_class( $e ) . "\"";
+
+			if ( $wgShowExceptionDetails ) {
+				$message .= "\n" . self::getLogMessage( $e ) . "\nBacktrace:\n" .
+					self::getRedactedTraceAsString( $e ) . "\n";
+			}
+
+			if ( $cmdLine ) {
+				self::printError( $message );
+			} else {
+				echo nl2br( htmlspecialchars( $message ) ) . "\n";
+			}
+
+		}
+	}
+
+	/**
+	 * Print a message, if possible to STDERR.
+	 * Use this in command line mode only (see isCommandLine)
+	 *
+	 * @param string $message Failure text
+	 */
+	public static function printError( $message ) {
+		# NOTE: STDERR may not be available, especially if php-cgi is used from the
+		# command line (bug #15602). Try to produce meaningful output anyway. Using
+		# echo may corrupt output to STDOUT though.
+		if ( defined( 'STDERR' ) ) {
+			fwrite( STDERR, $message );
+		} else {
+			echo $message;
 		}
 	}
 
@@ -87,21 +135,16 @@ class MWExceptionHandler {
 	 * @param Exception|Throwable $e
 	 */
 	public static function rollbackMasterChangesAndLog( $e ) {
-		$services = MediaWikiServices::getInstance();
-		if ( $services->isServiceDisabled( 'DBLoadBalancerFactory' ) ) {
-			return; // T147599
-		}
-
-		$lbFactory = $services->getDBLoadBalancerFactory();
-		if ( $lbFactory->hasMasterChanges() ) {
+		$factory = wfGetLBFactory();
+		if ( $factory->hasMasterChanges() ) {
 			$logger = LoggerFactory::getInstance( 'Bug56269' );
 			$logger->warning(
 				'Exception thrown with an uncommited database transaction: ' .
 				self::getLogMessage( $e ),
 				self::getLogContext( $e )
 			);
+			$factory->rollbackMasterChanges( __METHOD__ );
 		}
-		$lbFactory->rollbackMasterChanges( __METHOD__ );
 	}
 
 	/**
@@ -444,16 +487,12 @@ TXT;
 		return "[$id] $url   $type from line $line of $file: $message";
 	}
 
-	/**
-	 * @param Exception|Throwable $e
-	 * @return string
-	 */
-	public static function getPublicLogMessage( $e ) {
+	public static function getPublicLogMessage( Exception $e ) {
 		$reqId = WebRequest::getRequestId();
 		$type = get_class( $e );
 		return '[' . $reqId . '] '
 			. gmdate( 'Y-m-d H:i:s' ) . ': '
-			. 'Fatal exception of type "' . $type . '"';
+			. 'Fatal exception of type ' . $type;
 	}
 
 	/**

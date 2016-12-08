@@ -13,9 +13,9 @@
  * @constructor
  * @param {Object} element Reference to element in meta-linmod
  */
-ve.dm.MWTOCDisableMetaItem = function VeDmMWTOCDisableMetaItem() {
+ve.dm.MWTOCDisableMetaItem = function VeDmMWTOCDisableMetaItem( element ) {
 	// Parent constructor
-	ve.dm.MWTOCDisableMetaItem.super.apply( this, arguments );
+	ve.dm.MetaItem.call( this, element );
 };
 
 /* Inheritance */

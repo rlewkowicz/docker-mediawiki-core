@@ -586,11 +586,11 @@ final class SessionBackend {
 	 *
 	 * Calls to save() will not be delayed.
 	 *
-	 * @return \Wikimedia\ScopedCallback When this goes out of scope, a save will be triggered
+	 * @return \ScopedCallback When this goes out of scope, a save will be triggered
 	 */
 	public function delaySave() {
 		$this->delaySave++;
-		return new \Wikimedia\ScopedCallback( function () {
+		return new \ScopedCallback( function () {
 			if ( --$this->delaySave <= 0 ) {
 				$this->delaySave = 0;
 				$this->save();
@@ -599,8 +599,7 @@ final class SessionBackend {
 	}
 
 	/**
-	 * Save the session, unless delayed
-	 * @see SessionBackend::save()
+	 * Save and persist session data, unless delayed
 	 */
 	private function autosave() {
 		if ( $this->delaySave <= 0 ) {
@@ -609,12 +608,7 @@ final class SessionBackend {
 	}
 
 	/**
-	 * Save the session
-	 *
-	 * Update both the backend data and the associated WebRequest(s) to
-	 * reflect the state of the the SessionBackend. This might include
-	 * persisting or unpersisting the session.
-	 *
+	 * Save and persist session data
 	 * @param bool $closing Whether the session is being closed
 	 */
 	public function save( $closing = false ) {
@@ -642,11 +636,7 @@ final class SessionBackend {
 			] );
 			$this->user->setToken();
 			if ( !wfReadOnly() ) {
-				// Promise that the token set here will be valid; save it at end of request
-				$user = $this->user;
-				\DeferredUpdates::addCallableUpdate( function () use ( $user ) {
-					$user->saveSettings();
-				} );
+				$this->user->saveSettings();
 			}
 			$this->metaDirty = true;
 		}
@@ -726,8 +716,6 @@ final class SessionBackend {
 			}
 		}
 
-		$flags = $this->persist ? 0 : CachedBagOStuff::WRITE_CACHE_ONLY;
-		$flags |= CachedBagOStuff::WRITE_SYNC; // write to all datacenters
 		$this->store->set(
 			wfMemcKey( 'MWSession', (string)$this->id ),
 			[
@@ -735,7 +723,7 @@ final class SessionBackend {
 				'metadata' => $metadata,
 			],
 			$metadata['expires'],
-			$flags
+			$this->persist ? 0 : CachedBagOStuff::WRITE_CACHE_ONLY
 		);
 
 		$this->metaDirty = false;
@@ -751,7 +739,7 @@ final class SessionBackend {
 	private function checkPHPSession() {
 		if ( !$this->checkPHPSessionRecursionGuard ) {
 			$this->checkPHPSessionRecursionGuard = true;
-			$reset = new \Wikimedia\ScopedCallback( function () {
+			$reset = new \ScopedCallback( function () {
 				$this->checkPHPSessionRecursionGuard = false;
 			} );
 

@@ -11,7 +11,6 @@ module.exports = function ( grunt ) {
 	grunt.loadNpmTasks( 'grunt-jscs' );
 	grunt.loadNpmTasks( 'grunt-jsonlint' );
 	grunt.loadNpmTasks( 'grunt-banana-checker' );
-	grunt.loadNpmTasks( 'grunt-stylelint' );
 	grunt.initConfig( {
 		jshint: {
 			options: {
@@ -39,23 +38,6 @@ module.exports = function ( grunt ) {
 				src: '<%= jshint.all %>'
 			}
 		},
-		stylelint: {
-			core: {
-				src: [
-					'**/*.css',
-					'!modules/ve-cite/**',
-					'!node_modules/**'
-				]
-			},
-			've-cite': {
-				options: {
-					configFile: 'modules/ve-cite/.stylelintrc'
-				},
-				src: [
-					'modules/ve-cite/**/*.css'
-				]
-			}
-		},
 		jsonlint: {
 			all: [
 				'**/*.json',
@@ -64,6 +46,6 @@ module.exports = function ( grunt ) {
 		}
 	} );
 
-	grunt.registerTask( 'test', [ 'jshint', 'jscs:main', 'stylelint', 'jsonlint', 'banana' ] );
+	grunt.registerTask( 'test', [ 'jshint', 'jscs:main', 'jsonlint', 'banana' ] );
 	grunt.registerTask( 'default', 'test' );
 };

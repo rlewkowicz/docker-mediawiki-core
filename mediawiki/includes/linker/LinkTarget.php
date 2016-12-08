@@ -28,7 +28,6 @@ interface LinkTarget {
 
 	/**
 	 * Get the namespace index.
-	 * @since 1.27
 	 *
 	 * @return int Namespace index
 	 */
@@ -36,7 +35,6 @@ interface LinkTarget {
 
 	/**
 	 * Convenience function to test if it is in the namespace
-	 * @since 1.27
 	 *
 	 * @param int $ns
 	 * @return bool
@@ -45,7 +43,6 @@ interface LinkTarget {
 
 	/**
 	 * Get the link fragment (i.e. the bit after the #) in text form.
-	 * @since 1.27
 	 *
 	 * @return string link fragment
 	 */
@@ -53,7 +50,6 @@ interface LinkTarget {
 
 	/**
 	 * Whether the link target has a fragment
-	 * @since 1.27
 	 *
 	 * @return bool
 	 */
@@ -61,7 +57,6 @@ interface LinkTarget {
 
 	/**
 	 * Get the main part with underscores.
-	 * @since 1.27
 	 *
 	 * @return string Main part of the link, with underscores (for use in href attributes)
 	 */
@@ -69,8 +64,8 @@ interface LinkTarget {
 
 	/**
 	 * Returns the link in text form, without namespace prefix or fragment.
+	 *
 	 * This is computed from the DB key by replacing any underscores with spaces.
-	 * @since 1.27
 	 *
 	 * @return string
 	 */
@@ -80,7 +75,6 @@ interface LinkTarget {
 	 * Creates a new LinkTarget for a different fragment of the same page.
 	 * It is expected that the same type of object will be returned, but the
 	 * only requirement is that it is a LinkTarget.
-	 * @since 1.27
 	 *
 	 * @param string $fragment The fragment name, or "" for the entire page.
 	 *
@@ -90,7 +84,6 @@ interface LinkTarget {
 
 	/**
 	 * Whether this LinkTarget has an interwiki component
-	 * @since 1.27
 	 *
 	 * @return bool
 	 */
@@ -98,7 +91,6 @@ interface LinkTarget {
 
 	/**
 	 * The interwiki component of this LinkTarget
-	 * @since 1.27
 	 *
 	 * @return string
 	 */

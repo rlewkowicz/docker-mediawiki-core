@@ -1,6 +1,4 @@
 <?php
-use MediaWiki\MediaWikiServices;
-
 /**
  * @covers Interwiki
  *
@@ -49,15 +47,7 @@ class InterwikiTest extends MediaWikiTestCase {
 		$this->tablesUsed[] = 'interwiki';
 	}
 
-	private function setWgInterwikiCache( $interwikiCache ) {
-		$this->overrideMwServices();
-		MediaWikiServices::getInstance()->resetServiceForTesting( 'InterwikiLookup' );
-		$this->setMwGlobals( 'wgInterwikiCache', $interwikiCache );
-	}
-
 	public function testDatabaseStorage() {
-		$this->markTestSkipped( 'Needs I37b8e8018b3 <https://gerrit.wikimedia.org/r/#/c/270555/>' );
-
 		// NOTE: database setup is expensive, so we only do
 		//  it once and run all the tests in one go.
 		$dewiki = [
@@ -80,7 +70,8 @@ class InterwikiTest extends MediaWikiTestCase {
 
 		$this->populateDB( [ $dewiki, $zzwiki ] );
 
-		$this->setWgInterwikiCache( false );
+		Interwiki::resetLocalCache();
+		$this->setMwGlobals( 'wgInterwikiCache', false );
 
 		$this->assertEquals(
 			[ $dewiki, $zzwiki ],
@@ -188,7 +179,8 @@ class InterwikiTest extends MediaWikiTestCase {
 			[ $zzwiki ]
 		);
 
-		$this->setWgInterwikiCache( $cdbFile );
+		Interwiki::resetLocalCache();
+		$this->setMwGlobals( 'wgInterwikiCache', $cdbFile );
 
 		$this->assertEquals(
 			[ $dewiki, $zzwiki ],
@@ -234,7 +226,8 @@ class InterwikiTest extends MediaWikiTestCase {
 			[ $zzwiki ]
 		);
 
-		$this->setWgInterwikiCache( $cdbData );
+		Interwiki::resetLocalCache();
+		$this->setMwGlobals( 'wgInterwikiCache', $cdbData );
 
 		$this->assertEquals(
 			[ $dewiki, $zzwiki ],

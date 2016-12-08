@@ -7,14 +7,14 @@
 	/**
 	 * An implementation of Jenkins' one-at-a-time hash.
 	 *
-	 * @see https://en.wikipedia.org/wiki/Jenkins_hash_function
+	 * @see http://en.wikipedia.org/wiki/Jenkins_hash_function
 	 *
 	 * @param {string} string String to hash
 	 * @return {number} The hash as a 32-bit unsigned integer
 	 * @ignore
 	 *
 	 * @author Ori Livneh <ori@wikimedia.org>
-	 * @see https://jsbin.com/kejewi/4/watch?js,console
+	 * @see http://jsbin.com/kejewi/4/watch?js,console
 	 */
 	function hashString( string ) {
 		var hash = 0,

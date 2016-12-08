@@ -53,6 +53,18 @@ class ImagePage extends Article {
 	}
 
 	/**
+	 * Constructor from a page id
+	 * @param int $id Article ID to load
+	 * @return ImagePage|null
+	 */
+	public static function newFromID( $id ) {
+		$t = Title::newFromID( $id );
+		# @todo FIXME: Doesn't inherit right
+		return $t == null ? null : new self( $t );
+		# return $t == null ? null : new static( $t ); // PHP 5.3
+	}
+
+	/**
 	 * @param File $file
 	 * @return void
 	 */
@@ -210,12 +222,11 @@ class ImagePage extends Article {
 				$out->addStyle( $css );
 			}
 		}
+		// always show the local local Filepage.css, bug 29277
+		$out->addModuleStyles( 'filepage' );
 
-		$out->addModuleStyles( [
-			'filepage', // always show the local local Filepage.css, bug 29277
-			'mediawiki.action.view.filepage', // Add MediaWiki styles for a file page
-		] );
-
+		// Add MediaWiki styles for a file page
+		$out->addModuleStyles( 'mediawiki.action.view.filepage' );
 	}
 
 	/**
@@ -798,7 +809,7 @@ EOT
 	 * @return ResultWrapper
 	 */
 	protected function queryImageLinks( $target, $limit ) {
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 
 		return $dbr->select(
 			[ 'imagelinks', 'page' ],

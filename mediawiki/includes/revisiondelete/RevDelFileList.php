@@ -104,7 +104,7 @@ class RevDelFileList extends RevDelList {
 		return $status;
 	}
 
-	public function doPostCommitUpdates( array $visibilityChangeMap ) {
+	public function doPostCommitUpdates() {
 		$file = wfLocalFile( $this->title );
 		$file->purgeCache();
 		$file->purgeDescription();

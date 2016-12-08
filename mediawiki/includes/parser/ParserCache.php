@@ -72,19 +72,12 @@ class ParserCache {
 	}
 
 	/**
-	 * @param WikiPage $page
+	 * @param WikiPage $article
 	 * @return mixed|string
 	 */
-	protected function getOptionsKey( $page ) {
-		return wfMemcKey( 'pcache', 'idoptions', $page->getId() );
-	}
-
-	/**
-	 * @param WikiPage $page
-	 * @since 1.28
-	 */
-	public function deleteOptionsKey( $page ) {
-		$this->mMemc->delete( $this->getOptionsKey( $page ) );
+	protected function getOptionsKey( $article ) {
+		$pageid = $article->getId();
+		return wfMemcKey( 'pcache', 'idoptions', "{$pageid}" );
 	}
 
 	/**

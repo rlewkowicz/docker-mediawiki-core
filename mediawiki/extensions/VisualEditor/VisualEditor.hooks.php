@@ -54,11 +54,6 @@ class VisualEditorHooks {
 			$toolbarScrollOffset = $skinsToolbarScrollOffset[$skinName];
 		}
 		$output->addJsConfigVars( 'wgVisualEditorToolbarScrollOffset', $toolbarScrollOffset );
-
-		$output->addJsConfigVars(
-			'wgEditSubmitButtonLabelPublish',
-			$veConfig->get( 'EditSubmitButtonLabelPublish' )
-		);
 		return true;
 	}
 
@@ -129,6 +124,7 @@ class VisualEditorHooks {
 		}
 
 		$title = $article->getTitle();
+
 		$params = $req->getValues();
 
 		if ( isset( $params['venoscript'] ) ) {
@@ -147,7 +143,7 @@ class VisualEditorHooks {
 			self::getUserEditor( $user, $req ) === 'wikitext' ||
 			!$title->quickUserCan( 'edit' ) ||
 			!ApiVisualEditor::isAllowedNamespace( $veConfig, $title->getNamespace() ) ||
-			!ApiVisualEditor::isAllowedContentType( $veConfig, $title->getContentModel() ) ||
+			$title->getContentModel() !== CONTENT_MODEL_WIKITEXT ||
 			// Known parameters that VE does not handle
 			// TODO: Other params too? See identical list in ve.init.mw.DesktopArticleTarget.init.js
 			isset( $params['undo'] ) ||
@@ -196,6 +192,26 @@ class VisualEditorHooks {
 	}
 
 	/**
+	 * Convert the content model of a message that is actually JSON to JSON.
+	 * This only affects validation and UI when saving and editing, not
+	 * loading the content.
+	 *
+	 * @param Title $title
+	 * @param string $model
+	 * @return bool
+	 */
+	public static function onContentHandlerDefaultModelFor( Title $title, &$model ) {
+		if (
+			$title->inNamespace( NS_MEDIAWIKI ) &&
+			$title->getText() === 'Visualeditor-quick-access-characters.json'
+		) {
+			$model = CONTENT_MODEL_JSON;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Changes the Edit tab and adds the VisualEditor tab.
 	 *
 	 * This is attached to the MediaWiki 'SkinTemplateNavigation' hook.
@@ -220,7 +236,7 @@ class VisualEditorHooks {
 			return true;
 		}
 
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 		if (
 			$config->get( 'VisualEditorUseSingleEditTab' ) &&
 			!$user->isAnon() &&
@@ -257,10 +273,12 @@ class VisualEditorHooks {
 		$title = $skin->getRelevantTitle();
 		$namespaceEnabled = ApiVisualEditor::isAllowedNamespace( $config, $title->getNamespace() );
 		$pageContentModel = $title->getContentModel();
-		$contentModelEnabled = ApiVisualEditor::isAllowedContentType( $config, $pageContentModel );
 		// Don't exit if this page isn't VE-enabled, since we should still
 		// change "Edit" to "Edit source".
-		$isAvailable = $namespaceEnabled && $contentModelEnabled;
+		$isAvailable = (
+			$namespaceEnabled &&
+			$pageContentModel === CONTENT_MODEL_WIKITEXT
+		);
 
 		// HACK: Exit if we're in the Education Program namespace (even though it's content)
 		if ( defined( 'EP_NS' ) && $title->inNamespace( EP_NS ) ) {
@@ -309,7 +327,7 @@ class VisualEditorHooks {
 					$editTab['text'] = $skin->msg( $editTabMessage )->text();
 				}
 
-				$editor = self::getUserEditor( $user, $skin->getRequest() );
+				$editor = self::getUserEditor( $user, RequestContext::getMain()->getRequest() );
 				if (
 					$isAvailable &&
 					$config->get( 'VisualEditorUseSingleEditTab' ) &&
@@ -330,17 +348,6 @@ class VisualEditorHooks {
 						$user->getOption( 'visualeditor-tabs' ) === 'multi-tab'
 					)
 				) {
-					if (
-						$config->get( 'VisualEditorEnableWikitext' ) &&
-						$user->getOption( 'visualeditor-newwikitext' )
-					) {
-						$parsed = wfParseUrl( wfExpandUrl( $editTab['href'] ) );
-						$q = wfCgiToArray( $parsed['query'] );
-						unset( $q['action'] );
-						$q['veaction'] = 'editsource';
-						$parsed['query'] = wfArrayToCgi( $q );
-						$editTab['href'] = wfAssembleUrl( $parsed );
-					}
 					// Inject the VE tab before or after the edit tab
 					if ( $config->get( 'VisualEditorTabPosition' ) === 'before' ) {
 						$editTab['class'] .= ' collapsible';
@@ -400,7 +407,8 @@ class VisualEditorHooks {
 	public static function onRecentChange_save( RecentChange $rc ) {
 		$request = RequestContext::getMain()->getRequest();
 		if ( $request->getBool( 'veswitched' ) && $rc->mAttribs['rc_this_oldid'] ) {
-			$rc->addTags( 'visualeditor-switched' );
+			ChangeTags::addTags( 'visualeditor-switched',
+				$rc->mAttribs['rc_id'], $rc->mAttribs['rc_this_oldid'] );
 		}
 		return true;
 	}
@@ -423,18 +431,25 @@ class VisualEditorHooks {
 	) {
 		$config = ConfigFactory::getDefaultInstance()->makeConfig( 'visualeditor' );
 
+		// Exit if we're using the single edit tab.
+		if (
+			$config->get( 'VisualEditorUseSingleEditTab' ) &&
+			$skin->getUser()->getOption( 'visualeditor-tabs' ) !== 'multi-tab'
+		) {
+			return true;
+		}
+
 		// Exit if we're in parserTests
 		if ( isset( $GLOBALS[ 'wgVisualEditorInParserTests' ] ) ) {
 			return true;
 		}
 
-		$user = $skin->getUser();
 		// Exit if the user doesn't have VE enabled
 		if (
-			!$user->getOption( 'visualeditor-enable' ) ||
-			$user->getOption( 'visualeditor-betatempdisable' ) ||
-			$user->getOption( 'visualeditor-autodisable' ) ||
-			( $config->get( 'VisualEditorDisableForAnons' ) && $user->isAnon() )
+			!$skin->getUser()->getOption( 'visualeditor-enable' ) ||
+			$skin->getUser()->getOption( 'visualeditor-betatempdisable' ) ||
+			$skin->getUser()->getOption( 'visualeditor-autodisable' ) ||
+			( $config->get( 'VisualEditorDisableForAnons' ) && $skin->getUser()->isAnon() )
 		) {
 			return true;
 		}
@@ -448,48 +463,11 @@ class VisualEditorHooks {
 			return true;
 		}
 
-		$editor = self::getUserEditor( $user, RequestContext::getMain()->getRequest() );
-		if (
-			!$config->get( 'VisualEditorUseSingleEditTab' ) ||
-			$user->getOption( 'visualeditor-tabs' ) === 'multi-tab' ||
-			(
-				$user->getOption( 'visualeditor-tabs' ) === 'remember-last' &&
-				$editor === 'wikitext'
-			)
-		) {
-			// Don't add ve-edit, but do update the edit tab (e.g. "Edit source").
-			$tabMessages = $config->get( 'VisualEditorTabMessages' );
-			$sourceEditSection = $tabMessages['editsectionsource'] !== null ?
-				$tabMessages['editsectionsource'] : 'editsection';
-			$result['editsection']['text'] = $skin->msg( $sourceEditSection )->inLanguage( $lang )->text();
-		}
+		$tabMessages = $config->get( 'VisualEditorTabMessages' );
+		$sourceEditSection = $tabMessages['editsectionsource'] !== null ?
+			$tabMessages['editsectionsource'] : 'editsection';
 
-		if (
-			$config->get( 'VisualEditorEnableWikitext' ) &&
-			$user->getOption( 'visualeditor-newwikitext' ) &&
-			(
-				!$config->get( 'VisualEditorUseSingleEditTab' ) ||
-				$user->getOption( 'visualeditor-tabs' ) === 'prefer-wt' ||
-				$user->getOption( 'visualeditor-tabs' ) === 'multi-tab' ||
-				(
-					$user->getOption( 'visualeditor-tabs' ) === 'remember-last' &&
-					$editor === 'wikitext'
-				)
-			)
-		) {
-			$result['editsection']['query'] = [
-				'veaction' => 'editsource',
-				'vesection' => $section
-			];
-		}
-
-		// Exit if we're using the single edit tab.
-		if (
-			$config->get( 'VisualEditorUseSingleEditTab' ) &&
-			$user->getOption( 'visualeditor-tabs' ) !== 'multi-tab'
-		) {
-			return true;
-		}
+		$result['editsection']['text'] = $skin->msg( $sourceEditSection )->inLanguage( $lang )->text();
 
 		// add VE edit section in VE available namespaces
 		if ( ApiVisualEditor::isAllowedNamespace( $config, $title->getNamespace() ) ) {
@@ -533,9 +511,11 @@ class VisualEditorHooks {
 
 	public static function onGetPreferences( User $user, array &$preferences ) {
 		global $wgLang;
-		$config = ConfigFactory::getDefaultInstance()->makeConfig( 'visualeditor' );
 		if ( !class_exists( 'BetaFeatures' ) ) {
-			$namespaces = ApiVisualEditor::getAvailableNamespaceIds( $config );
+			$namespaces = ConfigFactory::getDefaultInstance()
+				->makeConfig( 'visualeditor' )
+				->get( 'VisualEditorAvailableNamespaces' );
+			$onNamespaces = array_keys( array_filter( $namespaces ) );
 
 			$enablePreference = [
 				'type' => 'toggle',
@@ -543,9 +523,9 @@ class VisualEditorHooks {
 					'visualeditor-preference-enable',
 					$wgLang->commaList( array_map(
 						[ 'self', 'convertNs' ],
-						$namespaces
+						$onNamespaces
 					) ),
-					count( $namespaces )
+					count( $onNamespaces )
 				],
 				'section' => 'editing/editor'
 			];
@@ -562,6 +542,7 @@ class VisualEditorHooks {
 				$user->getOption( 'visualeditor-autodisable' )
 		];
 
+		$config = ConfigFactory::getDefaultInstance()->makeConfig( 'visualeditor' );
 		if (
 			$config->get( 'VisualEditorUseSingleEditTab' ) &&
 			!$user->getOption( 'visualeditor-autodisable' ) &&
@@ -617,27 +598,6 @@ class VisualEditorHooks {
 				'skins' => $veConfig->get( 'VisualEditorSupportedSkins' ),
 			]
 		];
-
-		if ( $veConfig->get( 'VisualEditorEnableWikitext' ) ) {
-			$preferences['visualeditor-newwikitext'] = [
-				'version' => '1.0',
-				'label-message' => 'visualeditor-preference-newwikitexteditor-label',
-				'desc-message' => 'visualeditor-preference-newwikitexteditor-description',
-				'screenshot' => [
-					'ltr' => "$iconpath/betafeatures-icon-WikitextEditor-ltr.svg",
-					'rtl' => "$iconpath/betafeatures-icon-WikitextEditor-rtl.svg",
-				],
-				'info-message' => 'visualeditor-preference-newwikitexteditor-info-link',
-				'discussion-message' => 'visualeditor-preference-newwikitexteditor-discussion-link',
-				'requirements' => [
-					'javascript' => true,
-					'blacklist' => $veConfig->get( 'VisualEditorBrowserBlacklist' ),
-					'skins' => $veConfig->get( 'VisualEditorSupportedSkins' ),
-				],
-				'exempt-from-auto-enrollment' => true
-			];
-		}
-
 	}
 
 	/**
@@ -683,7 +643,6 @@ class VisualEditorHooks {
 		$tags[] = 'visualeditor';
 		$tags[] = 'visualeditor-needcheck'; // No longer in active use
 		$tags[] = 'visualeditor-switched';
-		$tags[] = 'visualeditor-wikitext';
 		return true;
 	}
 
@@ -711,21 +670,20 @@ class VisualEditorHooks {
 		$defaultUserOptions = $coreConfig->get( 'DefaultUserOptions' );
 		$thumbLimits = $coreConfig->get( 'ThumbLimits' );
 		$veConfig = ConfigFactory::getDefaultInstance()->makeConfig( 'visualeditor' );
-		$availableNamespaces = ApiVisualEditor::getAvailableNamespaceIds( $veConfig );
-		$availableContentModels = array_filter(
-			array_merge(
-				ExtensionRegistry::getInstance()->getAttribute( 'VisualEditorAvailableContentModels' ),
-				$veConfig->get( 'VisualEditorAvailableContentModels' )
-			)
-		);
+		$availableNamespaces = $veConfig->get( 'VisualEditorAvailableNamespaces' );
+		$enabledNamespaces = array_map( function ( $namespace ) {
+			// Convert canonical namespace names to IDs
+			return is_numeric( $namespace ) ?
+				$namespace :
+				MWNamespace::getCanonicalIndex( strtolower( $namespace ) );
+		}, array_keys( array_filter( $availableNamespaces ) ) );
 
 		$vars['wgVisualEditorConfig'] = [
 			'disableForAnons' => $veConfig->get( 'VisualEditorDisableForAnons' ),
 			'preferenceModules' => $veConfig->get( 'VisualEditorPreferenceModules' ),
-			'namespaces' => $availableNamespaces,
-			'contentModels' => $availableContentModels,
+			'namespaces' => $enabledNamespaces,
 			'signatureNamespaces' => array_values(
-				array_filter( $availableNamespaces, 'MWNamespace::wantSignatures' )
+				array_filter( $enabledNamespaces, 'MWNamespace::wantSignatures' )
 			),
 			'pluginModules' => array_merge(
 				ExtensionRegistry::getInstance()->getAttribute( 'VisualEditorPluginModules' ),
@@ -734,7 +692,6 @@ class VisualEditorHooks {
 			'defaultUserOptions' => [
 				'defaultthumbsize' => $thumbLimits[ $defaultUserOptions['thumbsize'] ]
 			],
-			'galleryOptions' => $coreConfig->get( 'GalleryOptions' ),
 			'blacklist' => $veConfig->get( 'VisualEditorBrowserBlacklist' ),
 			'skins' => $veConfig->get( 'VisualEditorSupportedSkins' ),
 			'tabPosition' => $veConfig->get( 'VisualEditorTabPosition' ),
@@ -742,7 +699,6 @@ class VisualEditorHooks {
 			'singleEditTab' => $veConfig->get( 'VisualEditorUseSingleEditTab' ),
 			'showBetaWelcome' => $veConfig->get( 'VisualEditorShowBetaWelcome' ),
 			'enableTocWidget' => $veConfig->get( 'VisualEditorEnableTocWidget' ),
-			'enableWikitext' => $veConfig->get( 'VisualEditorEnableWikitext' ),
 			'svgMaxSize' => $coreConfig->get( 'SVGMaxSize' ),
 			'namespacesWithSubpages' => $coreConfig->get( 'NamespacesWithSubpages' ),
 			'specialBooksources' => urldecode( SpecialPage::getTitleFor( 'Booksources' )->getPrefixedURL() ),
@@ -785,27 +741,6 @@ class VisualEditorHooks {
 					'targets' => [ 'desktop', 'mobile' ],
 			] ] );
 		}
-
-		$extensionMessages = [];
-		if ( class_exists( 'ConfirmEditHooks' ) ) {
-			$extensionMessages[] = 'captcha-edit';
-			$extensionMessages[] = 'captcha-label';
-
-			if ( class_exists( 'QuestyCaptcha' ) ) {
-				$extensionMessages[] = 'questycaptcha-edit';
-			}
-
-			if ( class_exists( 'FancyCaptcha' ) ) {
-				$extensionMessages[] = 'fancycaptcha-edit';
-				$extensionMessages[] = 'fancycaptcha-reload-text';
-			}
-		}
-		$resourceLoader->register( [
-			'ext.visualEditor.mwextensionmessages' => $veResourceTemplate + [
-				'messages' => $extensionMessages,
-				'targets' => [ 'desktop', 'mobile' ],
-			]
-		] );
 
 		return true;
 	}
@@ -865,7 +800,6 @@ class VisualEditorHooks {
 				'modules/ve-mw/tests/dm/ve.dm.mwExample.js',
 				'modules/ve-mw/tests/dm/ve.dm.Converter.test.js',
 				'modules/ve-mw/tests/dm/ve.dm.MWImageModel.test.js',
-				'modules/ve-mw/tests/dm/ve.dm.MWInternalLinkAnnotation.test.js',
 				// VisualEditor ContentEditable Tests
 				'lib/ve/tests/ce/ve.ce.test.js',
 				'lib/ve/tests/ce/ve.ce.Document.test.js',
@@ -1039,25 +973,4 @@ class VisualEditorHooks {
 		return true;
 	}
 
-	/**
-	 * On login, if user has a VEE cookie, set their preference equal to it.
-	 * @param $user User
-	 * @return bool true
-	 */
-	public static function onUserLoggedIn( $user ) {
-		$cookie = RequestContext::getMain()->getRequest()->getCookie( 'VEE', '' );
-		if ( $cookie === 'visualeditor' || $cookie === 'wikitext' ) {
-			DeferredUpdates::addUpdate( new AtomicSectionUpdate(
-				wfGetDB( DB_MASTER ),
-				__METHOD__,
-				function () use ( $user, $cookie ) {
-					$uLatest = $user->getInstanceForUpdate();
-					$uLatest->setOption( 'visualeditor-editor', $cookie );
-					$uLatest->saveSettings();
-				}
-			) );
-		}
-
-		return true;
-	}
 }

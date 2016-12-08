@@ -87,15 +87,9 @@ ve.ui.MWMediaDialog.static.actions = [
 		modes: [ 'info' ]
 	},
 	{
-		action: 'cancelupload',
-		label: OO.ui.deferMsg( 'visualeditor-dialog-media-goback' ),
-		flags: [ 'safe', 'back' ],
-		modes: [ 'upload-info' ]
-	},
-	{
 		label: OO.ui.deferMsg( 'visualeditor-dialog-action-cancel' ),
 		flags: [ 'safe', 'back' ],
-		modes: [ 'edit', 'insert', 'select', 'search', 'upload-upload' ]
+		modes: [ 'edit', 'insert', 'select', 'search', 'upload-upload', 'upload-info' ]
 	},
 	{
 		action: 'back',
@@ -1277,12 +1271,17 @@ ve.ui.MWMediaDialog.prototype.resetCaption = function () {
 	if ( this.imageModel ) {
 		captionDocument = this.imageModel.getCaptionDocument();
 	} else {
-		captionDocument = doc.cloneWithData( [
+		captionDocument = new ve.dm.Document( [
 			{ type: 'paragraph', internal: { generated: 'wrapper' } },
 			{ type: '/paragraph' },
 			{ type: 'internalList' },
 			{ type: '/internalList' }
-		] );
+		],
+		// The ve.dm.Document constructor expects
+		// ( data, htmlDocument, parentDocument, internalList, innerWhitespace, lang, dir )
+		// as parameters. We are only interested in setting up language, hence the
+		// multiple 'null' values.
+		null, null, null, null, doc.getLang(), doc.getDir() );
 	}
 
 	this.store = doc.getStore();
@@ -1374,13 +1373,6 @@ ve.ui.MWMediaDialog.prototype.getActionProcess = function ( action ) {
 			handler = function () {
 				this.switchPanels( 'search', true );
 				// Reset upload booklet, in case we got here by uploading a file
-				return this.mediaUploadBooklet.initialize();
-			};
-			break;
-		case 'cancelupload':
-			handler = function () {
-				this.searchTabs.setCard( 'upload' );
-				this.searchTabs.toggleMenu( true );
 				return this.mediaUploadBooklet.initialize();
 			};
 			break;

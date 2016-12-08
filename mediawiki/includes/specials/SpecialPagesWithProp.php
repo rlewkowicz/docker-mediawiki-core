@@ -174,7 +174,7 @@ class SpecialPagesWithProp extends QueryPage {
 			$opts['OFFSET'] = $offset;
 		}
 
-		$res = wfGetDB( DB_REPLICA )->select(
+		$res = wfGetDB( DB_SLAVE )->select(
 			'page_props',
 			'pp_propname',
 			'',

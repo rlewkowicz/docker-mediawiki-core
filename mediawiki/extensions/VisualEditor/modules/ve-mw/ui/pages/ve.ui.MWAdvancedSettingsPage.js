@@ -15,11 +15,11 @@
  * @param {string} name Unique symbolic name of page
  * @param {Object} [config] Configuration options
  */
-ve.ui.MWAdvancedSettingsPage = function VeUiMWAdvancedSettingsPage() {
+ve.ui.MWAdvancedSettingsPage = function VeUiMWAdvancedSettingsPage( name, config ) {
 	var advancedSettingsPage = this;
 
 	// Parent constructor
-	ve.ui.MWAdvancedSettingsPage.super.apply( this, arguments );
+	OO.ui.PageLayout.call( this, name, config );
 
 	// Properties
 	this.metaList = null;
@@ -167,9 +167,9 @@ ve.ui.MWAdvancedSettingsPage.prototype.onDisplayTitleInputChange = function () {
 /**
  * @inheritdoc
  */
-ve.ui.MWAdvancedSettingsPage.prototype.setOutlineItem = function () {
+ve.ui.MWAdvancedSettingsPage.prototype.setOutlineItem = function ( outlineItem ) {
 	// Parent method
-	ve.ui.MWAdvancedSettingsPage.super.prototype.setOutlineItem.apply( this, arguments );
+	OO.ui.PageLayout.prototype.setOutlineItem.call( this, outlineItem );
 
 	if ( this.outlineItem ) {
 		this.outlineItem

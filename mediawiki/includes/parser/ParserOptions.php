@@ -20,7 +20,6 @@
  * @file
  * @ingroup Parser
  */
-use Wikimedia\ScopedCallback;
 
 /**
  * @brief Set options of the Parser
@@ -118,21 +117,16 @@ class ParserOptions {
 	private $mRemoveComments = true;
 
 	/**
-	 * @var callable Callback for current revision fetching; first argument to call_user_func().
+	 * Callback for current revision fetching. Used as first argument to call_user_func().
 	 */
 	private $mCurrentRevisionCallback =
 		[ 'Parser', 'statelessFetchRevision' ];
 
 	/**
-	 * @var callable Callback for template fetching; first argument to call_user_func().
+	 * Callback for template fetching. Used as first argument to call_user_func().
 	 */
 	private $mTemplateCallback =
 		[ 'Parser', 'statelessFetchTemplate' ];
-
-	/**
-	 * @var callable|null Callback to generate a guess for {{REVISIONID}}
-	 */
-	private $mSpeculativeRevIdCallback;
 
 	/**
 	 * Enable limit report in an HTML comment on output
@@ -215,21 +209,6 @@ class ParserOptions {
 	 * Extra key that should be present in the caching key.
 	 */
 	private $mExtraKey = '';
-
-	/**
-	 * Are magic ISBN links enabled?
-	 */
-	private $mMagicISBNLinks = true;
-
-	/**
-	 * Are magic PMID links enabled?
-	 */
-	private $mMagicPMIDLinks = true;
-
-	/**
-	 * Are magic RFC links enabled?
-	 */
-	private $mMagicRFCLinks = true;
 
 	/**
 	 * Function to be called when an option is accessed.
@@ -321,11 +300,6 @@ class ParserOptions {
 
 	public function getTemplateCallback() {
 		return $this->mTemplateCallback;
-	}
-
-	/** @since 1.28 */
-	public function getSpeculativeRevIdCallback() {
-		return $this->mSpeculativeRevIdCallback;
 	}
 
 	public function getEnableLimitReport() {
@@ -435,28 +409,6 @@ class ParserOptions {
 		return $this->getUserLangObj()->getCode();
 	}
 
-	/**
-	 * @since 1.28
-	 * @return bool
-	 */
-	public function getMagicISBNLinks() {
-		return $this->mMagicISBNLinks;
-	}
-
-	/**
-	 * @since 1.28
-	 * @return bool
-	 */
-	public function getMagicPMIDLinks() {
-		return $this->mMagicPMIDLinks;
-	}
-	/**
-	 * @since 1.28
-	 * @return bool
-	 */
-	public function getMagicRFCLinks() {
-		return $this->mMagicRFCLinks;
-	}
 	public function setInterwikiMagic( $x ) {
 		return wfSetVar( $this->mInterwikiMagic, $x );
 	}
@@ -529,11 +481,6 @@ class ParserOptions {
 	/* @since 1.24 */
 	public function setCurrentRevisionCallback( $x ) {
 		return wfSetVar( $this->mCurrentRevisionCallback, $x );
-	}
-
-	/** @since 1.28 */
-	public function setSpeculativeRevIdCallback( $x ) {
-		return wfSetVar( $this->mSpeculativeRevIdCallback, $x );
 	}
 
 	public function setTemplateCallback( $x ) {
@@ -705,8 +652,7 @@ class ParserOptions {
 			$wgAllowExternalImagesFrom, $wgEnableImageWhitelist, $wgAllowSpecialInclusion,
 			$wgMaxArticleSize, $wgMaxPPNodeCount, $wgMaxTemplateDepth, $wgMaxPPExpandDepth,
 			$wgCleanSignatures, $wgExternalLinkTarget, $wgExpensiveParserFunctionLimit,
-			$wgMaxGeneratedPPNodeCount, $wgDisableLangConversion, $wgDisableTitleConversion,
-			$wgEnableMagicLinks;
+			$wgMaxGeneratedPPNodeCount, $wgDisableLangConversion, $wgDisableTitleConversion;
 
 		// *UPDATE* ParserOptions::matches() if any of this changes as needed
 		$this->mInterwikiMagic = $wgInterwikiMagic;
@@ -724,9 +670,6 @@ class ParserOptions {
 		$this->mExternalLinkTarget = $wgExternalLinkTarget;
 		$this->mDisableContentConversion = $wgDisableLangConversion;
 		$this->mDisableTitleConversion = $wgDisableLangConversion || $wgDisableTitleConversion;
-		$this->mMagicISBNLinks = $wgEnableMagicLinks['ISBN'];
-		$this->mMagicPMIDLinks = $wgEnableMagicLinks['PMID'];
-		$this->mMagicRFCLinks = $wgEnableMagicLinks['RFC'];
 
 		$this->mUser = $user;
 		$this->mNumberHeadings = $user->getOption( 'numberheadings' );
@@ -758,7 +701,7 @@ class ParserOptions {
 		}
 		// Check the object and lazy-loaded options
 		return (
-			$this->mUserLang->equals( $other->mUserLang ) &&
+			$this->mUserLang->getCode() === $other->mUserLang->getCode() &&
 			$this->getDateFormat() === $other->getDateFormat()
 		);
 	}

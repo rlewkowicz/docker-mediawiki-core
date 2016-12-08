@@ -1,8 +1,7 @@
 {
 	"@metadata": {
 		"authors": [
-			"StefanusRA",
-			"Mbrt"
+			"StefanusRA"
 		]
 	},
 	"vector-action-addsection": "Nambah topik",
@@ -15,6 +14,5 @@
 	"vector-view-edit": "Sunting",
 	"vector-view-history": "Sajarah kaca",
 	"vector-view-view": "Waca",
-	"vector-view-viewsource": "Deleng sumbere",
-	"vector-more-actions": "Liane"
+	"vector-view-viewsource": "Deleng sumbere"
 }

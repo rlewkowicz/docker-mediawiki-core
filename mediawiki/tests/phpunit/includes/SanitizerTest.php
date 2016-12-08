@@ -248,7 +248,7 @@ class SanitizerTest extends MediaWikiTestCase {
 	}
 
 	public static function provideDeprecatedAttributes() {
-		/** [ <attribute>, <element>, [message] ] */
+		/** array( <attribute>, <element>, [message] ) */
 		return [
 			[ 'clear="left"', 'br' ],
 			[ 'clear="all"', 'br' ],
@@ -276,7 +276,7 @@ class SanitizerTest extends MediaWikiTestCase {
 	}
 
 	public static function provideCssCommentsFixtures() {
-		/** [ <expected>, <css>, [message] ] */
+		/** array( <expected>, <css>, [message] ) */
 		return [
 			// Valid comments spanning entire input
 			[ '/**/', '/**/' ],
@@ -355,7 +355,7 @@ class SanitizerTest extends MediaWikiTestCase {
 	}
 
 	public static function provideEscapeIdReferenceList() {
-		/** [ <reference list>, <individual id 1>, <individual id 2> ] */
+		/** array( <reference list>, <individual id 1>, <individual id 2> ) */
 		return [
 			[ 'foo bar', 'foo', 'bar' ],
 			[ '#1 #2', '#1', '#2' ],

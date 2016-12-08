@@ -1,14 +1,6 @@
 <?php
 
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
-
 abstract class ResourceLoaderTestCase extends MediaWikiTestCase {
-	// Version hash for a blank file module.
-	// Result of ResourceLoader::makeHash(), ResourceLoaderTestModule
-	// and ResourceLoaderFileModule::getDefinitionSummary().
-	const BLANK_VERSION = '09p30q0';
-
 	/**
 	 * @param string $lang
 	 * @param string $dir
@@ -27,7 +19,9 @@ abstract class ResourceLoaderTestCase extends MediaWikiTestCase {
 			->setConstructorArgs( [ $resourceLoader, $request ] )
 			->setMethods( [ 'getDirection' ] )
 			->getMock();
-		$ctx->method( 'getDirection' )->willReturn( $dir );
+		$ctx->expects( $this->any() )->method( 'getDirection' )->will(
+			$this->returnValue( $dir )
+		);
 		return $ctx;
 	}
 
@@ -70,13 +64,10 @@ class ResourceLoaderTestModule extends ResourceLoaderModule {
 	protected $dependencies = [];
 	protected $group = null;
 	protected $source = 'local';
-	protected $position = 'bottom';
 	protected $script = '';
 	protected $styles = '';
 	protected $skipFunction = null;
 	protected $isRaw = false;
-	protected $isKnownEmpty = false;
-	protected $type = ResourceLoaderModule::LOAD_GENERAL;
 	protected $targets = [ 'phpunit' ];
 
 	public function __construct( $options = [] ) {
@@ -108,13 +99,6 @@ class ResourceLoaderTestModule extends ResourceLoaderModule {
 	public function getSource() {
 		return $this->source;
 	}
-	public function getPosition() {
-		return $this->position;
-	}
-
-	public function getType() {
-		return $this->type;
-	}
 
 	public function getSkipFunction() {
 		return $this->skipFunction;
@@ -123,9 +107,6 @@ class ResourceLoaderTestModule extends ResourceLoaderModule {
 	public function isRaw() {
 		return $this->isRaw;
 	}
-	public function isKnownEmpty( ResourceLoaderContext $context ) {
-		return $this->isKnownEmpty;
-	}
 
 	public function enableModuleContentVersion() {
 		return true;
@@ -133,14 +114,4 @@ class ResourceLoaderTestModule extends ResourceLoaderModule {
 }
 
 class ResourceLoaderFileModuleTestModule extends ResourceLoaderFileModule {
-}
-
-class EmptyResourceLoader extends ResourceLoader {
-	// TODO: This won't be needed once ResourceLoader is empty by default
-	// and default registrations are done from ServiceWiring instead.
-	public function __construct( Config $config = null, LoggerInterface $logger = null ) {
-		$this->setLogger( $logger ?: new NullLogger() );
-		$this->config = $config ?: ConfigFactory::getDefaultInstance()->makeConfig( 'main' );
-		$this->setMessageBlobStore( new MessageBlobStore( $this, $this->getLogger() ) );
-	}
 }

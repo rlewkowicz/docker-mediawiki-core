@@ -98,7 +98,7 @@ abstract class WebInstallerPage {
 				wfMessage( "config-$continue" )->text(),
 				[
 					'name' => "enter-$continue",
-					'style' => 'width:0;border:0;height:0;padding:0'
+					'style' => 'visibility:hidden;overflow:hidden;width:1px;margin:0'
 				]
 			) . "\n";
 		}

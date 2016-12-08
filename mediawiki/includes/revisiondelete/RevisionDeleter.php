@@ -213,7 +213,7 @@ class RevisionDeleter {
 	 * @return bool|mixed
 	 */
 	public static function checkRevisionExistence( $title, $revid ) {
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 		$exists = $dbr->selectField( 'revision', '1',
 				[ 'rev_id' => $revid ], __METHOD__ );
 

@@ -1,7 +1,5 @@
 <?php
 use MediaWiki\Logger\LoggerFactory;
-use MediaWiki\MediaWikiServices;
-use Psr\Log\LoggerInterface;
 
 /**
  * @covers MediaWikiTestCase
@@ -100,36 +98,6 @@ class MediaWikiTestCaseTest extends MediaWikiTestCase {
 		$this->stashMwGlobals( self::GLOBAL_KEY_NONEXISTING );
 	}
 
-	public function testOverrideMwServices() {
-		$initialServices = MediaWikiServices::getInstance();
-
-		$this->overrideMwServices();
-		$this->assertNotSame( $initialServices, MediaWikiServices::getInstance() );
-
-		$this->tearDown();
-		$this->assertSame( $initialServices, MediaWikiServices::getInstance() );
-	}
-
-	public function testSetService() {
-		$initialServices = MediaWikiServices::getInstance();
-		$initialService = $initialServices->getDBLoadBalancer();
-		$mockService = $this->getMockBuilder( LoadBalancer::class )
-			->disableOriginalConstructor()->getMock();
-
-		$this->setService( 'DBLoadBalancer', $mockService );
-		$this->assertNotSame( $initialServices, MediaWikiServices::getInstance() );
-		$this->assertNotSame(
-			$initialService,
-			MediaWikiServices::getInstance()->getDBLoadBalancer()
-		);
-		$this->assertSame( $mockService, MediaWikiServices::getInstance()->getDBLoadBalancer() );
-
-		$this->tearDown();
-		$this->assertSame( $initialServices, MediaWikiServices::getInstance() );
-		$this->assertNotSame( $mockService, MediaWikiServices::getInstance()->getDBLoadBalancer() );
-		$this->assertSame( $initialService, MediaWikiServices::getInstance()->getDBLoadBalancer() );
-	}
-
 	/**
 	 * @covers MediaWikiTestCase::setLogger
 	 * @covers MediaWikiTestCase::restoreLogger
@@ -137,7 +105,7 @@ class MediaWikiTestCaseTest extends MediaWikiTestCase {
 	public function testLoggersAreRestoredOnTearDown() {
 		// replacing an existing logger
 		$logger1 = LoggerFactory::getInstance( 'foo' );
-		$this->setLogger( 'foo', $this->getMock( LoggerInterface::class ) );
+		$this->setLogger( 'foo', $this->getMock( '\Psr\Log\LoggerInterface' ) );
 		$logger2 = LoggerFactory::getInstance( 'foo' );
 		$this->tearDown();
 		$logger3 = LoggerFactory::getInstance( 'foo' );
@@ -146,7 +114,7 @@ class MediaWikiTestCaseTest extends MediaWikiTestCase {
 		$this->assertNotSame( $logger1, $logger2 );
 
 		// replacing a non-existing logger
-		$this->setLogger( 'foo', $this->getMock( LoggerInterface::class ) );
+		$this->setLogger( 'bar', $this->getMock( '\Psr\Log\LoggerInterface' ) );
 		$logger1 = LoggerFactory::getInstance( 'bar' );
 		$this->tearDown();
 		$logger2 = LoggerFactory::getInstance( 'bar' );
@@ -156,8 +124,8 @@ class MediaWikiTestCaseTest extends MediaWikiTestCase {
 
 		// replacing same logger twice
 		$logger1 = LoggerFactory::getInstance( 'baz' );
-		$this->setLogger( 'foo', $this->getMock( LoggerInterface::class ) );
-		$this->setLogger( 'foo', $this->getMock( LoggerInterface::class ) );
+		$this->setLogger( 'baz', $this->getMock( '\Psr\Log\LoggerInterface' ) );
+		$this->setLogger( 'baz', $this->getMock( '\Psr\Log\LoggerInterface' ) );
 		$this->tearDown();
 		$logger2 = LoggerFactory::getInstance( 'baz' );
 

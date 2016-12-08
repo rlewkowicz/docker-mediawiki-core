@@ -46,7 +46,7 @@ class SpecialBlockList extends SpecialPage {
 		$out = $this->getOutput();
 		$lang = $this->getLanguage();
 		$out->setPageTitle( $this->msg( 'ipblocklist' ) );
-		$out->addModuleStyles( [ 'mediawiki.special' ] );
+		$out->addModuleStyles( [ 'mediawiki.special', 'mediawiki.special.blocklist' ] );
 
 		$request = $this->getRequest();
 		$par = $request->getVal( 'ip', $par );
@@ -103,14 +103,13 @@ class SpecialBlockList extends SpecialPage {
 		$context = new DerivativeContext( $this->getContext() );
 		$context->setTitle( $this->getPageTitle() ); // Remove subpage
 		$form = HTMLForm::factory( 'ooui', $fields, $context );
-		$form
-			->setMethod( 'get' )
-			->setWrapperLegendMsg( 'ipblocklist-legend' )
-			->setSubmitTextMsg( 'ipblocklist-submit' )
-			->setSubmitProgressive()
-			->prepareForm()
-			->displayForm( false );
+		$form->setMethod( 'get' );
+		$form->setWrapperLegendMsg( 'ipblocklist-legend' );
+		$form->setSubmitTextMsg( 'ipblocklist-submit' );
+		$form->setSubmitProgressive();
+		$form->prepareForm();
 
+		$form->displayForm( '' );
 		$this->showList( $pager );
 	}
 
@@ -137,7 +136,8 @@ class SpecialBlockList extends SpecialPage {
 				case Block::TYPE_IP:
 				case Block::TYPE_RANGE:
 					list( $start, $end ) = IP::parseRange( $target );
-					$conds[] = wfGetDB( DB_REPLICA )->makeList(
+					$dbr = wfGetDB( DB_SLAVE );
+					$conds[] = $dbr->makeList(
 						[
 							'ipb_address' => $target,
 							Block::getRangeCond( $start, $end )

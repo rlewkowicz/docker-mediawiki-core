@@ -18,12 +18,7 @@ ve.ui.MWEducationPopupTool = function VeUiMwEducationPopupTool( config ) {
 	var popupCloseButton, $popupContent, $shield,
 		usePrefs = !mw.user.isAnon(),
 		prefSaysShow = usePrefs && !mw.user.options.get( 'visualeditor-hideusered' ),
-		tool = this,
-		localStorageHidePref = null;
-
-	try {
-		localStorageHidePref = localStorage.getItem( 've-hideusered' );
-	} catch ( e ) {}
+		tool = this;
 
 	config = config || {};
 
@@ -34,7 +29,7 @@ ve.ui.MWEducationPopupTool = function VeUiMwEducationPopupTool( config ) {
 			!prefSaysShow &&
 			!(
 				!usePrefs &&
-				localStorageHidePref === null &&
+				localStorage.getItem( 've-hideusered' ) === null &&
 				$.cookie( 've-hideusered' ) === null
 			)
 		)

@@ -57,8 +57,22 @@ ve.dm.AlienNode.static.toDataElement = function ( domElements, converter ) {
 	return element;
 };
 
-ve.dm.AlienNode.static.toDomElements = function ( dataElement, doc, converter ) {
-	return ve.copyDomElements( converter.getStore().value( dataElement.originalDomElementsIndex ) || [], doc );
+ve.dm.AlienNode.static.toDomElements = function ( dataElement, doc ) {
+	return ve.copyDomElements( dataElement.originalDomElements, doc );
+};
+
+/**
+ * @inheritdoc
+ */
+ve.dm.AlienNode.static.getHashObject = function ( dataElement ) {
+	return {
+		type: dataElement.type,
+		attributes: dataElement.attributes,
+		originalDomElements: dataElement.originalDomElements &&
+			dataElement.originalDomElements.map( function ( el ) {
+				return el.outerHTML;
+			} ).join( '' )
+	};
 };
 
 /* Methods */

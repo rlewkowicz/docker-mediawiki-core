@@ -8,9 +8,9 @@ QUnit.module( 've.ce.BranchNode' );
 
 /* Stubs */
 
-ve.ce.BranchNodeStub = function VeCeBranchNodeStub() {
+ve.ce.BranchNodeStub = function VeCeBranchNodeStub( model, $element ) {
 	// Parent constructor
-	ve.ce.BranchNodeStub.super.apply( this, arguments );
+	ve.ce.BranchNode.call( this, model, $element );
 };
 
 OO.inheritClass( ve.ce.BranchNodeStub, ve.ce.BranchNode );

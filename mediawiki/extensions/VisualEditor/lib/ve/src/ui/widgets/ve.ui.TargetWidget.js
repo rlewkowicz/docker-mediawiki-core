@@ -25,19 +25,18 @@ ve.ui.TargetWidget = function VeUiTargetWidget( doc, config ) {
 	config = config || {};
 
 	// Parent constructor
-	ve.ui.TargetWidget.super.call( this, config );
+	OO.ui.Widget.call( this, config );
 
 	// Properties
-	this.commandRegistry = config.commandRegistry || ve.init.target.getSurface().commandRegistry;
-	this.sequenceRegistry = config.sequenceRegistry || ve.init.target.getSurface().sequenceRegistry;
-	this.dataTransferHandlerFactory = config.dataTransferHandlerFactory || ve.init.target.getSurface().dataTransferHandlerFactory;
+	this.commandRegistry = config.commandRegistry || ve.init.target.commandRegistry;
+	this.sequenceRegistry = config.sequenceRegistry || ve.init.target.sequenceRegistry;
+	this.dataTransferHandlerFactory = config.dataTransferHandlerFactory || ve.init.target.dataTransferHandlerFactory;
 	// TODO: Override document/targetTriggerListener
 
 	this.surface = ve.init.target.createSurface( doc, {
 		inTargetWidget: true,
 		commandRegistry: this.commandRegistry,
 		sequenceRegistry: this.sequenceRegistry,
-		dataTransferHandlerFactory: this.dataTransferHandlerFactory,
 		includeCommands: config.includeCommands,
 		excludeCommands: config.excludeCommands,
 		importRules: config.importRules,

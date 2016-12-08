@@ -129,11 +129,6 @@ final class Session implements \Countable, \Iterator, \ArrayAccess {
 
 	/**
 	 * Make this session not be persisted across requests
-	 *
-	 * This will remove persistence information (e.g. delete cookies)
-	 * from the associated WebRequest(s), and delete session data in the
-	 * backend. The session data will still be available via get() until
-	 * the end of the request.
 	 */
 	public function unpersist() {
 		$this->backend->unpersist();
@@ -392,7 +387,7 @@ final class Session implements \Countable, \Iterator, \ArrayAccess {
 	 * @return string[] Encryption key, HMAC key
 	 */
 	private function getSecretKeys() {
-		global $wgSessionSecret, $wgSecretKey, $wgSessionPbkdf2Iterations;
+		global $wgSessionSecret, $wgSecretKey;
 
 		$wikiSecret = $wgSessionSecret ?: $wgSecretKey;
 		$userSecret = $this->get( 'wsSessionSecret', null );
@@ -400,13 +395,8 @@ final class Session implements \Countable, \Iterator, \ArrayAccess {
 			$userSecret = \MWCryptRand::generateHex( 32 );
 			$this->set( 'wsSessionSecret', $userSecret );
 		}
-		$iterations = $this->get( 'wsSessionPbkdf2Iterations', null );
-		if ( $iterations === null ) {
-			$iterations = $wgSessionPbkdf2Iterations;
-			$this->set( 'wsSessionPbkdf2Iterations', $iterations );
-		}
 
-		$keymats = hash_pbkdf2( 'sha256', $wikiSecret, $userSecret, $iterations, 64, true );
+		$keymats = hash_pbkdf2( 'sha256', $wikiSecret, $userSecret, 10001, 64, true );
 		return [
 			substr( $keymats, 0, 32 ),
 			substr( $keymats, 32, 32 ),
@@ -600,7 +590,7 @@ final class Session implements \Countable, \Iterator, \ArrayAccess {
 	 *
 	 * Calls to save() or clear() will not be delayed.
 	 *
-	 * @return \Wikimedia\ScopedCallback When this goes out of scope, a save will be triggered
+	 * @return \ScopedCallback When this goes out of scope, a save will be triggered
 	 */
 	public function delaySave() {
 		return $this->backend->delaySave();
@@ -608,9 +598,6 @@ final class Session implements \Countable, \Iterator, \ArrayAccess {
 
 	/**
 	 * Save the session
-	 *
-	 * This will update the backend data and might re-persist the session
-	 * if needed.
 	 */
 	public function save() {
 		$this->backend->save();

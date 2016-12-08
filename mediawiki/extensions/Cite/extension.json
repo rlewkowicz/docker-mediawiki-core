@@ -38,9 +38,6 @@
 		],
 		"LinksUpdateComplete": [
 			"CiteHooks::onLinksUpdateComplete"
-		],
-		"ResourceLoaderGetConfigVars": [
-			"CiteHooks::onResourceLoaderGetConfigVars"
 		]
 	},
 	"ResourceModules": {
@@ -151,8 +148,7 @@
 				"cite-ve-dialogbutton-reference-title",
 				"cite-ve-dialogbutton-referenceslist-tooltip",
 				"cite-ve-reference-input-placeholder",
-				"cite-ve-toolbar-group-label",
-				"cite-ve-othergroup-item"
+				"cite-ve-toolbar-group-label"
 			],
 			"targets": [
 				"desktop",
@@ -174,18 +170,17 @@
 		"AllowCiteGroups": true,
 		"CiteCacheReferences": false,
 		"CiteStoreReferencesData": false,
-		"CiteCacheReferencesDataOnParse": false,
-		"CiteVisualEditorOtherGroup": false
+		"CiteCacheReferencesDataOnParse": false
 	},
 	"AutoloadClasses": {
-		"ApiQueryReferences": "includes/ApiQueryReferences.php",
-		"Cite": "includes/Cite.php",
-		"CiteHooks": "includes/CiteHooks.php",
-		"CiteDataModule": "includes/CiteDataModule.php",
-		"CiteCSSFileModule": "includes/CiteCSSFileModule.php"
+		"ApiQueryReferences": "ApiQueryReferences.php",
+		"Cite": "Cite_body.php",
+		"CiteHooks": "CiteHooks.php",
+		"CiteDataModule": "CiteDataModule.php",
+		"CiteCSSFileModule": "CiteCSSFileModule.php"
 	},
 	"ParserTestFiles": [
-		"tests/parser/citeParserTests.txt"
+		"citeParserTests.txt"
 	],
 	"TrackingCategories": [
 		"cite-tracking-category-cite-error"

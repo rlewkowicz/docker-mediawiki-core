@@ -39,7 +39,6 @@ class FeedUtils {
 		global $wgRequest, $wgUser;
 
 		$purge = $wgRequest->getVal( 'action' ) === 'purge';
-		// Allow users with 'purge' right to clear feed caches
 		if ( $purge && $wgUser->isAllowed( 'purge' ) ) {
 			$cache = ObjectCache::getMainWANInstance();
 			$cache->delete( $timekey, 1 );

@@ -29,14 +29,8 @@ class ApiManageTags extends ApiBase {
 		$params = $this->extractRequestParams();
 
 		// make sure the user is allowed
-		if ( $params['operation'] !== 'delete'
-			&& !$this->getUser()->isAllowed( 'managechangetags' )
-		) {
-			$this->dieUsage( "You don't have permission to manage change tags",
-				'permissiondenied' );
-		} elseif ( !$this->getUser()->isAllowed( 'deletechangetags' ) ) {
-			$this->dieUsage( "You don't have permission to delete change tags",
-				'permissiondenied' );
+		if ( !$this->getUser()->isAllowed( 'managechangetags' ) ) {
+			$this->dieUsage( "You don't have permission to manage change tags", 'permissiondenied' );
 		}
 
 		$result = $this->getResult();

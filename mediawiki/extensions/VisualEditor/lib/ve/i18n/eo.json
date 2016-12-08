@@ -6,8 +6,7 @@
 			"Shirayuki",
 			"Yekrats",
 			"Ochilov",
-			"Psychoslave",
-			"Robin van der Vliet"
+			"Psychoslave"
 		]
 	},
 	"visualeditor": "VidRedaktilo",
@@ -17,13 +16,11 @@
 	"visualeditor-align-widget-left": "Maldekstre",
 	"visualeditor-align-widget-right": "Dekstre",
 	"visualeditor-alignablecontextitem-title": "Ĝisrandigo",
-	"visualeditor-annotationbutton-big-tooltip": "Granda",
 	"visualeditor-annotationbutton-bold-tooltip": "Grasa",
 	"visualeditor-annotationbutton-code-tooltip": "Komputila kodo",
 	"visualeditor-annotationbutton-italic-tooltip": "Kursiva",
 	"visualeditor-annotationbutton-language-tooltip": "Lingvo",
 	"visualeditor-annotationbutton-link-tooltip": "Ligilo",
-	"visualeditor-annotationbutton-small-tooltip": "Malgranda",
 	"visualeditor-annotationbutton-strikethrough-tooltip": "Trastrekita",
 	"visualeditor-annotationbutton-subscript-tooltip": "Malalta skribo",
 	"visualeditor-annotationbutton-superscript-tooltip": "Alta skribo",

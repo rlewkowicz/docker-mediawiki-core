@@ -31,7 +31,7 @@ class BatchRowIterator implements RecursiveIterator {
 	protected $db;
 
 	/**
-	 * @var string|array $table The name or names of the table to read from
+	 * @var string $table The name of the table to read from
 	 */
 	protected $table;
 
@@ -78,20 +78,15 @@ class BatchRowIterator implements RecursiveIterator {
 	private $key;
 
 	/**
-	 * @var array Additional query options
-	 */
-	protected $options = [];
-
-	/**
 	 * @param IDatabase $db The database to read from
-	 * @param string|array $table      The name or names of the table to read from
+	 * @param string       $table      The name of the table to read from
 	 * @param string|array $primaryKey The name or names of the primary key columns
 	 * @param integer      $batchSize  The number of rows to fetch per iteration
-	 * @throws InvalidArgumentException
+	 * @throws MWException
 	 */
 	public function __construct( IDatabase $db, $table, $primaryKey, $batchSize ) {
 		if ( $batchSize < 1 ) {
-			throw new InvalidArgumentException( 'Batch size must be at least 1 row.' );
+			throw new MWException( 'Batch size must be at least 1 row.' );
 		}
 		$this->db = $db;
 		$this->table = $table;
@@ -102,7 +97,7 @@ class BatchRowIterator implements RecursiveIterator {
 	}
 
 	/**
-	 * @param array $conditions Query conditions suitable for use with
+	 * @param array $condition Query conditions suitable for use with
 	 *  IDatabase::select
 	 */
 	public function addConditions( array $conditions ) {
@@ -110,15 +105,7 @@ class BatchRowIterator implements RecursiveIterator {
 	}
 
 	/**
-	 * @param array $options Query options suitable for use with
-	 *  IDatabase::select
-	 */
-	public function addOptions( array $options ) {
-		$this->options = array_merge( $this->options, $options );
-	}
-
-	/**
-	 * @param array $conditions Query join conditions suitable for use
+	 * @param array $condition Query join conditions suitable for use
 	 *  with IDatabase::select
 	 */
 	public function addJoinConditions( array $conditions ) {
@@ -149,9 +136,8 @@ class BatchRowIterator implements RecursiveIterator {
 	 */
 	public function extractPrimaryKeys( $row ) {
 		$pk = [];
-		foreach ( $this->primaryKey as $alias => $column ) {
-			$name = is_numeric( $alias ) ? $column : $alias;
-			$pk[$name] = $row->{$name};
+		foreach ( $this->primaryKey as $column ) {
+			$pk[$column] = $row->$column;
 		}
 		return $pk;
 	}
@@ -212,7 +198,7 @@ class BatchRowIterator implements RecursiveIterator {
 			[
 				'LIMIT' => $this->batchSize,
 				'ORDER BY' => $this->orderBy,
-			] + $this->options,
+			],
 			$this->joinConditions
 		);
 
@@ -230,7 +216,7 @@ class BatchRowIterator implements RecursiveIterator {
 	 * `=` conditions while the final key uses a `>` condition
 	 *
 	 * Example output:
-	 * 	  [ '( foo = 42 AND bar > 7 ) OR ( foo > 42 )' ]
+	 * 	  array( '( foo = 42 AND bar > 7 ) OR ( foo > 42 )' )
 	 *
 	 * @return array The SQL conditions necessary to select the next set
 	 *  of rows in the batched query
@@ -242,9 +228,8 @@ class BatchRowIterator implements RecursiveIterator {
 
 		$maxRow = end( $this->current );
 		$maximumValues = [];
-		foreach ( $this->primaryKey as $alias => $column ) {
-			$name = is_numeric( $alias ) ? $column : $alias;
-			$maximumValues[$column] = $this->db->addQuotes( $maxRow->{$name} );
+		foreach ( $this->primaryKey as $column ) {
+			$maximumValues[$column] = $this->db->addQuotes( $maxRow->$column );
 		}
 
 		$pkConditions = [];

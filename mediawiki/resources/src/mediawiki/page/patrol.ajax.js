@@ -14,9 +14,9 @@
 	$( function () {
 		var $patrolLinks = $( '.patrollink[data-mw="interface"] a' );
 		$patrolLinks.on( 'click', function ( e ) {
-			var $spinner, rcid, apiRequest;
+			var $spinner, href, rcid, apiRequest;
 
-			// Preload the notification module for mw.notify
+			// Start preloading the notification module (normally loaded by mw.notify())
 			mw.loader.load( 'mediawiki.notification' );
 
 			// Hide the link and create a spinner to show it inside the brackets.
@@ -26,7 +26,8 @@
 			} );
 			$( this ).hide().after( $spinner );
 
-			rcid = mw.util.getParamValue( 'rcid', this.href );
+			href = $( this ).attr( 'href' );
+			rcid = mw.util.getParamValue( 'rcid', href );
 			apiRequest = new mw.Api();
 
 			apiRequest.postWithToken( 'patrol', {

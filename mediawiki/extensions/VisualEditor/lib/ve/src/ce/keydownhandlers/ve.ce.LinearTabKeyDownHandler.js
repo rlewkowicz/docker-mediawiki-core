@@ -19,7 +19,7 @@ ve.ce.LinearTabKeyDownHandler = function VeCeLinearTabKeyDownHandler() {
 
 /* Inheritance */
 
-OO.inheritClass( ve.ce.LinearTabKeyDownHandler, ve.ce.KeyDownHandler );
+OO.inheritClass( ve.ce.LinearTabKeyDownHandler, ve.ce.TableArrowKeyDownHandler );
 
 /* Static properties */
 
@@ -42,16 +42,15 @@ ve.ce.LinearTabKeyDownHandler.static.execute = function ( surface, e ) {
 		e.preventDefault();
 		e.stopPropagation();
 		activeTableNode.setEditing( false );
-		// If this was a merged cell, we're going to have unexpected behavior when the selection moves,
+		// if this was a merged cell, we're going to have unexpected behavior when the selection moves,
 		// so preemptively collapse to the top-left point of the merged cell.
 		surface.getModel().setSelection( surface.getModel().getSelection().collapseToStart() );
-		ve.ce.TableArrowKeyDownHandler.static.moveTableSelection(
+		ve.ce.LinearTabKeyDownHandler.static.moveTableSelection(
 			surface,
 			0, // rows
 			e.shiftKey ? -1 : 1, // columns
 			false, // logical direction, not visual
-			false, // don't expand the current selection,
-			true // wrap to next/previous row
+			false // don't expand the current selection
 		);
 		return true;
 	}

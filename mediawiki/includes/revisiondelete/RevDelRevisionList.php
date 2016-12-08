@@ -60,16 +60,13 @@ class RevDelRevisionList extends RevDelList {
 	public function doQuery( $db ) {
 		$ids = array_map( 'intval', $this->ids );
 		$queryInfo = [
-			'tables' => [ 'revision', 'page', 'user' ],
+			'tables' => [ 'revision', 'user' ],
 			'fields' => array_merge( Revision::selectFields(), Revision::selectUserFields() ),
 			'conds' => [
 				'rev_page' => $this->title->getArticleID(),
 				'rev_id' => $ids,
 			],
-			'options' => [
-				'ORDER BY' => 'rev_id DESC',
-				'USE INDEX' => [ 'revision' => 'PRIMARY' ] // workaround for MySQL bug (T104313)
-			],
+			'options' => [ 'ORDER BY' => 'rev_id DESC' ],
 			'join_conds' => [
 				'page' => Revision::pageJoinCond(),
 				'user' => Revision::userJoinCond(),
@@ -97,33 +94,13 @@ class RevDelRevisionList extends RevDelList {
 			return $live;
 		}
 
-		$archiveQueryInfo = [
-			'tables' => [ 'archive' ],
-			'fields' => Revision::selectArchiveFields(),
-			'conds' => [
-				'ar_rev_id' => $ids,
-			],
-			'options' => [ 'ORDER BY' => 'ar_rev_id DESC' ],
-			'join_conds' => [],
-		];
-
-		ChangeTags::modifyDisplayQuery(
-			$archiveQueryInfo['tables'],
-			$archiveQueryInfo['fields'],
-			$archiveQueryInfo['conds'],
-			$archiveQueryInfo['join_conds'],
-			$archiveQueryInfo['options'],
-			''
-		);
-
 		// Check if any requested revisions are available fully deleted.
-		$archived = $db->select(
-			$archiveQueryInfo['tables'],
-			$archiveQueryInfo['fields'],
-			$archiveQueryInfo['conds'],
+		$archived = $db->select( [ 'archive' ], Revision::selectArchiveFields(),
+			[
+				'ar_rev_id' => $ids
+			],
 			__METHOD__,
-			$archiveQueryInfo['options'],
-			$archiveQueryInfo['join_conds']
+			[ 'ORDER BY' => 'ar_rev_id DESC' ]
 		);
 
 		if ( $archived->numRows() == 0 ) {
@@ -173,10 +150,10 @@ class RevDelRevisionList extends RevDelList {
 		return Status::newGood();
 	}
 
-	public function doPostCommitUpdates( array $visibilityChangeMap ) {
+	public function doPostCommitUpdates() {
 		$this->title->purgeSquid();
 		// Extensions that require referencing previous revisions may need this
-		Hooks::run( 'ArticleRevisionVisibilitySet', [ $this->title, $this->ids, $visibilityChangeMap ] );
+		Hooks::run( 'ArticleRevisionVisibilitySet', [ $this->title, $this->ids ] );
 		return Status::newGood();
 	}
 }

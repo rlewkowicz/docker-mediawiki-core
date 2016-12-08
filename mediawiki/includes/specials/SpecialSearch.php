@@ -100,34 +100,24 @@ class SpecialSearch extends SpecialPage {
 	 * @param string $par
 	 */
 	public function execute( $par ) {
-		$request = $this->getRequest();
-
-		// Fetch the search term
-		$search = str_replace( "\n", " ", $request->getText( 'search' ) );
-
-		// Historically search terms have been accepted not only in the search query
-		// parameter, but also as part of the primary url. This can have PII implications
-		// in releasing page view data. As such issue a 301 redirect to the correct
-		// URL.
-		if ( strlen( $par ) && !strlen( $search ) ) {
-			$query = $request->getValues();
-			unset( $query['title'] );
-			// Strip underscores from title parameter; most of the time we'll want
-			// text form here. But don't strip underscores from actual text params!
-			$query['search'] = str_replace( '_', ' ', $par );
-			$this->getOutput()->redirect( $this->getPageTitle()->getFullURL( $query ), 301 );
-			return;
-		}
-
 		$this->setHeaders();
 		$this->outputHeader();
 		$out = $this->getOutput();
 		$out->allowClickjacking();
 		$out->addModuleStyles( [
-			'mediawiki.special', 'mediawiki.special.search.styles', 'mediawiki.ui', 'mediawiki.ui.button',
+			'mediawiki.special', 'mediawiki.special.search', 'mediawiki.ui', 'mediawiki.ui.button',
 			'mediawiki.ui.input', 'mediawiki.widgets.SearchInputWidget.styles',
 		] );
 		$this->addHelpLink( 'Help:Searching' );
+
+		// Strip underscores from title parameter; most of the time we'll want
+		// text form here. But don't strip underscores from actual text params!
+		$titleParam = str_replace( '_', ' ', $par );
+
+		$request = $this->getRequest();
+
+		// Fetch the search term
+		$search = str_replace( "\n", " ", $request->getText( 'search', $titleParam ) );
 
 		$this->load();
 		if ( !is_null( $request->getVal( 'nsRemember' ) ) ) {
@@ -396,14 +386,13 @@ class SpecialSearch extends SpecialPage {
 		if ( $textMatches && !$textStatus ) {
 			// output appropriate heading
 			if ( $numTextMatches > 0 && $numTitleMatches > 0 ) {
-				$out->addHTML( '<div class="mw-search-visualclear"></div>' );
+				$out->addHTML( '<div class="visualClear"></div>' );
 				// if no title matches the heading is redundant
 				$out->wrapWikiMsg( "==$1==\n", 'textmatches' );
 			}
 
 			// show results
 			if ( $numTextMatches > 0 ) {
-				$search->augmentSearchResults( $textMatches );
 				$out->addHTML( $this->showMatches( $textMatches ) );
 			}
 
@@ -446,7 +435,7 @@ class SpecialSearch extends SpecialPage {
 			$textMatches->free();
 		}
 
-		$out->addHTML( '<div class="mw-search-visualclear"></div>' );
+		$out->addHTML( '<div class="visualClear"></div>' );
 
 		if ( $prevnext ) {
 			$out->addHTML( "<p class='mw-search-pager-bottom'>{$prevnext}</p>\n" );
@@ -467,7 +456,7 @@ class SpecialSearch extends SpecialPage {
 	protected function interwikiHeader( $interwiki, $interwikiResult ) {
 		// TODO: we need to figure out how to name wikis correctly
 		$wikiMsg = $this->msg( 'search-interwiki-results-' . $interwiki )->parse();
-		return "<p class=\"mw-search-interwiki-header mw-search-visualclear\">\n$wikiMsg</p>";
+		return "<p class=\"mw-search-interwiki-header\">\n$wikiMsg</p>";
 	}
 
 	/**
@@ -496,9 +485,7 @@ class SpecialSearch extends SpecialPage {
 	protected function getDidYouMeanHtml( SearchResultSet $textMatches ) {
 		# mirror Go/Search behavior of original request ..
 		$params = [ 'search' => $textMatches->getSuggestionQuery() ];
-		if ( $this->fulltext === null ) {
-			$params['fulltext'] = 'Search';
-		} else {
+		if ( $this->fulltext != null ) {
 			$params['fulltext'] = $this->fulltext;
 		}
 		$stParams = array_merge( $params, $this->powerSearchOptions() );
@@ -532,9 +519,7 @@ class SpecialSearch extends SpecialPage {
 		// Search instead for '$orig'
 
 		$params = [ 'search' => $textMatches->getQueryAfterRewrite() ];
-		if ( $this->fulltext === null ) {
-			$params['fulltext'] = 'Search';
-		} else {
+		if ( $this->fulltext != null ) {
 			$params['fulltext'] = $this->fulltext;
 		}
 		$stParams = array_merge( $params, $this->powerSearchOptions() );
@@ -717,7 +702,7 @@ class SpecialSearch extends SpecialPage {
 	 *
 	 * @return string
 	 */
-	protected function showMatches( $matches, $interwiki = null ) {
+	protected function showMatches( &$matches, $interwiki = null ) {
 		global $wgContLang;
 
 		$terms = $wgContLang->convertForSearchResult( $matches->termMatches() );
@@ -726,12 +711,12 @@ class SpecialSearch extends SpecialPage {
 		$pos = $this->offset;
 
 		if ( $result && $interwiki ) {
-			$out .= $this->interwikiHeader( $interwiki, $matches );
+			$out .= $this->interwikiHeader( $interwiki, $result );
 		}
 
 		$out .= "<ul class='mw-search-results'>\n";
 		while ( $result ) {
-			$out .= $this->showHit( $result, $terms, $pos++ );
+			$out .= $this->showHit( $result, $terms, ++$pos );
 			$result = $matches->next();
 		}
 		$out .= "</ul>\n";
@@ -751,7 +736,7 @@ class SpecialSearch extends SpecialPage {
 	 *
 	 * @return string
 	 */
-	protected function showHit( SearchResult $result, $terms, $position ) {
+	protected function showHit( $result, $terms, $position ) {
 
 		if ( $result->isBrokenTitle() ) {
 			return '';
@@ -1177,8 +1162,7 @@ class SpecialSearch extends SpecialPage {
 	 * @return string
 	 */
 	protected function searchProfileTabs( $term ) {
-		$out = Html::element( 'div', [ 'class' => 'mw-search-visualclear' ] ) .
-			Xml::openElement( 'div', [ 'class' => 'mw-search-profile-tabs' ] );
+		$out = Xml::openElement( 'div', [ 'class' => 'mw-search-profile-tabs' ] );
 
 		$bareterm = $term;
 		if ( $this->startsWithImage( $term ) ) {
@@ -1255,22 +1239,18 @@ class SpecialSearch extends SpecialPage {
 			'autofocus' => trim( $term ) === '',
 			'value' => $term,
 			'dataLocation' => 'content',
-			'infusable' => true,
-		] );
-
-		$layout = new OOUI\ActionFieldLayout( $searchWidget, new OOUI\ButtonInputWidget( [
-			'type' => 'submit',
-			'label' => $this->msg( 'searchbutton' )->text(),
-			'flags' => [ 'progressive', 'primary' ],
-		] ), [
-			'align' => 'top',
 		] );
 
 		$out =
 			Html::hidden( 'title', $this->getPageTitle()->getPrefixedText() ) .
 			Html::hidden( 'profile', $this->profile ) .
 			Html::hidden( 'fulltext', 'Search' ) .
-			$layout;
+			$searchWidget .
+			new OOUI\ButtonInputWidget( [
+				'type' => 'submit',
+				'label' => $this->msg( 'searchbutton' )->text(),
+				'flags' => [ 'progressive', 'primary' ],
+			] );
 
 		// Results-info
 		if ( $totalNum > 0 && $this->offset < $totalNum ) {
@@ -1278,7 +1258,8 @@ class SpecialSearch extends SpecialPage {
 				->numParams( $this->offset + 1, $this->offset + $resultsShown, $totalNum )
 				->numParams( $resultsShown )
 				->parse();
-			$out .= Xml::tags( 'div', [ 'class' => 'results-info' ], $top );
+			$out .= Xml::tags( 'div', [ 'class' => 'results-info' ], $top ) .
+				Xml::element( 'div', [ 'style' => 'clear:both' ], '', false );
 		}
 
 		return $out;

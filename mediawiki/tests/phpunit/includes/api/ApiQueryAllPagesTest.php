@@ -20,11 +20,7 @@ class ApiQueryAllPagesTest extends ApiTestCase {
 	public function testPrefixNormalizationSearchBug() {
 		$title = Title::newFromText( 'Category:Template:xyz' );
 		$page = WikiPage::factory( $title );
-
-		$page->doEditContent(
-			ContentHandler::makeContent( 'Some text', $page->getTitle() ),
-			'inserting content'
-		);
+		$page->doEdit( 'Some text', 'inserting content' );
 
 		$result = $this->doApiRequest( [
 			'action' => 'query',

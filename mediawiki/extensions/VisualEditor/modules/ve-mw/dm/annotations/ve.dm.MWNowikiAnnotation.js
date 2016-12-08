@@ -16,9 +16,9 @@
  * @constructor
  * @param {Object} element [description]
  */
-ve.dm.MWNowikiAnnotation = function VeDmMWNowikiAnnotation() {
+ve.dm.MWNowikiAnnotation = function VeDmMWNowikiAnnotation( element ) {
 	// Parent constructor
-	ve.dm.MWNowikiAnnotation.super.apply( this, arguments );
+	ve.dm.Annotation.call( this, element );
 };
 
 /* Inheritance */
@@ -33,7 +33,7 @@ ve.dm.MWNowikiAnnotation.static.matchRdfaTypes = [ 'mw:Nowiki' ];
 
 ve.dm.MWNowikiAnnotation.static.toDomElements = function ( dataElement, doc, converter, childDomElements ) {
 	var i, len,
-		originalDomElements = converter.getStore().value( dataElement.originalDomElementsIndex ),
+		originalDomElements = dataElement.originalDomElements,
 		originalChildren = originalDomElements && originalDomElements[ 0 ] && originalDomElements[ 0 ].childNodes,
 		contentsChanged = false,
 		domElement = document.createElement( 'span' );

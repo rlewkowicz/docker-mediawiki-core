@@ -30,18 +30,7 @@
 			'ext.visualEditor.icons'
 		]
 			// Add modules from $wgVisualEditorPluginModules
-			.concat( conf.pluginModules.filter( mw.loader.getState ) );
-
-	// Provide the new wikitext editor
-	if (
-		conf.enableWikitext &&
-		(
-			mw.user.options.get( 'visualeditor-newwikitext' ) ||
-			new mw.Uri().query.veaction === 'editsource'
-		)
-	) {
-		modules.push( 'ext.visualEditor.mwwikitext' );
-	}
+			.concat( conf.pluginModules );
 
 	// Allow signing posts in select namespaces
 	if ( conf.signatureNamespaces.length ) {
@@ -105,23 +94,13 @@
 		 * Request the page HTML and various metadata from the MediaWiki API (which will use
 		 * Parsoid or RESTBase).
 		 *
-		 * @param {string} mode Target mode: 'visual' or 'source'
 		 * @param {string} pageName Page name to request
-		 * @param {number} [section] Section to edit (currently just source mode)
 		 * @param {string} [oldid] Old revision ID, current if omitted
 		 * @param {string} [targetName] Optional target name for tracking
 		 * @param {boolean} [modified] The page was been modified before loading (e.g. in source mode)
 		 * @return {jQuery.Promise} Abortable promise resolved with a JSON object
 		 */
-		requestPageData: function ( mode, pageName, section, oldid, targetName, modified ) {
-			if ( mode === 'source' ) {
-				return this.requestWikitext( pageName, section, oldid, targetName, modified );
-			} else {
-				return this.requestParsoidData( pageName, oldid, targetName, modified );
-			}
-		},
-
-		requestParsoidData: function ( pageName, oldid, targetName, modified, wikitext ) {
+		requestPageData: function ( pageName, oldid, targetName, modified ) {
 			var start, apiXhr, restbaseXhr, apiPromise, restbasePromise, dataPromise, pageHtmlUrl,
 				switched = false,
 				fromEditedState = false,
@@ -159,7 +138,7 @@
 				ve.track( 'trace.restbaseLoad.enter' );
 				if (
 					conf.fullRestbaseUrl &&
-					( wikitext || ( wikitext = $( '#wpTextbox1' ).textSelection( 'getContents' ) ) ) &&
+					$( '#wpTextbox1' ).val() &&
 					!$( '[name=wpSection]' ).val()
 				) {
 					switched = true;
@@ -174,7 +153,7 @@
 						data: {
 							title: pageName,
 							oldid: oldid,
-							wikitext: wikitext,
+							wikitext: $( '#wpTextbox1' ).val(),
 							stash: 'true'
 						},
 						// Should be synchronised with ApiVisualEditor.php
@@ -211,8 +190,9 @@
 							// Page does not exist, so let the user start with a blank document.
 							return $.Deferred().resolve( [ '', undefined ] ).promise();
 						} else {
+							window.alert( mw.msg( 'visualeditor-loaderror-message', 'HTTP ' + response.status ) );
+
 							mw.log.warn( 'RESTBase load failed: ' + response.statusText );
-							return response;
 						}
 					}
 				);
@@ -236,26 +216,6 @@
 			}
 
 			return dataPromise;
-		},
-
-		requestWikitext: function ( pageName, section, oldid /*, targetName */ ) {
-			var data = {
-					action: 'visualeditor',
-					paction: 'wikitext',
-					page: pageName,
-					uselang: mw.config.get( 'wgUserLanguage' )
-				};
-
-			// section should never really be undefined, but check just in case
-			if ( section !== null && section !== undefined ) {
-				data.section = section;
-			}
-
-			if ( oldid !== undefined ) {
-				data.oldid = oldid;
-			}
-
-			return new mw.Api().get( data );
 		}
 	};
 }() );

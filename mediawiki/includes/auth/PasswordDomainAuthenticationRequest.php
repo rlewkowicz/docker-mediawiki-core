@@ -70,8 +70,6 @@ class PasswordDomainAuthenticationRequest extends PasswordAuthenticationRequest 
 
 	/**
 	 * @codeCoverageIgnore
-	 * @param array $data
-	 * @return AuthenticationRequest|static
 	 */
 	public static function __set_state( $data ) {
 		$ret = new static( $data['domainList'] );

@@ -22,7 +22,7 @@ class VEAutodisablePref extends Maintenance {
 	}
 
 	public function execute() {
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 
 		$lastUserId = -1;
 		do {

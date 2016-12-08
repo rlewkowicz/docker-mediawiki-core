@@ -12,7 +12,7 @@ class TestUtils {
 	/**
 	 * Override the singleton for unit testing
 	 * @param SessionManager|null $manager
-	 * @return \\Wikimedia\ScopedCallback|null
+	 * @return \\ScopedCallback|null
 	 */
 	public static function setSessionManagerSingleton( SessionManager $manager = null ) {
 		session_write_close();
@@ -45,7 +45,7 @@ class TestUtils {
 			PHPSessionHandler::install( $manager );
 		}
 
-		return new \Wikimedia\ScopedCallback( function () use ( &$reset, $oldInstance ) {
+		return new \ScopedCallback( function () use ( &$reset, $oldInstance ) {
 			foreach ( $reset as &$arr ) {
 				$arr[0]->setValue( $arr[1] );
 			}

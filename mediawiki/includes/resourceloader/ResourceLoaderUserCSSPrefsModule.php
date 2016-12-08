@@ -55,6 +55,12 @@ class ResourceLoaderUserCSSPrefsModule extends ResourceLoaderModule {
 			$rules[] = "a { text-decoration: " .
 				( $options['underline'] ? 'underline' : 'none' ) . "; }";
 		}
+		if ( $options['editfont'] !== 'default' ) {
+			// Double-check that $options['editfont'] consists of safe characters only
+			if ( preg_match( '/^[a-zA-Z0-9_, -]+$/', $options['editfont'] ) ) {
+				$rules[] = "textarea { font-family: {$options['editfont']}; }\n";
+			}
+		}
 		$style = implode( "\n", $rules );
 		if ( $this->getFlip( $context ) ) {
 			$style = CSSJanus::transform( $style, true, false );
@@ -76,12 +82,5 @@ class ResourceLoaderUserCSSPrefsModule extends ResourceLoaderModule {
 	 */
 	public function getGroup() {
 		return 'private';
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getType() {
-		return self::LOAD_STYLES;
 	}
 }

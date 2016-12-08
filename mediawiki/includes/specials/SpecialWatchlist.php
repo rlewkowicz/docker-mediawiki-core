@@ -21,8 +21,6 @@
  * @ingroup SpecialPage
  */
 
-use MediaWiki\MediaWikiServices;
-
 /**
  * A special page that lists last changes made to the wiki,
  * limited to user-defined list of titles.
@@ -313,7 +311,7 @@ class SpecialWatchlist extends ChangesListSpecialPage {
 	 * @return IDatabase
 	 */
 	protected function getDB() {
-		return wfGetDB( DB_REPLICA, 'watchlist' );
+		return wfGetDB( DB_SLAVE, 'watchlist' );
 	}
 
 	/**
@@ -343,7 +341,7 @@ class SpecialWatchlist extends ChangesListSpecialPage {
 		$user = $this->getUser();
 		$output = $this->getOutput();
 
-		# Show a message about replica DB lag, if applicable
+		# Show a message about slave lag, if applicable
 		$lag = wfGetLB()->safeGetLag( $dbr );
 		if ( $lag > 0 ) {
 			$output->showLagWarning( $lag );
@@ -367,7 +365,7 @@ class SpecialWatchlist extends ChangesListSpecialPage {
 		if ( $this->getConfig()->get( 'RCShowWatchingUsers' )
 			&& $user->getOption( 'shownumberswatching' )
 		) {
-			$watchedItemStore = MediaWikiServices::getInstance()->getWatchedItemStore();
+			$watchedItemStore = WatchedItemStore::getDefaultInstance();
 		}
 
 		$s = $list->beginRecentChangesList();
@@ -429,10 +427,7 @@ class SpecialWatchlist extends ChangesListSpecialPage {
 
 		$out->addSubtitle(
 			$this->msg( 'watchlistfor2', $user->getName() )
-				->rawParams( SpecialEditWatchlist::buildTools(
-					$this->getLanguage(),
-					$this->getLinkRenderer()
-				) )
+				->rawParams( SpecialEditWatchlist::buildTools( null ) )
 		);
 
 		$this->setTopText( $opts );
@@ -618,10 +613,9 @@ class SpecialWatchlist extends ChangesListSpecialPage {
 
 		$form .= Xml::openElement( 'form', [
 			'method' => 'get',
-			'action' => wfScript(),
+			'action' => $this->getPageTitle()->getLocalURL(),
 			'id' => 'mw-watchlist-form'
 		] );
-		$form .= Html::hidden( 'title', $this->getPageTitle()->getPrefixedText() );
 		$form .= Xml::fieldset(
 			$this->msg( 'watchlist-options' )->text(),
 			false,
@@ -652,8 +646,7 @@ class SpecialWatchlist extends ChangesListSpecialPage {
 	 * @return int
 	 */
 	protected function countItems() {
-		$store = MediaWikiServices::getInstance()->getWatchedItemStore();
-		$count = $store->countWatchedItems( $this->getUser() );
+		$count = WatchedItemStore::getDefaultInstance()->countWatchedItems( $this->getUser() );
 		return floor( $count / 2 );
 	}
 }

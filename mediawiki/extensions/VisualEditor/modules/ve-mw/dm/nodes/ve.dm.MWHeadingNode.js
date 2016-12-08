@@ -17,7 +17,7 @@
  */
 ve.dm.MWHeadingNode = function VeDmMWHeadingNode() {
 	// Parent constructor
-	ve.dm.MWHeadingNode.super.apply( this, arguments );
+	ve.dm.HeadingNode.apply( this, arguments );
 };
 
 /* Inheritance */

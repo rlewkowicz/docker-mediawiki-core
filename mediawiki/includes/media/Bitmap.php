@@ -276,7 +276,7 @@ class BitmapHandler extends TransformationalImageHandler {
 	 */
 	protected function transformImageMagickExt( $image, $params ) {
 		global $wgSharpenReductionThreshold, $wgSharpenParameter, $wgMaxAnimatedGifArea,
-			$wgJpegPixelFormat;
+			$wgMaxInterlacingAreas, $wgJpegPixelFormat;
 
 		try {
 			$im = new Imagick();

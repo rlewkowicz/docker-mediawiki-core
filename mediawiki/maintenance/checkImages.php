@@ -37,7 +37,7 @@ class CheckImages extends Maintenance {
 
 	public function execute() {
 		$start = '';
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 
 		$numImages = 0;
 		$numGood = 0;

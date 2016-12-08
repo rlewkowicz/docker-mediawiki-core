@@ -1,13 +1,12 @@
 <?php
 use MediaWiki\Linker\LinkTarget;
-use Wikimedia\ScopedCallback;
 
 /**
  * @author Addshore
  *
  * @covers WatchedItemStore
  */
-class WatchedItemStoreUnitTest extends MediaWikiTestCase {
+class WatchedItemStoreUnitTest extends PHPUnit_Framework_TestCase {
 
 	/**
 	 * @return PHPUnit_Framework_MockObject_MockObject|IDatabase
@@ -29,12 +28,12 @@ class WatchedItemStoreUnitTest extends MediaWikiTestCase {
 			->getMock();
 		if ( $expectedConnectionType !== null ) {
 			$mock->expects( $this->any() )
-				->method( 'getConnectionRef' )
+				->method( 'getConnection' )
 				->with( $expectedConnectionType )
 				->will( $this->returnValue( $mockDb ) );
 		} else {
 			$mock->expects( $this->any() )
-				->method( 'getConnectionRef' )
+				->method( 'getConnection' )
 				->will( $this->returnValue( $mockDb ) );
 		}
 		$mock->expects( $this->any() )
@@ -93,6 +92,23 @@ class WatchedItemStoreUnitTest extends MediaWikiTestCase {
 			$loadBalancer,
 			$cache
 		);
+	}
+
+	public function testGetDefaultInstance() {
+		$instanceOne = WatchedItemStore::getDefaultInstance();
+		$instanceTwo = WatchedItemStore::getDefaultInstance();
+		$this->assertSame( $instanceOne, $instanceTwo );
+	}
+
+	public function testOverrideDefaultInstance() {
+		$instance = WatchedItemStore::getDefaultInstance();
+		$scopedOverride = $instance->overrideDefaultInstance( null );
+
+		$this->assertNotSame( $instance, WatchedItemStore::getDefaultInstance() );
+
+		unset( $scopedOverride );
+
+		$this->assertSame( $instance, WatchedItemStore::getDefaultInstance() );
 	}
 
 	public function testCountWatchedItems() {
@@ -2367,88 +2383,13 @@ class WatchedItemStoreUnitTest extends MediaWikiTestCase {
 		ScopedCallback::consume( $scopedOverrideRevision );
 	}
 
-	public function testSetNotificationTimestampsForUser_anonUser() {
-		$store = $this->newWatchedItemStore(
-			$this->getMockLoadBalancer( $this->getMockDb() ),
-			$this->getMockCache()
-		);
-		$this->assertFalse( $store->setNotificationTimestampsForUser( $this->getAnonUser(), '' ) );
-	}
-
-	public function testSetNotificationTimestampsForUser_allRows() {
-		$user = $this->getMockNonAnonUserWithId( 1 );
-		$timestamp = '20100101010101';
-
-		$mockDb = $this->getMockDb();
-		$mockDb->expects( $this->once() )
-			->method( 'update' )
-			->with(
-				'watchlist',
-				[ 'wl_notificationtimestamp' => 'TS' . $timestamp . 'TS' ],
-				[ 'wl_user' => 1 ]
-			)
-			->will( $this->returnValue( true ) );
-		$mockDb->expects( $this->exactly( 1 ) )
-			->method( 'timestamp' )
-			->will( $this->returnCallback( function( $value ) {
-				return 'TS' . $value . 'TS';
-			} ) );
-
-		$store = $this->newWatchedItemStore(
-			$this->getMockLoadBalancer( $mockDb ),
-			$this->getMockCache()
-		);
-
-		$this->assertTrue(
-			$store->setNotificationTimestampsForUser( $user, $timestamp )
-		);
-	}
-
-	public function testSetNotificationTimestampsForUser_specificTargets() {
-		$user = $this->getMockNonAnonUserWithId( 1 );
-		$timestamp = '20100101010101';
-		$targets = [ new TitleValue( 0, 'Foo' ), new TitleValue( 0, 'Bar' ) ];
-
-		$mockDb = $this->getMockDb();
-		$mockDb->expects( $this->once() )
-			->method( 'update' )
-			->with(
-				'watchlist',
-				[ 'wl_notificationtimestamp' => 'TS' . $timestamp . 'TS' ],
-				[ 'wl_user' => 1, 0 => 'makeWhereFrom2d return value' ]
-			)
-			->will( $this->returnValue( true ) );
-		$mockDb->expects( $this->exactly( 1 ) )
-			->method( 'timestamp' )
-			->will( $this->returnCallback( function( $value ) {
-				return 'TS' . $value . 'TS';
-			} ) );
-		$mockDb->expects( $this->once() )
-			->method( 'makeWhereFrom2d' )
-			->with(
-				[ [ 'Foo' => 1, 'Bar' => 1 ] ],
-				$this->isType( 'string' ),
-				$this->isType( 'string' )
-			)
-			->will( $this->returnValue( 'makeWhereFrom2d return value' ) );
-
-		$store = $this->newWatchedItemStore(
-			$this->getMockLoadBalancer( $mockDb ),
-			$this->getMockCache()
-		);
-
-		$this->assertTrue(
-			$store->setNotificationTimestampsForUser( $user, $timestamp, $targets )
-		);
-	}
-
 	public function testUpdateNotificationTimestamp_watchersExist() {
 		$mockDb = $this->getMockDb();
 		$mockDb->expects( $this->once() )
-			->method( 'selectFieldValues' )
+			->method( 'select' )
 			->with(
-				'watchlist',
-				'wl_user',
+				[ 'watchlist' ],
+				[ 'wl_user' ],
 				[
 					'wl_user != 1',
 					'wl_namespace' => 0,
@@ -2456,7 +2397,18 @@ class WatchedItemStoreUnitTest extends MediaWikiTestCase {
 					'wl_notificationtimestamp IS NULL'
 				]
 			)
-			->will( $this->returnValue( [ '2', '3' ] ) );
+			->will(
+				$this->returnValue( [
+					$this->getFakeRow( [ 'wl_user' => '2' ] ),
+					$this->getFakeRow( [ 'wl_user' => '3' ] )
+				] )
+			);
+		$mockDb->expects( $this->once() )
+			->method( 'onTransactionIdle' )
+			->with( $this->isType( 'callable' ) )
+			->will( $this->returnCallback( function( $callable ) {
+				$callable();
+			} ) );
 		$mockDb->expects( $this->once() )
 			->method( 'update' )
 			->with(
@@ -2492,10 +2444,10 @@ class WatchedItemStoreUnitTest extends MediaWikiTestCase {
 	public function testUpdateNotificationTimestamp_noWatchers() {
 		$mockDb = $this->getMockDb();
 		$mockDb->expects( $this->once() )
-			->method( 'selectFieldValues' )
+			->method( 'select' )
 			->with(
-				'watchlist',
-				'wl_user',
+				[ 'watchlist' ],
+				[ 'wl_user' ],
 				[
 					'wl_user != 1',
 					'wl_namespace' => 0,
@@ -2506,6 +2458,8 @@ class WatchedItemStoreUnitTest extends MediaWikiTestCase {
 			->will(
 				$this->returnValue( [] )
 			);
+		$mockDb->expects( $this->never() )
+			->method( 'onTransactionIdle' );
 		$mockDb->expects( $this->never() )
 			->method( 'update' );
 
@@ -2539,10 +2493,19 @@ class WatchedItemStoreUnitTest extends MediaWikiTestCase {
 				$this->getFakeRow( [ 'wl_notificationtimestamp' => '20151212010101' ] )
 			) );
 		$mockDb->expects( $this->once() )
-			->method( 'selectFieldValues' )
+			->method( 'select' )
 			->will(
-				$this->returnValue( [ '2', '3' ] )
+				$this->returnValue( [
+					$this->getFakeRow( [ 'wl_user' => '2' ] ),
+					$this->getFakeRow( [ 'wl_user' => '3' ] )
+				] )
 			);
+		$mockDb->expects( $this->once() )
+			->method( 'onTransactionIdle' )
+			->with( $this->isType( 'callable' ) )
+			->will( $this->returnCallback( function( $callable ) {
+				$callable();
+			} ) );
 		$mockDb->expects( $this->once() )
 			->method( 'update' );
 

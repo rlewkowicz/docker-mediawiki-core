@@ -59,7 +59,7 @@ class ResourceLoaderImageModule extends ResourceLoaderModule {
 	 * Below is a description for the $options array:
 	 * @par Construction options:
 	 * @code
-	 *     [
+	 *     array(
 	 *         // Base path to prepend to all local paths in $options. Defaults to $IP
 	 *         'localBasePath' => [base path],
 	 *         // Path to JSON file that contains any of the settings below
@@ -72,33 +72,33 @@ class ResourceLoaderImageModule extends ResourceLoaderModule {
 	 *         'selectorWithoutVariant' => [CSS selector template, variables: {prefix} {name}],
 	 *         'selectorWithVariant' => [CSS selector template, variables: {prefix} {name} {variant}],
 	 *         // List of variants that may be used for the image files
-	 *         'variants' => [
-	 *             [theme name] => [
-	 *                 [variant name] => [
+	 *         'variants' => array(
+	 *             [theme name] => array(
+	 *                 [variant name] => array(
 	 *                     'color' => [color string, e.g. '#ffff00'],
 	 *                     'global' => [boolean, if true, this variant is available
 	 *                                  for all images of this type],
-	 *                 ],
+	 *                 ),
 	 *                 ...
-	 *             ],
+	 *             ),
 	 *             ...
-	 *         ],
+	 *         ),
 	 *         // List of image files and their options
-	 *         'images' => [
-	 *             [theme name] => [
-	 *                 [icon name] => [
+	 *         'images' => array(
+	 *             [theme name] => array(
+	 *                 [icon name] => array(
 	 *                     'file' => [file path string or array whose values are file path strings
 	 *                                    and whose keys are 'default', 'ltr', 'rtl', a single
 	 *                                    language code like 'en', or a list of language codes like
 	 *                                    'en,de,ar'],
 	 *                     'variants' => [array of variant name strings, variants
 	 *                                    available for this image],
-	 *                 ],
+	 *                 ),
 	 *                 ...
-	 *             ],
+	 *             ),
 	 *             ...
-	 *         ],
-	 *     ]
+	 *         ),
+	 *     )
 	 * @endcode
 	 * @throws InvalidArgumentException
 	 */
@@ -393,8 +393,6 @@ class ResourceLoaderImageModule extends ResourceLoaderModule {
 	public function getDefinitionSummary( ResourceLoaderContext $context ) {
 		$this->loadFromDefinition();
 		$summary = parent::getDefinitionSummary( $context );
-
-		$options = [];
 		foreach ( [
 			'localBasePath',
 			'images',
@@ -403,27 +401,29 @@ class ResourceLoaderImageModule extends ResourceLoaderModule {
 			'selectorWithoutVariant',
 			'selectorWithVariant',
 		] as $member ) {
-			$options[$member] = $this->{$member};
+			$summary[$member] = $this->{$member};
 		};
-
-		$summary[] = [
-			'options' => $options,
-			'fileHashes' => $this->getFileHashes( $context ),
-		];
 		return $summary;
 	}
 
 	/**
-	 * Helper method for getDefinitionSummary.
+	 * Get the last modified timestamp of this module.
+	 *
+	 * @param ResourceLoaderContext $context Context in which to calculate
+	 *     the modified time
+	 * @return int UNIX timestamp
 	 */
-	protected function getFileHashes( ResourceLoaderContext $context ) {
+	public function getModifiedTime( ResourceLoaderContext $context ) {
 		$this->loadFromDefinition();
 		$files = [];
 		foreach ( $this->getImages( $context ) as $name => $image ) {
 			$files[] = $image->getPath( $context );
 		}
+
 		$files = array_values( array_unique( $files ) );
-		return array_map( [ __CLASS__, 'safeFileHash' ], $files );
+		$filesMtime = max( array_map( [ __CLASS__, 'safeFilemtime' ], $files ) );
+
+		return $filesMtime;
 	}
 
 	/**
@@ -454,12 +454,5 @@ class ResourceLoaderImageModule extends ResourceLoaderModule {
 	public function getPosition() {
 		$this->loadFromDefinition();
 		return $this->position;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getType() {
-		return self::LOAD_STYLES;
 	}
 }

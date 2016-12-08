@@ -45,7 +45,7 @@ abstract class AbstractPreAuthenticationProvider extends AbstractAuthenticationP
 		return \StatusValue::newGood();
 	}
 
-	public function testUserForCreation( $user, $autocreate, array $options = [] ) {
+	public function testUserForCreation( $user, $autocreate ) {
 		return \StatusValue::newGood();
 	}
 

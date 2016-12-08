@@ -1,11 +1,9 @@
 {
 	"@metadata": {
 		"authors": [
-			"An13sa",
-			"Sator"
+			"An13sa"
 		]
 	},
 	"cite-desc": "<nowiki><ref[ name=id]></nowiki> eta <nowiki><references/></nowiki> etiketak gehitzen ditu, aipuentzako",
-	"cite_error": "Aipamen errorea: $1",
-	"cite_section_preview_references": "Erreferentzien aurreikuspena"
+	"cite_error": "Aipamen errorea: $1"
 }

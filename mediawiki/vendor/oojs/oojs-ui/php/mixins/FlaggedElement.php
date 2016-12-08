@@ -29,7 +29,6 @@ trait FlaggedElement {
 	 *   'primary', 'safe', 'progressive', 'destructive' or 'constructive'
 	 */
 	public function initializeFlaggedElement( array $config = [] ) {
-		// Properties
 		$this->flagged = isset( $config['flagged'] ) ? $config['flagged'] : $this;
 
 		// Initialization

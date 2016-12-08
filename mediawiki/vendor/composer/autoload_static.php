@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62
+class ComposerStaticInitc425af04dd1d552fac3d5a312c102d6b
 {
     public static $files = array (
         'a24b5daa493ecb5e767c7d1592a8da36' => __DIR__ . '/..' . '/mediawiki/at-ease/src/Functions.php',
@@ -99,7 +99,6 @@ class ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62
         'Cdb\\Exception' => __DIR__ . '/..' . '/wikimedia/cdb/src/Exception.php',
         'Cdb\\Reader' => __DIR__ . '/..' . '/wikimedia/cdb/src/Reader.php',
         'Cdb\\Reader\\DBA' => __DIR__ . '/..' . '/wikimedia/cdb/src/Reader/DBA.php',
-        'Cdb\\Reader\\Hash' => __DIR__ . '/..' . '/wikimedia/cdb/src/Reader/Hash.php',
         'Cdb\\Reader\\PHP' => __DIR__ . '/..' . '/wikimedia/cdb/src/Reader/PHP.php',
         'Cdb\\Util' => __DIR__ . '/..' . '/wikimedia/cdb/src/Util.php',
         'Cdb\\Writer' => __DIR__ . '/..' . '/wikimedia/cdb/src/Writer.php',
@@ -199,7 +198,6 @@ class ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62
         'OOUI\\ButtonInputWidget' => __DIR__ . '/..' . '/oojs/oojs-ui/php/widgets/ButtonInputWidget.php',
         'OOUI\\ButtonWidget' => __DIR__ . '/..' . '/oojs/oojs-ui/php/widgets/ButtonWidget.php',
         'OOUI\\CheckboxInputWidget' => __DIR__ . '/..' . '/oojs/oojs-ui/php/widgets/CheckboxInputWidget.php',
-        'OOUI\\CheckboxMultiselectInputWidget' => __DIR__ . '/..' . '/oojs/oojs-ui/php/widgets/CheckboxMultiselectInputWidget.php',
         'OOUI\\ComboBoxInputWidget' => __DIR__ . '/..' . '/oojs/oojs-ui/php/widgets/ComboBoxInputWidget.php',
         'OOUI\\DropdownInputWidget' => __DIR__ . '/..' . '/oojs/oojs-ui/php/widgets/DropdownInputWidget.php',
         'OOUI\\Element' => __DIR__ . '/..' . '/oojs/oojs-ui/php/Element.php',
@@ -221,7 +219,6 @@ class ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62
         'OOUI\\Layout' => __DIR__ . '/..' . '/oojs/oojs-ui/php/Layout.php',
         'OOUI\\MediaWikiTheme' => __DIR__ . '/..' . '/oojs/oojs-ui/php/themes/MediaWikiTheme.php',
         'OOUI\\PanelLayout' => __DIR__ . '/..' . '/oojs/oojs-ui/php/layouts/PanelLayout.php',
-        'OOUI\\ProgressBarWidget' => __DIR__ . '/..' . '/oojs/oojs-ui/php/widgets/ProgressBarWidget.php',
         'OOUI\\RadioInputWidget' => __DIR__ . '/..' . '/oojs/oojs-ui/php/widgets/RadioInputWidget.php',
         'OOUI\\RadioSelectInputWidget' => __DIR__ . '/..' . '/oojs/oojs-ui/php/widgets/RadioSelectInputWidget.php',
         'OOUI\\TabIndexedElement' => __DIR__ . '/..' . '/oojs/oojs-ui/php/mixins/TabIndexedElement.php',
@@ -261,21 +258,18 @@ class ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62
         'Wikimedia\\Composer\\Merge\\PluginState' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/Merge/PluginState.php',
         'Wikimedia\\Composer\\Merge\\StabilityFlags' => __DIR__ . '/..' . '/wikimedia/composer-merge-plugin/src/Merge/StabilityFlags.php',
         'Wikimedia\\PhpSessionSerializer' => __DIR__ . '/..' . '/wikimedia/php-session-serializer/src/Wikimedia/PhpSessionSerializer.php',
-        'Wikimedia\\ScopedCallback' => __DIR__ . '/..' . '/wikimedia/scoped-callback/src/ScopedCallback.php',
-        'Wikimedia\\WaitConditionLoop' => __DIR__ . '/..' . '/wikimedia/wait-condition-loop/src/WaitConditionLoop.php',
         'WrappedString\\WrappedString' => __DIR__ . '/..' . '/wikimedia/wrappedstring/src/WrappedString.php',
-        'WrappedString\\WrappedStringList' => __DIR__ . '/..' . '/wikimedia/wrappedstring/src/WrappedStringList.php',
         'lessc' => __DIR__ . '/..' . '/oyejorge/less.php/lessc.inc.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62::$prefixesPsr0;
-            $loader->fallbackDirsPsr0 = ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62::$fallbackDirsPsr0;
-            $loader->classMap = ComposerStaticInit875e54f7f4be57d2e25635ca5762eb62::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitc425af04dd1d552fac3d5a312c102d6b::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitc425af04dd1d552fac3d5a312c102d6b::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInitc425af04dd1d552fac3d5a312c102d6b::$prefixesPsr0;
+            $loader->fallbackDirsPsr0 = ComposerStaticInitc425af04dd1d552fac3d5a312c102d6b::$fallbackDirsPsr0;
+            $loader->classMap = ComposerStaticInitc425af04dd1d552fac3d5a312c102d6b::$classMap;
 
         }, null, ClassLoader::class);
     }

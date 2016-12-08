@@ -1,5 +1,3 @@
-@import "mediawiki.mixins";
-
 /* Search */
 #p-search {
 	/* @noflip */
@@ -8,7 +6,7 @@
 	margin-left: 0.5em;
 
 	h3 {
-		.mixin-screen-reader-text;
+		display: none;
 	}
 
 	form,
@@ -105,9 +103,6 @@ div#simpleSearch {
 		direction: ltr;
 		white-space: nowrap;
 		overflow: hidden;
-	}
-
-	#searchButton {
 		.background-image-svg('images/search-ltr.svg', 'images/search-ltr.png');
 		background-position: center center;
 		background-repeat: no-repeat;

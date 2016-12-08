@@ -8,8 +8,9 @@
 
 ( function ( mw, $ ) {
 
-	// Keep reference to the dummy placeholder from mediawiki.js
-	// The root is replaced below, but it has other methods that we need to restore.
+	// Reference to dummy
+	// We don't need the dummy, but it has other methods on it
+	// that we need to restore afterwards.
 	var original = mw.log,
 		slice = Array.prototype.slice;
 

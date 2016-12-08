@@ -76,7 +76,7 @@ By default, outputs relative paths against the parent directory of $wgUploadDire
 	 * @param bool $shared True to pass shared-dir settings to hash func
 	 */
 	function fetchUsed( $shared ) {
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 		$image = $dbr->tableName( 'image' );
 		$imagelinks = $dbr->tableName( 'imagelinks' );
 
@@ -97,7 +97,7 @@ By default, outputs relative paths against the parent directory of $wgUploadDire
 	 * @param bool $shared True to pass shared-dir settings to hash func
 	 */
 	function fetchLocal( $shared ) {
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 		$result = $dbr->select( 'image',
 			[ 'img_name' ],
 			'',
@@ -111,7 +111,7 @@ By default, outputs relative paths against the parent directory of $wgUploadDire
 	function outputItem( $name, $shared ) {
 		$file = wfFindFile( $name );
 		if ( $file && $this->filterItem( $file, $shared ) ) {
-			$filename = $file->getLocalRefPath();
+			$filename = $file->getPath();
 			$rel = wfRelativePath( $filename, $this->mBasePath );
 			$this->output( "$rel\n" );
 		} else {

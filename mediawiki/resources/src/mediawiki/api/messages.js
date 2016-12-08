@@ -14,18 +14,16 @@
 		 * Get a set of messages.
 		 *
 		 * @param {Array} messages Messages to retrieve
-		 * @param {Object} [options] Additional parameters for the API call
 		 * @return {jQuery.Promise}
 		 */
-		getMessages: function ( messages, options ) {
-			options = options || {};
-			return this.get( $.extend( {
+		getMessages: function ( messages ) {
+			return this.get( {
 				action: 'query',
 				meta: 'allmessages',
 				ammessages: messages,
 				amlang: mw.config.get( 'wgUserLanguage' ),
 				formatversion: 2
-			}, options ) ).then( function ( data ) {
+			} ).then( function ( data ) {
 				var result = {};
 
 				$.each( data.query.allmessages, function ( i, obj ) {
@@ -39,34 +37,13 @@
 		},
 
 		/**
-		 * Loads a set of messages and add them to mw.messages.
+		 * Loads a set of mesages and add them to mw.messages.
 		 *
 		 * @param {Array} messages Messages to retrieve
-		 * @param {Object} [options] Additional parameters for the API call
 		 * @return {jQuery.Promise}
 		 */
-		loadMessages: function ( messages, options ) {
-			return this.getMessages( messages, options ).then( $.proxy( mw.messages, 'set' ) );
-		},
-
-		/**
-		 * Loads a set of messages and add them to mw.messages. Only messages that are not already known
-		 * are loaded. If all messages are known, the returned promise is resolved immediately.
-		 *
-		 * @param {Array} messages Messages to retrieve
-		 * @param {Object} [options] Additional parameters for the API call
-		 * @return {jQuery.Promise}
-		 */
-		loadMessagesIfMissing: function ( messages, options ) {
-			var missing = messages.filter( function ( msg ) {
-				return !mw.message( msg ).exists();
-			} );
-
-			if ( missing.length === 0 ) {
-				return $.Deferred().resolve();
-			}
-
-			return this.getMessages( missing, options ).then( $.proxy( mw.messages, 'set' ) );
+		loadMessages: function ( messages ) {
+			return this.getMessages( messages ).then( $.proxy( mw.messages, 'set' ) );
 		}
 	} );
 

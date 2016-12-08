@@ -32,7 +32,7 @@ require __DIR__ . '/../commandLine.inc';
 class UpdateLogging {
 
 	/**
-	 * @var Database
+	 * @var DatabaseBase
 	 */
 	public $dbw;
 	public $batchSize = 1000;

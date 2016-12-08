@@ -188,13 +188,9 @@ class SpecialNewpages extends IncludableSpecialPage {
 		unset( $changed['offset'] ); // Reset offset if query type changes
 
 		$self = $this->getPageTitle();
-		$linkRenderer = $this->getLinkRenderer();
 		foreach ( $filters as $key => $msg ) {
 			$onoff = 1 - $this->opts->getValue( $key );
-			$link = $linkRenderer->makeLink(
-				$self,
-				new HtmlArmor( $showhide[$onoff] ),
-				[],
+			$link = Linker::link( $self, $showhide[$onoff], [],
 				[ $key => $onoff ] + $changed
 			);
 			$links[$key] = $this->msg( $msg )->rawParams( $link )->escaped();
@@ -311,25 +307,28 @@ class SpecialNewpages extends IncludableSpecialPage {
 		$spanTime = Html::element( 'span', [ 'class' => 'mw-newpages-time' ],
 			$lang->userTimeAndDate( $result->rc_timestamp, $this->getUser() )
 		);
-		$linkRenderer = $this->getLinkRenderer();
-		$time = $linkRenderer->makeKnownLink(
+		$time = Linker::linkKnown(
 			$title,
-			new HtmlArmor( $spanTime ),
+			$spanTime,
 			[],
-			[ 'oldid' => $result->rc_this_oldid ]
+			[ 'oldid' => $result->rc_this_oldid ],
+			[]
 		);
 
 		$query = $title->isRedirect() ? [ 'redirect' => 'no' ] : [];
 
-		$plink = $linkRenderer->makeKnownLink(
+		// Linker::linkKnown() uses 'known' and 'noclasses' options.
+		// This breaks the colouration for stubs.
+		$plink = Linker::link(
 			$title,
 			null,
 			[ 'class' => 'mw-newpages-pagename' ],
-			$query
+			$query,
+			[ 'known' ]
 		);
-		$histLink = $linkRenderer->makeKnownLink(
+		$histLink = Linker::linkKnown(
 			$title,
-			$this->msg( 'hist' )->text(),
+			$this->msg( 'hist' )->escaped(),
 			[],
 			[ 'action' => 'history' ]
 		);
@@ -376,11 +375,7 @@ class SpecialNewpages extends IncludableSpecialPage {
 
 		if ( !$title->equals( $oldTitle ) ) {
 			$oldTitleText = $oldTitle->getPrefixedText();
-			$oldTitleText = Html::rawElement(
-				'span',
-				[ 'class' => 'mw-newpages-oldtitle' ],
-				$this->msg( 'rc-old-title' )->params( $oldTitleText )->escaped()
-			);
+			$oldTitleText = $this->msg( 'rc-old-title' )->params( $oldTitleText )->escaped();
 		}
 
 		return "<li{$css}>{$time} {$dm}{$plink} {$hist} {$dm}{$length} "
@@ -482,9 +477,5 @@ class SpecialNewpages extends IncludableSpecialPage {
 
 	protected function getGroupName() {
 		return 'changes';
-	}
-
-	protected function getCacheTTL() {
-		return 60 * 5;
 	}
 }

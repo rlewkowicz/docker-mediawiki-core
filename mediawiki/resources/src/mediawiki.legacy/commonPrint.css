@@ -10,9 +10,10 @@
  * Hide all the elements irrelevant for printing
  */
 .noprint,
-#jump-to-nav,
+div#jump-to-nav,
 .mw-jump,
-#column-one,
+div.top,
+div#column-one,
 .mw-editsection,
 .mw-editsection-like,
 #footer-places,
@@ -20,12 +21,12 @@
 .usermessage,
 .patrollink,
 .ns-0 .mw-redirectedfrom,
-.magnify,
+div.magnify,
 #mw-navigation,
 #siteNotice,
 /* Deprecated, changed in core */
-#f-poweredbyico,
-#f-copyrightico,
+div#f-poweredbyico,
+div#f-copyrightico,
 li#about,
 li#disclaimer,
 li#mobileview,
@@ -83,7 +84,6 @@ pre,
 }
 
 img,
-figure,
 .wikitable,
 .thumb {
 	/* Pagination */
@@ -172,7 +172,6 @@ a {
 .mw-body a.external.text:after,
 .mw-body a.external.autonumber:after {
 	content: " (" attr( href ) ")";
-	word-break: break-all;
 	word-wrap: break-word;
 }
 
@@ -227,7 +226,7 @@ div.floatleft p {
 	font-style: italic;
 }
 
-.center {
+div.center {
 	text-align: center;
 }
 
@@ -245,11 +244,9 @@ div.thumb {
 div.thumbinner {
 	background-color: #fff;
 	border: 1pt solid #ccc;
-	padding: 3px;
+	padding: 3px !important;
 	font-size: 94%;
 	text-align: center;
-	/* new block formatting context,
-	 * to clear background from floating content  */
 	overflow: hidden;
 }
 
@@ -261,7 +258,7 @@ html .thumbcaption {
 	border: none;
 	text-align: left;
 	line-height: 1.4em;
-	padding: 3px;
+	padding: 3px !important;
 	font-size: 94%;
 }
 
@@ -322,6 +319,10 @@ table.listing,
 table.listing td {
 	border: 1pt solid #000;
 	border-collapse: collapse;
+}
+
+a.sortheader {
+	margin: 0 0.3em;
 }
 
 /**

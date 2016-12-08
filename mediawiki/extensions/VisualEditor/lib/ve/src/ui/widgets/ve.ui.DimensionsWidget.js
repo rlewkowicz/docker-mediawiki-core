@@ -23,7 +23,7 @@ ve.ui.DimensionsWidget = function VeUiDimensionsWidget( config ) {
 	config = config || {};
 
 	// Parent constructor
-	ve.ui.DimensionsWidget.super.call( this, config );
+	OO.ui.Widget.call( this, config );
 
 	this.widthInput = new OO.ui.TextInputWidget( {
 		validate: config.validate || $.isNumeric

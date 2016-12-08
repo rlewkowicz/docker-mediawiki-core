@@ -20,9 +20,9 @@
  * @constructor
  * @param {Object} element
  */
-ve.dm.MWExternalLinkAnnotation = function VeDmMWExternalLinkAnnotation() {
+ve.dm.MWExternalLinkAnnotation = function VeDmMWExternalLinkAnnotation( element ) {
 	// Parent constructor
-	ve.dm.MWExternalLinkAnnotation.super.apply( this, arguments );
+	ve.dm.LinkAnnotation.call( this, element );
 };
 
 /* Inheritance */
@@ -34,9 +34,9 @@ OO.inheritClass( ve.dm.MWExternalLinkAnnotation, ve.dm.LinkAnnotation );
 ve.dm.MWExternalLinkAnnotation.static.name = 'link/mwExternal';
 
 ve.dm.MWExternalLinkAnnotation.static.matchFunction = function ( domElement ) {
-	var type = domElement.getAttribute( 'rel' ) || domElement.getAttribute( 'typeof' ) || domElement.getAttribute( 'property' );
+	var rel = domElement.getAttribute( 'rel' );
 	// Match explicity mw:ExtLink, or plain RDFa-less links with an href (e.g. from external paste)
-	return ( !type && domElement.hasAttribute( 'href' ) ) || type === 'mw:ExtLink';
+	return ( !rel && domElement.hasAttribute( 'href' ) ) || rel === 'mw:ExtLink';
 };
 
 ve.dm.MWExternalLinkAnnotation.static.toDataElement = function ( domElements, converter ) {

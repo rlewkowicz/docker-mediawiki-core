@@ -94,7 +94,7 @@ class MostlinkedCategoriesPage extends QueryPage {
 		}
 
 		$text = $wgContLang->convert( $nt->getText() );
-		$plink = $this->getLinkRenderer()->makeLink( $nt, $text );
+		$plink = Linker::link( $nt, htmlspecialchars( $text ) );
 		$nlinks = $this->msg( 'nmembers' )->numParams( $result->value )->escaped();
 
 		return $this->getLanguage()->specialList( $plink, $nlinks );

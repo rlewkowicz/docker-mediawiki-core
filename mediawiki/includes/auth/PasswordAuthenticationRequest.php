@@ -53,7 +53,6 @@ class PasswordAuthenticationRequest extends AuthenticationRequest {
 				'type' => 'password',
 				'label' => wfMessage( $passwordLabel ),
 				'help' => wfMessage( 'authmanager-password-help' ),
-				'sensitive' => true,
 			],
 		];
 
@@ -69,7 +68,6 @@ class PasswordAuthenticationRequest extends AuthenticationRequest {
 				'type' => 'password',
 				'label' => wfMessage( $retypeLabel ),
 				'help' => wfMessage( 'authmanager-retype-help' ),
-				'sensitive' => true,
 			];
 		}
 

@@ -26,7 +26,7 @@
 	}
 }
 
-@indicator-size: unit( 12 / 16 / 0.8, em );
+@indicator-size: unit(12 / 16 / 0.8, em);
 
 .mw-widget-dateInputWidget {
 	display: inline-block;
@@ -74,11 +74,7 @@
 		border: 1px solid #ccc;
 		border-radius: 0.1em;
 		line-height: 1.275em;
-		background-color: #fff;
-
-		> .oo-ui-labelElement-label {
-			padding: 0;
-		}
+		background-color: white;
 	}
 
 	&.oo-ui-indicatorElement .mw-widget-dateInputWidget-handle > .oo-ui-indicatorElement-indicator {
@@ -95,7 +91,7 @@
 	}
 
 	&-calendar {
-		background-color: #fff;
+		background-color: white;
 		margin-top: -2px;
 
 		&:focus {
@@ -105,7 +101,7 @@
 
 	&.oo-ui-widget-enabled {
 		.mw-widget-dateInputWidget-handle:hover {
-			border-color: #36c;
+			border-color: #347bff;
 		}
 	}
 
@@ -125,8 +121,8 @@
 
 	&.oo-ui-flaggedElement-invalid {
 		.mw-widget-dateInputWidget-handle {
-			border-color: #f00;
-			box-shadow: inset 0 0 0 0 #f00;
+			border-color: red;
+			box-shadow: inset 0 0 0 0 red;
 		}
 	}
 

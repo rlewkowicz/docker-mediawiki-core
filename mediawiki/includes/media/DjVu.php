@@ -235,7 +235,7 @@ class DjVuHandler extends ImageHandler {
 	/**
 	 * Cache an instance of DjVuImage in an Image object, return that instance
 	 *
-	 * @param File|FSFile $image
+	 * @param File $image
 	 * @param string $path
 	 * @return DjVuImage
 	 */
@@ -335,6 +335,11 @@ class DjVuHandler extends ImageHandler {
 		}
 	}
 
+	/**
+	 * @param File $image
+	 * @param string $path
+	 * @return bool|array False on failure
+	 */
 	function getImageSize( $image, $path ) {
 		return $this->getDjVuImage( $image, $path )->getImageSize();
 	}

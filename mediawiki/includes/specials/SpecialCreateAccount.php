@@ -23,6 +23,7 @@
 
 use MediaWiki\Auth\AuthManager;
 use MediaWiki\Logger\LoggerFactory;
+use Psr\Log\LogLevel;
 
 /**
  * Implements Special:CreateAccount
@@ -134,7 +135,7 @@ class SpecialCreateAccount extends LoginSignupSpecialPage {
 		# Run any hooks; display injected HTML
 		$injected_html = '';
 		$welcome_creation_msg = 'welcomecreation-msg';
-		Hooks::run( 'UserLoginComplete', [ &$user, &$injected_html, $direct ] );
+		Hooks::run( 'UserLoginComplete', [ &$user, &$injected_html ] );
 
 		/**
 		 * Let any extensions change what message is shown.
@@ -164,7 +165,7 @@ class SpecialCreateAccount extends LoginSignupSpecialPage {
 	}
 
 	protected function logAuthResult( $success, $status = null ) {
-		LoggerFactory::getInstance( 'authevents' )->info( 'Account creation attempt', [
+		LoggerFactory::getInstance( 'authmanager-stats' )->info( 'Account creation attempt', [
 			'event' => 'accountcreation',
 			'successful' => $success,
 			'status' => $status,

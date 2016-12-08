@@ -64,10 +64,10 @@ QUnit.test( 'constructor', 12, function ( assert ) {
 	assert.strictEqual( doc.data, data, 'ElementLinearData is stored by reference' );
 
 	doc = ve.dm.example.createExampleDocument( 'withMeta' );
-	assert.equalLinearDataWithDom( doc.getStore(), doc.getData(), ve.dm.example.withMetaPlainData,
+	assert.deepEqualWithDomElements( doc.getData(), ve.dm.example.withMetaPlainData,
 		'metadata is stripped out of the linear model'
 	);
-	assert.equalLinearDataWithDom( doc.getStore(), doc.getMetadata(), ve.dm.example.withMetaMetaData,
+	assert.deepEqualWithDomElements( doc.getMetadata(), ve.dm.example.withMetaMetaData,
 		'metadata is put in the meta-linmod'
 	);
 	assert.equalNodeTree(
@@ -83,23 +83,17 @@ QUnit.test( 'constructor', 12, function ( assert ) {
 QUnit.test( 'getData', 1, function ( assert ) {
 	var doc = ve.dm.example.createExampleDocument(),
 		expectedData = ve.dm.example.preprocessAnnotations( ve.copy( ve.dm.example.data ) );
-	assert.equalLinearDataWithDom( doc.getStore(), doc.getData(), expectedData.getData() );
+	assert.deepEqualWithDomElements( doc.getData(), expectedData.getData() );
 } );
 
 QUnit.test( 'getFullData', 1, function ( assert ) {
 	var doc = ve.dm.example.createExampleDocument( 'withMeta' );
-	assert.equalLinearDataWithDom( doc.getStore(), doc.getFullData(), ve.dm.example.withMeta );
+	assert.deepEqualWithDomElements( doc.getFullData(), ve.dm.example.withMeta );
 } );
 
 QUnit.test( 'cloneFromRange', function ( assert ) {
 	var i, doc2, doc = ve.dm.example.createExampleDocument( 'internalData' ),
 		cases = [
-			{
-				msg: 'range undefined',
-				doc: 'internalData',
-				range: undefined,
-				expectedData: doc.data.slice()
-			},
 			{
 				msg: 'first internal item',
 				doc: 'internalData',
@@ -639,35 +633,22 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 			{
 				msg: 'empty range',
 				range: new ve.Range( 2 ),
-				expected: [
-					{ type: 'paragraph', internal: { generated: 'empty' } },
-					{ type: 'paragraph' }
-				],
-				originalRange: new ve.Range( 1 ),
-				balancedRange: new ve.Range( 1 )
+				expected: []
 			},
 			{
 				msg: 'range with one character',
 				range: new ve.Range( 2, 3 ),
 				expected: [
-					{ type: 'heading', attributes: { level: 1 }, internal: { generated: 'wrapper' } },
-					[ 'b', [ ve.dm.example.bold ] ],
-					{ type: '/heading' }
-				],
-				originalRange: new ve.Range( 1, 2 ),
-				balancedRange: new ve.Range( 1, 2 )
+					[ 'b', [ ve.dm.example.bold ] ]
+				]
 			},
 			{
 				msg: 'range with two characters',
 				range: new ve.Range( 2, 4 ),
 				expected: [
-					{ type: 'heading', attributes: { level: 1 }, internal: { generated: 'wrapper' } },
 					[ 'b', [ ve.dm.example.bold ] ],
-					[ 'c', [ ve.dm.example.italic ] ],
-					{ type: '/heading' }
-				],
-				originalRange: new ve.Range( 1, 3 ),
-				balancedRange: new ve.Range( 1, 3 )
+					[ 'c', [ ve.dm.example.italic ] ]
+				]
 			},
 			{
 				msg: 'range with two characters and a header closing',
@@ -811,54 +792,46 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 				msg: 'inline node at start',
 				range: new ve.Range( 1, 3 ),
 				expected: [
-					{ type: 'paragraph', internal: { generated: 'wrapper' } },
 					ve.dm.example.image.data,
-					{ type: '/inlineImage' },
-					{ type: '/paragraph' }
+					{ type: '/inlineImage' }
 				],
-				originalRange: new ve.Range( 1, 3 ),
-				balancedRange: new ve.Range( 1, 3 )
+				originalRange: new ve.Range( 0, 2 ),
+				balancedRange: new ve.Range( 0, 2 )
 			},
 			{
 				doc: 'inlineAtEdges',
 				msg: 'inline node at end',
 				range: new ve.Range( 6, 8 ),
 				expected: [
-					{ type: 'paragraph', internal: { generated: 'wrapper' } },
 					{ type: 'alienInline', originalDomElements: $( '<foobar />' ).toArray() },
-					{ type: '/alienInline' },
-					{ type: '/paragraph' }
+					{ type: '/alienInline' }
 				],
-				originalRange: new ve.Range( 1, 3 ),
-				balancedRange: new ve.Range( 1, 3 )
+				originalRange: new ve.Range( 0, 2 ),
+				balancedRange: new ve.Range( 0, 2 )
 			},
 			{
 				doc: 'inlineAtEdges',
 				msg: 'inline node at start with text',
 				range: new ve.Range( 1, 5 ),
 				expected: [
-					{ type: 'paragraph', internal: { generated: 'wrapper' } },
 					ve.dm.example.image.data,
 					{ type: '/inlineImage' },
-					'F', 'o',
-					{ type: '/paragraph' }
+					'F', 'o'
 				],
-				originalRange: new ve.Range( 1, 5 ),
-				balancedRange: new ve.Range( 1, 5 )
+				originalRange: new ve.Range( 0, 4 ),
+				balancedRange: new ve.Range( 0, 4 )
 			},
 			{
 				doc: 'inlineAtEdges',
 				msg: 'inline node at end with text',
 				range: new ve.Range( 4, 8 ),
 				expected: [
-					{ type: 'paragraph', internal: { generated: 'wrapper' } },
 					'o', 'o',
 					{ type: 'alienInline', originalDomElements: $( '<foobar />' ).toArray() },
-					{ type: '/alienInline' },
-					{ type: '/paragraph' }
+					{ type: '/alienInline' }
 				],
-				originalRange: new ve.Range( 1, 5 ),
-				balancedRange: new ve.Range( 1, 5 )
+				originalRange: new ve.Range( 0, 4 ),
+				balancedRange: new ve.Range( 0, 4 )
 			}
 		];
 	QUnit.expect( 3 * cases.length );
@@ -871,8 +844,7 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 			{ type: '/internalList' }
 		] );
 		slice = doc.shallowCloneFromRange( cases[ i ].range );
-		assert.equalLinearDataWithDom(
-			doc.getStore(),
+		assert.deepEqualWithDomElements(
 			slice.getData(),
 			expectedData,
 			cases[ i ].msg + ': data'
@@ -892,7 +864,7 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 
 QUnit.test( 'protection against double application of transactions', 1, function ( assert ) {
 	var testDocument = ve.dm.example.createExampleDocument(),
-		tx = new ve.dm.Transaction();
+		tx = new ve.dm.Transaction( testDocument );
 	tx.pushRetain( 1 );
 	tx.pushReplace( testDocument, 1, 0, [ 'H', 'e', 'l', 'l', 'o' ] );
 	testDocument.commit( tx );

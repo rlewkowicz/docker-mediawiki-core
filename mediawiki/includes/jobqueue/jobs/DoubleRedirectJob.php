@@ -167,8 +167,7 @@ class DoubleRedirectJob extends Job {
 		$reason = wfMessage( 'double-redirect-fixed-' . $this->reason,
 			$this->redirTitle->getPrefixedText(), $newTitle->getPrefixedText()
 		)->inContentLanguage()->text();
-		$flags = EDIT_UPDATE | EDIT_SUPPRESS_RC | EDIT_INTERNAL;
-		$article->doEditContent( $newContent, $reason, $flags, false, $user );
+		$article->doEditContent( $newContent, $reason, EDIT_UPDATE | EDIT_SUPPRESS_RC, false, $user );
 		$wgUser = $oldUser;
 
 		return true;
@@ -179,8 +178,7 @@ class DoubleRedirectJob extends Job {
 	 *
 	 * @param Title $title
 	 *
-	 * @return Title|bool The final Title after following all redirects, or false if
-	 *  the page is not a redirect or the redirect loops.
+	 * @return bool If the specified title is not a redirect, or if it is a circular redirect
 	 */
 	public static function getFinalDestination( $title ) {
 		$dbw = wfGetDB( DB_MASTER );

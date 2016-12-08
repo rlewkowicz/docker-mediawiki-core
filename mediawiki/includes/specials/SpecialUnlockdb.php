@@ -33,7 +33,7 @@ class SpecialUnlockdb extends FormSpecialPage {
 	}
 
 	public function doesWrites() {
-		return false;
+		return true;
 	}
 
 	public function requiresWrite() {
@@ -58,9 +58,9 @@ class SpecialUnlockdb extends FormSpecialPage {
 	}
 
 	protected function alterForm( HTMLForm $form ) {
-		$form->setWrapperLegend( false )
-			->setHeaderText( $this->msg( 'unlockdbtext' )->parseAsBlock() )
-			->setSubmitTextMsg( 'unlockbtn' );
+		$form->setWrapperLegend( false );
+		$form->setHeaderText( $this->msg( 'unlockdbtext' )->parseAsBlock() );
+		$form->setSubmitTextMsg( 'unlockbtn' );
 	}
 
 	public function onSubmit( array $data ) {
@@ -84,10 +84,6 @@ class SpecialUnlockdb extends FormSpecialPage {
 		$out = $this->getOutput();
 		$out->addSubtitle( $this->msg( 'unlockdbsuccesssub' ) );
 		$out->addWikiMsg( 'unlockdbsuccesstext' );
-	}
-
-	protected function getDisplayFormat() {
-		return 'ooui';
 	}
 
 	protected function getGroupName() {

@@ -37,7 +37,7 @@ class CssContentHandler extends CodeContentHandler {
 	}
 
 	protected function getContentClass() {
-		return CssContent::class;
+		return 'CssContent';
 	}
 
 	public function supportsRedirects() {

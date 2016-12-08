@@ -43,7 +43,6 @@ class ApiQueryTest extends ApiTestCase {
 
 		$this->assertEquals(
 			[
-				'fromencoded' => false,
 				'from' => 'Project:articleA',
 				'to' => $to->getPrefixedText(),
 			],
@@ -52,7 +51,6 @@ class ApiQueryTest extends ApiTestCase {
 
 		$this->assertEquals(
 			[
-				'fromencoded' => false,
 				'from' => 'article_B',
 				'to' => 'Article B'
 			],

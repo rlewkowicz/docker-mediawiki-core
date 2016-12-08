@@ -11,7 +11,6 @@ class ComposerLockTest extends MediaWikiTestCase {
 	}
 
 	/**
-	 * @covers ComposerLock::__construct
 	 * @covers ComposerLock::getInstalledDependencies
 	 */
 	public function testGetInstalledDependencies() {

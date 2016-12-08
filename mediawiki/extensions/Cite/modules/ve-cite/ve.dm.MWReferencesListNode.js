@@ -80,11 +80,13 @@ ve.dm.MWReferencesListNode.static.toDomElements = function ( data, doc, converte
 		attribs = dataElement.attributes,
 		contentsData = data.slice( 1, -1 );
 
-	if ( dataElement.originalDomElementsIndex ) {
+	if ( dataElement.originalDomElements ) {
 		// If there's more than 1 element, preserve entire array, not just first element
-		els = ve.copyDomElements( converter.getStore().value( dataElement.originalDomElementsIndex ), doc );
+		els = ve.copyDomElements( dataElement.originalDomElements, doc );
+		el = els[ 0 ];
 	} else {
-		els = [ doc.createElement( 'div' ) ];
+		el = doc.createElement( 'div' );
+		els = [ el ];
 	}
 
 	mwData = attribs.mw ? ve.copy( attribs.mw ) : {};
@@ -97,7 +99,6 @@ ve.dm.MWReferencesListNode.static.toDomElements = function ( data, doc, converte
 		delete mwData.attrs.refGroup;
 	}
 
-	el = els[ 0 ];
 	el.setAttribute( 'typeof', 'mw:Extension/references' );
 
 	if ( contentsData.length > 2 ) {

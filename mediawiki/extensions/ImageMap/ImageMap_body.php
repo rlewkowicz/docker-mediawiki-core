@@ -79,7 +79,7 @@ class ImageMap {
 					list( $image, $options ) = $bits;
 				}
 				$imageTitle = Title::newFromText( $image );
-				if ( !$imageTitle || !$imageTitle->inNamespace( NS_FILE ) ) {
+				if ( !$imageTitle || $imageTitle->getNamespace() != NS_IMAGE ) {
 					return self::error( 'imagemap_no_image' );
 				}
 				if ( wfIsBadImage( $imageTitle->getDBkey(), $parser->mTitle ) ) {

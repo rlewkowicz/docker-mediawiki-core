@@ -14,9 +14,9 @@
  * @constructor
  * @param {Object} [config] Configuration options
  */
-ve.ui.Overlay = function VeUiOverlay() {
+ve.ui.Overlay = function VeUiOverlay( config ) {
 	// Parent constructor
-	ve.ui.Overlay.super.apply( this, arguments );
+	OO.ui.Element.call( this, config );
 
 	// Initialization
 	this.$element.addClass( 've-ui-overlay' );

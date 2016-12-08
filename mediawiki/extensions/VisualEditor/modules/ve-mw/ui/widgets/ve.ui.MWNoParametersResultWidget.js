@@ -16,7 +16,7 @@
  */
 ve.ui.MWNoParametersResultWidget = function VeUiMWNoParametersResultWidget( config ) {
 	// Parent constructor
-	ve.ui.MWNoParametersResultWidget.super.call( this, config );
+	OO.ui.OptionWidget.call( this, config );
 
 	// Initialization
 	this.$element.addClass( 've-ui-mwNoParametersResultWidget' );

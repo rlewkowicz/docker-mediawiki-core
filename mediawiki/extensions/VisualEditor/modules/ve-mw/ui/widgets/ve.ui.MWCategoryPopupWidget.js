@@ -19,7 +19,7 @@ ve.ui.MWCategoryPopupWidget = function VeUiMWCategoryPopupWidget( config ) {
 	config = ve.extendObject( { autoClose: true }, config );
 
 	// Parent constructor
-	ve.ui.MWCategoryPopupWidget.super.call( this, config );
+	OO.ui.PopupWidget.call( this, config );
 
 	// Properties
 	this.category = null;
@@ -164,7 +164,6 @@ ve.ui.MWCategoryPopupWidget.prototype.loadCategoryIntoPopup = function ( item ) 
 ve.ui.MWCategoryPopupWidget.prototype.closePopup = function () {
 	this.toggle( false );
 	this.popupOpen = false;
-	this.category = null;
 };
 
 /**

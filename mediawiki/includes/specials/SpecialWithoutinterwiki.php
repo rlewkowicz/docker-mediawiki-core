@@ -57,8 +57,8 @@ class WithoutInterwikiPage extends PageQueryPage {
 			]
 		];
 
-		$htmlForm = HTMLForm::factory( 'ooui', $formDescriptor, $this->getContext() );
-		$htmlForm->setWrapperLegend( '' )
+		$htmlForm = HTMLForm::factory( 'inline', $formDescriptor, $this->getContext() );
+		$htmlForm->setWrapperLegendMsg( 'withoutinterwiki-legend' )
 			->setSubmitTextMsg( 'withoutinterwiki-submit' )
 			->setMethod( 'get' )
 			->prepareForm()
@@ -97,7 +97,7 @@ class WithoutInterwikiPage extends PageQueryPage {
 			'join_conds' => [ 'langlinks' => [ 'LEFT JOIN', 'll_from = page_id' ] ]
 		];
 		if ( $this->prefix ) {
-			$dbr = wfGetDB( DB_REPLICA );
+			$dbr = wfGetDB( DB_SLAVE );
 			$query['conds'][] = 'page_title ' . $dbr->buildLike( $this->prefix, $dbr->anyString() );
 		}
 

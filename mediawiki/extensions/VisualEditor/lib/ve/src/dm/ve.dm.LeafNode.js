@@ -16,12 +16,12 @@
  * @constructor
  * @param {Object} [element] Reference to element in linear model
  */
-ve.dm.LeafNode = function VeDmLeafNode() {
+ve.dm.LeafNode = function VeDmLeafNode( element ) {
 	// Mixin constructor
 	ve.LeafNode.call( this );
 
 	// Parent constructor
-	ve.dm.LeafNode.super.apply( this, arguments );
+	ve.dm.Node.call( this, element );
 };
 
 /* Inheritance */

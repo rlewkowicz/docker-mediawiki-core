@@ -13,9 +13,9 @@
  * @constructor
  * @param {Object} [config] Configuration options
  */
-ve.ui.LanguageInspector = function VeUiLanguageInspector() {
+ve.ui.LanguageInspector = function VeUiLanguageInspector( config ) {
 	// Parent constructor
-	ve.ui.LanguageInspector.super.apply( this, arguments );
+	ve.ui.AnnotationInspector.call( this, config );
 };
 
 /* Inheritance */

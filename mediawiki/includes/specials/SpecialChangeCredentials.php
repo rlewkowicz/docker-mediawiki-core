@@ -81,6 +81,12 @@ class SpecialChangeCredentials extends AuthManagerSpecialPage {
 			return;
 		}
 
+		if ( $this->getRequest()->getCheck( 'wpCancel' ) ) {
+			$returnUrl = $this->getReturnUrl() ?: Title::newMainPage()->getFullURL();
+			$this->getOutput()->redirect( $returnUrl );
+			return;
+		}
+
 		if ( !$this->authRequests ) {
 			// messages used: changecredentials-invalidsubpage, removecredentials-invalidsubpage
 			$this->showSubpageList( $this->msg( static::$messagePrefix . '-invalidsubpage', $subPage ) );
@@ -143,8 +149,12 @@ class SpecialChangeCredentials extends AuthManagerSpecialPage {
 		);
 
 		// messages used: changecredentials-submit removecredentials-submit
+		// changecredentials-submit-cancel removecredentials-submit-cancel
 		$form->setSubmitTextMsg( static::$messagePrefix . '-submit' );
-		$form->showCancel()->setCancelTarget( $this->getReturnUrl() ?: Title::newMainPage() );
+		$form->addButton( [
+			'name' => 'wpCancel',
+			'value' => $this->msg( static::$messagePrefix . '-submit-cancel' )->text()
+		] );
 
 		return $form;
 	}
@@ -184,7 +194,6 @@ class SpecialChangeCredentials extends AuthManagerSpecialPage {
 			$groupedRequests[(string)$info['provider']][] = $req;
 		}
 
-		$linkRenderer = $this->getLinkRenderer();
 		$out->addHTML( Html::openElement( 'dl' ) );
 		foreach ( $groupedRequests as $group => $members ) {
 			$out->addHTML( Html::element( 'dt', [], $group ) );
@@ -192,10 +201,8 @@ class SpecialChangeCredentials extends AuthManagerSpecialPage {
 				/** @var AuthenticationRequest $req */
 				$info = $req->describeCredentials();
 				$out->addHTML( Html::rawElement( 'dd', [],
-					$linkRenderer->makeLink(
-						$this->getPageTitle( $req->getUniqueId() ),
-						$info['account']
-					)
+					Linker::link( $this->getPageTitle( $req->getUniqueId() ),
+						htmlspecialchars( $info['account'], ENT_QUOTES ) )
 				) );
 			}
 		}

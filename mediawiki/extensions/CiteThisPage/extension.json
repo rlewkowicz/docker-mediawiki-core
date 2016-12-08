@@ -20,7 +20,9 @@
 		"SkinTemplateBuildNavUrlsNav_urlsAfterPermalink": [
 			"CiteThisPageHooks::onSkinTemplateBuildNavUrlsNav_urlsAfterPermalink"
 		],
-		"BaseTemplateToolbox": "CiteThisPageHooks::onBaseTemplateToolbox"
+		"SkinTemplateToolboxEnd": [
+			"CiteThisPageHooks::onSkinTemplateToolboxEnd"
+		]
 	},
 	"ResourceModules": {
 		"ext.citeThisPage": {
@@ -37,6 +39,7 @@
 	},
 	"AutoloadClasses": {
 		"SpecialCiteThisPage": "SpecialCiteThisPage.php",
+		"CiteThisPageOutput": "SpecialCiteThisPage.php",
 		"CiteThisPageHooks": "CiteThisPage.hooks.php"
 	},
 	"manifest_version": 1

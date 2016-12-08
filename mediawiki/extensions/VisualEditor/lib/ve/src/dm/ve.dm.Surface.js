@@ -134,7 +134,7 @@ ve.dm.Surface.prototype.startHistoryTracking = function () {
 		return;
 	}
 	if ( this.historyTrackingInterval === null ) {
-		this.historyTrackingInterval = setInterval( this.breakpoint.bind( this ), 3000 );
+		this.historyTrackingInterval = setInterval( this.breakpoint.bind( this ), 750 );
 	}
 };
 
@@ -149,14 +149,6 @@ ve.dm.Surface.prototype.stopHistoryTracking = function () {
 		clearInterval( this.historyTrackingInterval );
 		this.historyTrackingInterval = null;
 	}
-};
-
-/**
- * Reset the timer for automatic history-tracking
- */
-ve.dm.Surface.prototype.resetHistoryTrackingInterval = function () {
-	this.stopHistoryTracking();
-	this.startHistoryTracking();
 };
 
 /**
@@ -862,7 +854,6 @@ ve.dm.Surface.prototype.breakpoint = function () {
 	if ( !this.enabled ) {
 		return false;
 	}
-	this.resetHistoryTrackingInterval();
 	if ( this.newTransactions.length > 0 ) {
 		this.undoStack.push( {
 			transactions: this.newTransactions,
@@ -1004,7 +995,7 @@ ve.dm.Surface.prototype.getModifiedRanges = function () {
 
 	this.getHistory().forEach( function ( stackItem ) {
 		stackItem.transactions.forEach( function ( tx ) {
-			var newRange = tx.getModifiedRange( this.documentModel );
+			var newRange = tx.getModifiedRange();
 			// newRange will by null for no-ops
 			if ( newRange ) {
 				// Translate previous ranges by the current transaction
@@ -1020,7 +1011,7 @@ ve.dm.Surface.prototype.getModifiedRanges = function () {
 
 	ranges.sort( function ( a, b ) { return a.start - b.start; } ).forEach( function ( range ) {
 		if ( !range.isCollapsed() ) {
-			if ( lastRange && lastRange.touchesRange( range ) ) {
+			if ( lastRange && lastRange.overlapsRange( range ) ) {
 				compactRanges.pop();
 				range = lastRange.expand( range );
 			}

@@ -36,8 +36,7 @@ use WebRequest;
  */
 interface SessionManagerInterface extends LoggerAwareInterface {
 	/**
-	 * Fetch the session for a request (or a new empty session if none is
-	 * attached to it)
+	 * Fetch the session for a request
 	 *
 	 * @note You probably want to use $request->getSession() instead. It's more
 	 *  efficient and doesn't break FauxRequests or sessions that were changed
@@ -53,7 +52,6 @@ interface SessionManagerInterface extends LoggerAwareInterface {
 
 	/**
 	 * Fetch a session by ID
-	 *
 	 * @param string $id
 	 * @param bool $create If no session exists for $id, try to create a new one.
 	 *  May still return null if a session for $id exists but cannot be loaded.
@@ -64,7 +62,7 @@ interface SessionManagerInterface extends LoggerAwareInterface {
 	public function getSessionById( $id, $create = false, WebRequest $request = null );
 
 	/**
-	 * Create a new, empty session
+	 * Fetch a new, empty session
 	 *
 	 * The first provider configured that is able to provide an empty session
 	 * will be used.

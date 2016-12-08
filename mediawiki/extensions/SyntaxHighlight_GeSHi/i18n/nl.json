@@ -3,11 +3,9 @@
 		"authors": [
 			"Siebrand",
 			"Tvdm",
-			"Romaine",
-			"SPQRobin"
+			"Romaine"
 		]
 	},
 	"syntaxhighlight-desc": "Voorziet in het markeren van syntaxis voor <code>&lt;syntaxhighlight&gt;</code> met [http://pygments.org/ Pygments]",
-	"syntaxhighlight-error-category": "Pagina's met fouten in de syntaxmarkering",
-	"syntaxhighlight-visualeditor-mwsyntaxhighlightinspector-language": "Taal"
+	"syntaxhighlight-error-category": "Pagina's met fouten in de syntaxmarkering"
 }

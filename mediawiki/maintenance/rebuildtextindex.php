@@ -36,7 +36,7 @@ class RebuildTextIndex extends Maintenance {
 	const RTI_CHUNK_SIZE = 500;
 
 	/**
-	 * @var Database
+	 * @var DatabaseBase
 	 */
 	private $db;
 

@@ -30,7 +30,6 @@ trait IconElement {
 	 * @param string $config['icon'] Symbolic icon name
 	 */
 	public function initializeIconElement( array $config = [] ) {
-		// Properties
 		// FIXME 'iconElement' is a very stupid way to call '$icon'
 		$this->icon = isset( $config['iconElement'] ) ? $config['iconElement'] : new Tag( 'span' );
 

@@ -181,7 +181,7 @@ class SpecialAllPages extends IncludableSpecialPage {
 			list( $namespace, $fromKey, $from ) = $fromList;
 			list( , $toKey, $to ) = $toList;
 
-			$dbr = wfGetDB( DB_REPLICA );
+			$dbr = wfGetDB( DB_SLAVE );
 			$filterConds = [ 'page_namespace' => $namespace ];
 			if ( $hideredirects ) {
 				$filterConds['page_is_redirect'] = 0;

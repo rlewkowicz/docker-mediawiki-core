@@ -41,13 +41,9 @@
 				value = options[ name ] === null ? null : String( options[ name ] );
 
 				// Can we bundle this option, or does it need a separate request?
-				if ( this.defaults.useUS ) {
-					bundleable = name.indexOf( '=' ) === -1;
-				} else {
-					bundleable =
-						( value === null || value.indexOf( '|' ) === -1 ) &&
-						( name.indexOf( '|' ) === -1 && name.indexOf( '=' ) === -1 );
-				}
+				bundleable =
+					( value === null || value.indexOf( '|' ) === -1 ) &&
+					( name.indexOf( '|' ) === -1 && name.indexOf( '=' ) === -1 );
 
 				if ( bundleable ) {
 					if ( value !== null ) {

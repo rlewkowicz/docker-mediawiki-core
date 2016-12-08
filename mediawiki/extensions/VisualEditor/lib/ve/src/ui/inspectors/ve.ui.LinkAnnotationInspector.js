@@ -13,9 +13,9 @@
  * @constructor
  * @param {Object} [config] Configuration options
  */
-ve.ui.LinkAnnotationInspector = function VeUiLinkAnnotationInspector() {
+ve.ui.LinkAnnotationInspector = function VeUiLinkAnnotationInspector( config ) {
 	// Parent constructor
-	ve.ui.LinkAnnotationInspector.super.apply( this, arguments );
+	ve.ui.AnnotationInspector.call( this, config );
 };
 
 /* Inheritance */

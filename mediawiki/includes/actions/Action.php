@@ -62,7 +62,7 @@ abstract class Action {
 	 * the action is disabled, or null if it's not recognised
 	 * @param string $action
 	 * @param array $overrides
-	 * @return bool|null|string|callable|Action
+	 * @return bool|null|string|callable
 	 */
 	final private static function getClass( $action, array $overrides ) {
 		global $wgActions;
@@ -88,7 +88,7 @@ abstract class Action {
 	 * @since 1.17
 	 * @param string $action
 	 * @param Page $page
-	 * @param IContextSource|null $context
+	 * @param IContextSource $context
 	 * @return Action|bool|null False if the action is disabled, null
 	 *     if it is not recognised
 	 */
@@ -264,7 +264,7 @@ abstract class Action {
 	 * Only public since 1.21
 	 *
 	 * @param Page $page
-	 * @param IContextSource|null $context
+	 * @param IContextSource $context
 	 */
 	public function __construct( Page $page, IContextSource $context = null ) {
 		if ( $context === null ) {

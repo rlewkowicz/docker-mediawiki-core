@@ -3,16 +3,15 @@
 		"authors": [
 			"Dbc334",
 			"Smihael",
-			"Yerpo",
-			"Janezdrilc"
+			"Yerpo"
 		]
 	},
 	"vector-skin-desc": "Sodobna različica MonoBook s svežim videzom in mnogimi izboljšavami uporabnosti",
 	"vector-action-addsection": "Dodaj temo",
 	"vector-action-delete": "Izbriši",
-	"vector-action-move": "Preimenuj",
+	"vector-action-move": "Prestavi",
 	"vector-action-protect": "Zaščiti",
-	"vector-action-undelete": "Obnovi",
+	"vector-action-undelete": "Vrni",
 	"vector-action-unprotect": "Spremeni zaščito",
 	"vector-view-create": "Ustvari",
 	"vector-view-edit": "Uredi",

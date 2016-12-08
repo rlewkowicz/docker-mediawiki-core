@@ -10,8 +10,7 @@
 		suppressErrors = true,
 		updatingBooklet = false,
 		pages = {},
-		moduleInfoCache = {},
-		baseRequestParams;
+		moduleInfoCache = {};
 
 	WidgetMethods = {
 		textInputWidget: {
@@ -117,24 +116,10 @@
 
 		capsuleWidget: {
 			getApiValue: function () {
-				var items = this.getItemsData();
-				if ( items.join( '' ).indexOf( '|' ) === -1 ) {
-					return items.join( '|' );
-				} else {
-					return '\x1f' + items.join( '\x1f' );
-				}
+				return this.getItemsData().join( '|' );
 			},
 			setApiValue: function ( v ) {
-				if ( v === undefined || v === '' || v === '\x1f' ) {
-					this.setItemsFromData( [] );
-				} else {
-					v = String( v );
-					if ( v.indexOf( '\x1f' ) !== 0 ) {
-						this.setItemsFromData( v.split( '|' ) );
-					} else {
-						this.setItemsFromData( v.substr( 1 ).split( '\x1f' ) );
-					}
-				}
+				this.setItemsFromData( v === undefined || v === '' ? [] : String( v ).split( '|' ) );
 			},
 			apiCheckValid: function () {
 				var ok = this.getApiValue() !== undefined || suppressErrors;
@@ -319,7 +304,7 @@
 							}
 						} );
 					} else if ( Util.apiBool( pi.multi ) ) {
-						widget = new OO.ui.CapsuleMultiselectWidget( {
+						widget = new OO.ui.CapsuleMultiSelectWidget( {
 							allowArbitrary: true
 						} );
 						widget.paramInfo = pi;
@@ -428,7 +413,7 @@
 						return a.data - b.data;
 					} );
 					if ( Util.apiBool( pi.multi ) ) {
-						widget = new OO.ui.CapsuleMultiselectWidget( {
+						widget = new OO.ui.CapsuleMultiSelectWidget( {
 							menu: { items: items }
 						} );
 						widget.paramInfo = pi;
@@ -451,7 +436,7 @@
 						return new OO.ui.MenuOptionWidget( { data: String( v ), label: String( v ) } );
 					} );
 					if ( Util.apiBool( pi.multi ) ) {
-						widget = new OO.ui.CapsuleMultiselectWidget( {
+						widget = new OO.ui.CapsuleMultiSelectWidget( {
 							menu: { items: items }
 						} );
 						widget.paramInfo = pi;
@@ -495,7 +480,7 @@
 						throw new Error( 'Unknown multiMode "' + multiMode + '"' );
 				}
 
-				widget = new OO.ui.CapsuleMultiselectWidget( {
+				widget = new OO.ui.CapsuleMultiSelectWidget( {
 					allowArbitrary: true,
 					popup: {
 						classes: [ 'mw-apisandbox-popup' ],
@@ -572,7 +557,7 @@
 	*
 	* @class mw.special.ApiSandbox
 	*/
-	ApiSandbox = {
+	mw.special.ApiSandbox = ApiSandbox = {
 		/**
 		 * Initialize the UI
 		 *
@@ -580,8 +565,6 @@
 		 */
 		init: function () {
 			var $toolbar;
-
-			ApiSandbox.isFullscreen = false;
 
 			$content = $( '#mw-apisandbox' );
 
@@ -602,7 +585,7 @@
 					fullscreenButton.$element,
 					new OO.ui.ButtonWidget( {
 						label: mw.message( 'apisandbox-submit' ).text(),
-						flags: [ 'primary', 'progressive' ]
+						flags: [ 'primary', 'constructive' ]
 					} ).on( 'click', ApiSandbox.sendRequest ).$element,
 					new OO.ui.ButtonWidget( {
 						label: mw.message( 'apisandbox-reset' ).text(),
@@ -661,21 +644,17 @@
 		 * Toggle "fullscreen" mode
 		 */
 		toggleFullscreen: function () {
-			var $body = $( document.body ),
-				$ui = $( '#mw-apisandbox-ui' );
+			var $body = $( document.body );
 
-			ApiSandbox.isFullscreen = !ApiSandbox.isFullscreen;
-
-			$body.toggleClass( 'mw-apisandbox-fullscreen', ApiSandbox.isFullscreen );
-			$ui.toggleClass( 'mw-body-content', ApiSandbox.isFullscreen );
-			if ( ApiSandbox.isFullscreen ) {
+			$body.toggleClass( 'mw-apisandbox-fullscreen' );
+			if ( $body.hasClass( 'mw-apisandbox-fullscreen' ) ) {
 				fullscreenButton.setLabel( mw.message( 'apisandbox-unfullscreen' ).text() );
 				fullscreenButton.setTitle( mw.message( 'apisandbox-unfullscreen-tooltip' ).text() );
-				$body.append( $ui );
+				$body.append( $( '#mw-apisandbox-ui' ) );
 			} else {
 				fullscreenButton.setLabel( mw.message( 'apisandbox-fullscreen' ).text() );
 				fullscreenButton.setTitle( mw.message( 'apisandbox-fullscreen-tooltip' ).text() );
-				$content.append( $ui );
+				$content.append( $( '#mw-apisandbox-ui' ) );
 			}
 			ApiSandbox.resizePanel();
 		},
@@ -687,7 +666,7 @@
 			var height = $( window ).height(),
 				contentTop = $content.offset().top;
 
-			if ( ApiSandbox.isFullscreen ) {
+			if ( $( document.body ).hasClass( 'mw-apisandbox-fullscreen' ) ) {
 				height -= panel.$element.offset().top - $( '#mw-apisandbox-ui' ).offset().top;
 				panel.$element.height( height - 1 );
 			} else {
@@ -810,15 +789,12 @@
 
 		/**
 		 * Submit button handler
-		 *
-		 * @param {Object} [params] Use this set of params instead of those in the form fields.
-		 *   The form fields will be updated to match.
 		 */
-		sendRequest: function ( params ) {
+		sendRequest: function () {
 			var page, subpages, i, query, $result, $focus,
 				progress, $progressText, progressLoading,
 				deferreds = [],
-				paramsAreForced = !!params,
+				params = {},
 				displayParams = {},
 				checkPages = [ pages.main ];
 
@@ -831,11 +807,6 @@
 
 			suppressErrors = false;
 
-			// save widget state in params (or load from it if we are forced)
-			if ( paramsAreForced ) {
-				ApiSandbox.updateUI( params );
-			}
-			params = {};
 			while ( checkPages.length ) {
 				page = checkPages.shift();
 				deferreds.push( page.apiCheckValid() );
@@ -846,11 +817,6 @@
 						checkPages.push( pages[ subpages[ i ].key ] );
 					}
 				}
-			}
-
-			if ( !paramsAreForced ) {
-				// forced params means we are continuing a query; the base query should be preserved
-				baseRequestParams = $.extend( {}, params );
 			}
 
 			$.when.apply( $, deferreds ).done( function () {
@@ -960,7 +926,7 @@
 							);
 					} )
 					.done( function ( data, jqXHR ) {
-						var m, loadTime, button, clear,
+						var m, loadTime, button,
 							ct = jqXHR.getResponseHeader( 'Content-Type' );
 
 						$result.empty();
@@ -981,32 +947,6 @@
 								.addClass( 'api-pretty-content' )
 								.text( data )
 								.appendTo( $result );
-						}
-						if ( paramsAreForced || data[ 'continue' ] ) {
-							$result.append(
-								$( '<div>' ).append(
-									new OO.ui.ButtonWidget( {
-										label: mw.message( 'apisandbox-continue' ).text()
-									} ).on( 'click', function () {
-										ApiSandbox.sendRequest( $.extend( {}, baseRequestParams, data[ 'continue' ] ) );
-									} ).setDisabled( !data[ 'continue' ] ).$element,
-									( clear = new OO.ui.ButtonWidget( {
-										label: mw.message( 'apisandbox-continue-clear' ).text()
-									} ).on( 'click', function () {
-										ApiSandbox.updateUI( baseRequestParams );
-										clear.setDisabled( true );
-										booklet.setPage( '|results|' );
-									} ).setDisabled( !paramsAreForced ) ).$element,
-									new OO.ui.PopupButtonWidget( {
-										framed: false,
-										icon: 'info',
-										popup: {
-											$content: $( '<div>' ).append( mw.message( 'apisandbox-continue-help' ).parse() ),
-											padded: true
-										}
-									} ).$element
-								)
-							);
 						}
 						if ( typeof loadTime === 'number' ) {
 							$result.append(
@@ -1374,10 +1314,10 @@
 						}
 						if ( Util.apiBool( pi.parameters[ i ].multi ) ) {
 							tmp = [];
-							if ( flag && !( widget instanceof OO.ui.CapsuleMultiselectWidget ) &&
+							if ( flag && !( widget instanceof OO.ui.CapsuleMultiSelectWidget ) &&
 								!(
 									widget instanceof OptionalWidget &&
-									widget.widget instanceof OO.ui.CapsuleMultiselectWidget
+									widget.widget instanceof OO.ui.CapsuleMultiSelectWidget
 								)
 							) {
 								tmp.push( mw.message( 'api-help-param-multi-separate' ).parse() );
@@ -1425,7 +1365,6 @@
 						// Don't grey out the label when the field is disabled,
 						// it makes it too hard to read and our "disabled"
 						// isn't really disabled.
-						widgetField.onFieldDisable( false );
 						widgetField.onFieldDisable = doNothing;
 
 						if ( Util.apiBool( pi.parameters[ i ].deprecated ) ) {
@@ -1468,7 +1407,7 @@
 							dynamicParamNameWidget,
 							new OO.ui.ButtonWidget( {
 								icon: 'add',
-								flags: 'progressive'
+								flags: 'constructive'
 							} ).on( 'click', addDynamicParamWidget ),
 							{
 								label: mw.message( 'apisandbox-dynamic-parameters-add-label' ).text(),
@@ -1734,7 +1673,5 @@
 	};
 
 	$( ApiSandbox.init );
-
-	module.exports = ApiSandbox;
 
 }( jQuery, mediaWiki, OO ) );

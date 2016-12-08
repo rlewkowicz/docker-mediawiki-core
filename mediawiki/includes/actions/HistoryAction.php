@@ -105,7 +105,8 @@ class HistoryAction extends FormlessAction {
 		$config = $this->context->getConfig();
 
 		# Fill in the file cache if not set already
-		if ( HTMLFileCache::useFileCache( $this->getContext() ) ) {
+		$useFileCache = $config->get( 'UseFileCache' );
+		if ( $useFileCache && HTMLFileCache::useFileCache( $this->getContext() ) ) {
 			$cache = new HTMLFileCache( $this->getTitle(), 'history' );
 			if ( !$cache->isCacheGood( /* Assume up to date */ ) ) {
 				ob_start( [ &$cache, 'saveToFileCache' ] );
@@ -115,10 +116,6 @@ class HistoryAction extends FormlessAction {
 		// Setup page variables.
 		$out->setFeedAppendQuery( 'action=history' );
 		$out->addModules( 'mediawiki.action.history' );
-		$out->addModuleStyles( [
-			'mediawiki.action.history.styles',
-			'mediawiki.special.changeslist',
-		] );
 		if ( $config->get( 'UseMediaWikiUIEverywhere' ) ) {
 			$out = $this->getOutput();
 			$out->addModuleStyles( [
@@ -139,10 +136,6 @@ class HistoryAction extends FormlessAction {
 
 		// Fail nicely if article doesn't exist.
 		if ( !$this->page->exists() ) {
-			global $wgSend404Code;
-			if ( $wgSend404Code ) {
-				$out->setStatusCode( 404 );
-			}
 			$out->addWikiMsg( 'nohistory' );
 			# show deletion/move log if there is an entry
 			LogEventsList::showLogExtract(
@@ -237,7 +230,7 @@ class HistoryAction extends FormlessAction {
 			return new FakeResultWrapper( [] );
 		}
 
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 
 		if ( $direction === self::DIR_PREV ) {
 			list( $dirs, $oper ) = [ "ASC", ">=" ];

@@ -20,7 +20,6 @@
  * @file
  * @author Aaron Schulz
  */
-use Psr\Log\LoggerInterface;
 
 /**
  * Class to handle job queues stored in Redis
@@ -67,8 +66,6 @@ use Psr\Log\LoggerInterface;
 class JobQueueRedis extends JobQueue {
 	/** @var RedisConnectionPool */
 	protected $redisPool;
-	/** @var LoggerInterface */
-	protected $logger;
 
 	/** @var string Server address */
 	protected $server;
@@ -99,7 +96,6 @@ class JobQueueRedis extends JobQueue {
 				"Non-daemonized mode is no longer supported. Please install the " .
 				"mediawiki/services/jobrunner service and update \$wgJobTypeConf as needed." );
 		}
-		$this->logger = \MediaWiki\Logger\LoggerFactory::getInstance( 'redis' );
 	}
 
 	protected function supportedOrders() {
@@ -254,7 +250,6 @@ class JobQueueRedis extends JobQueue {
 			$args[] = (string)$this->serialize( $item );
 		}
 		static $script =
-		/** @lang Lua */
 <<<LUA
 		local kUnclaimed, kSha1ById, kIdBySha1, kDelayed, kData, kQwJobs = unpack(KEYS)
 		-- First argument is the queue ID
@@ -344,7 +339,6 @@ LUA;
 	 */
 	protected function popAndAcquireBlob( RedisConnRef $conn ) {
 		static $script =
-		/** @lang Lua */
 <<<LUA
 		local kUnclaimed, kSha1ById, kIdBySha1, kClaimed, kAttempts, kData = unpack(KEYS)
 		local rTime = unpack(ARGV)
@@ -392,7 +386,6 @@ LUA;
 		$conn = $this->getConnection();
 		try {
 			static $script =
-			/** @lang Lua */
 <<<LUA
 			local kClaimed, kAttempts, kData = unpack(KEYS)
 			local id = unpack(ARGV)
@@ -752,7 +745,7 @@ LUA;
 	 * @throws JobQueueConnectionError
 	 */
 	protected function getConnection() {
-		$conn = $this->redisPool->getConnection( $this->server, $this->logger );
+		$conn = $this->redisPool->getConnection( $this->server );
 		if ( !$conn ) {
 			throw new JobQueueConnectionError(
 				"Unable to connect to redis server {$this->server}." );

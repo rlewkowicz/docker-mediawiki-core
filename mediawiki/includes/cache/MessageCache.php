@@ -20,8 +20,6 @@
  * @file
  * @ingroup Cache
  */
-use MediaWiki\MediaWikiServices;
-use Wikimedia\ScopedCallback;
 
 /**
  * MediaWiki message cache structure version.
@@ -156,9 +154,9 @@ class MessageCache {
 		$this->mExpiry = $expiry;
 
 		if ( $wgUseLocalMessageCache ) {
-			$this->localCache = MediaWikiServices::getInstance()->getLocalServerObjectCache();
+			$this->localCache = ObjectCache::getLocalServerInstance( CACHE_NONE );
 		} else {
-			$this->localCache = new EmptyBagOStuff();
+			$this->localCache = wfGetCache( CACHE_NONE );
 		}
 
 		$this->wanCache = ObjectCache::getMainWANInstance();
@@ -228,14 +226,17 @@ class MessageCache {
 	 * or false if populating empty cache fails. Also returns true if MessageCache
 	 * is disabled.
 	 *
-	 * @param string $code Language to which load messages
-	 * @param integer $mode Use MessageCache::FOR_UPDATE to skip process cache [optional]
+	 * @param bool|string $code Language to which load messages
+	 * @param integer $mode Use MessageCache::FOR_UPDATE to skip process cache
 	 * @throws MWException
 	 * @return bool
 	 */
-	protected function load( $code, $mode = null ) {
+	function load( $code = false, $mode = null ) {
 		if ( !is_string( $code ) ) {
-			throw new InvalidArgumentException( "Missing language code" );
+			# This isn't really nice, so at least make a note about it and try to
+			# fall back
+			wfDebug( __METHOD__ . " called without providing a language code\n" );
+			$code = 'en';
 		}
 
 		# Don't do double loading...
@@ -301,7 +302,7 @@ class MessageCache {
 						$where[] = 'global cache is expired';
 						$staleCache = $cache;
 					} elseif ( $hashVolatile ) {
-						# DB results are replica DB lag prone until the holdoff TTL passes.
+						# DB results are slave lag prone until the holdoff TTL passes.
 						# By then, updates should be reflected in loadFromDBWithLock().
 						# One thread renerates the cache while others use old values.
 						$where[] = 'global cache is expired/volatile';
@@ -441,7 +442,7 @@ class MessageCache {
 	function loadFromDB( $code, $mode = null ) {
 		global $wgMaxMsgCacheEntrySize, $wgLanguageCode, $wgAdaptiveMessageCache;
 
-		$dbr = wfGetDB( ( $mode == self::FOR_UPDATE ) ? DB_MASTER : DB_REPLICA );
+		$dbr = wfGetDB( ( $mode == self::FOR_UPDATE ) ? DB_MASTER : DB_SLAVE );
 
 		$cache = [];
 
@@ -563,7 +564,7 @@ class MessageCache {
 		}
 
 		// Mark this cache as definitely "latest" (non-volatile) so
-		// load() calls do try to refresh the cache with replica DB data
+		// load() calls do try to refresh the cache with slave data
 		$this->mCache[$code]['LATEST'] = time();
 
 		// Update caches if the lock was acquired
@@ -629,11 +630,11 @@ class MessageCache {
 		if ( $dest === 'all' ) {
 			$cacheKey = wfMemcKey( 'messages', $code );
 			$success = $this->mMemc->set( $cacheKey, $cache );
-			$this->setValidationHash( $code, $cache );
 		} else {
 			$success = true;
 		}
 
+		$this->setValidationHash( $code, $cache );
 		$this->saveToLocalCache( $code, $cache );
 
 		return $success;
@@ -862,8 +863,6 @@ class MessageCache {
 				}
 				$alreadyTried[ $langcode ] = true;
 			}
-		} else {
-			$uckey = null;
 		}
 
 		// Check the CDB cache
@@ -881,8 +880,7 @@ class MessageCache {
 					continue;
 				}
 
-				$message = $this->getMsgFromNamespace(
-					$this->getMessagePageName( $code, $uckey ), $code );
+				$message = $this->getMsgFromNamespace( $this->getMessagePageName( $code, $uckey ), $code );
 
 				if ( $message !== false ) {
 					return $message;
@@ -947,47 +945,28 @@ class MessageCache {
 			return false;
 		}
 
-		// Try the individual message cache
+		# Try the individual message cache
 		$titleKey = wfMemcKey( 'messages', 'individual', $title );
-
-		$curTTL = null;
-		$entry = $this->wanCache->get(
-			$titleKey,
-			$curTTL,
-			[ wfMemcKey( 'messages', $code ) ]
-		);
-		$entry = ( $curTTL >= 0 ) ? $entry : false;
-
+		$entry = $this->wanCache->get( $titleKey );
 		if ( $entry ) {
 			if ( substr( $entry, 0, 1 ) === ' ' ) {
 				$this->mCache[$code][$title] = $entry;
-				// The message exists, so make sure a string is returned
+
+				// The message exists, so make sure a string
+				// is returned.
 				return (string)substr( $entry, 1 );
 			} elseif ( $entry === '!NONEXISTENT' ) {
 				$this->mCache[$code][$title] = '!NONEXISTENT';
 
 				return false;
 			} else {
-				// Corrupt/obsolete entry, delete it
+				# Corrupt/obsolete entry, delete it
 				$this->wanCache->delete( $titleKey );
 			}
 		}
 
-		// Try loading it from the database
-		$dbr = wfGetDB( DB_REPLICA );
-		$cacheOpts = Database::getCacheSetOptions( $dbr );
-		// Use newKnownCurrent() to avoid querying revision/user tables
-		$titleObj = Title::makeTitle( NS_MEDIAWIKI, $title );
-		if ( $titleObj->getLatestRevID() ) {
-			$revision = Revision::newKnownCurrent(
-				$dbr,
-				$titleObj->getArticleID(),
-				$titleObj->getLatestRevID()
-			);
-		} else {
-			$revision = false;
-		}
-
+		# Try loading it from the database
+		$revision = Revision::newFromTitle( Title::makeTitle( NS_MEDIAWIKI, $title ) );
 		if ( $revision ) {
 			$content = $revision->getContent();
 			if ( !$content ) {
@@ -1014,7 +993,7 @@ class MessageCache {
 					$message = false; // negative caching
 				} else {
 					$this->mCache[$code][$title] = ' ' . $message;
-					$this->wanCache->set( $titleKey, ' ' . $message, $this->mExpiry, $cacheOpts );
+					$this->wanCache->set( $titleKey, ' ' . $message, $this->mExpiry );
 				}
 			}
 		} else {
@@ -1023,7 +1002,7 @@ class MessageCache {
 
 		if ( $message === false ) { // negative caching
 			$this->mCache[$code][$title] = '!NONEXISTENT';
-			$this->wanCache->set( $titleKey, '!NONEXISTENT', $this->mExpiry, $cacheOpts );
+			$this->wanCache->set( $titleKey, '!NONEXISTENT', $this->mExpiry );
 		}
 
 		return $message;
@@ -1110,7 +1089,7 @@ class MessageCache {
 		if ( !$title || !$title instanceof Title ) {
 			global $wgTitle;
 			wfDebugLog( 'GlobalTitleFail', __METHOD__ . ' called by ' .
-				wfGetAllCallers( 6 ) . ' with no title set.' );
+				wfGetAllCallers( 5 ) . ' with no title set.' );
 			$title = $wgTitle;
 		}
 		// Sometimes $wgTitle isn't set either...

@@ -13,9 +13,9 @@
  * @constructor
  * @param {Object} element Reference to element in meta-linmod
  */
-ve.dm.MWLanguageMetaItem = function VeDmMWLanguageMetaItem() {
+ve.dm.MWLanguageMetaItem = function VeDmMWLanguageMetaItem( element ) {
 	// Parent constructor
-	ve.dm.MWLanguageMetaItem.super.apply( this, arguments );
+	ve.dm.MetaItem.call( this, element );
 };
 
 /* Inheritance */

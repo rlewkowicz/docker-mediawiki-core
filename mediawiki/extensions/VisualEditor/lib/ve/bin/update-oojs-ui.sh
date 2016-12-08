@@ -53,7 +53,7 @@ COMMITMSG=$(cat <<END
 Update OOjs UI to v$OOJSUI_VERSION
 
 Release notes:
- https://phabricator.wikimedia.org/diffusion/GOJU/browse/master/History.md;v$OOJSUI_VERSION
+ https://git.wikimedia.org/blob/oojs%2Fui.git/v$OOJSUI_VERSION/History.md
 END
 )
 

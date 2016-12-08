@@ -46,7 +46,7 @@ class HtmlTest extends MediaWikiTestCase {
 		$this->assertEquals(
 			'<img/>',
 			Html::element( 'img', null, '' ),
-			'Self-closing tag for short-tag elements'
+			'No close tag for short-tag elements'
 		);
 
 		$this->assertEquals(
@@ -59,6 +59,12 @@ class HtmlTest extends MediaWikiTestCase {
 			'<element></element>',
 			Html::element( 'element', [], '' ),
 			'Close tag for empty element (array, string)'
+		);
+
+		$this->assertEquals(
+			'<img/>',
+			Html::element( 'img', null, '' ),
+			'Self-closing tag for short-tag elements'
 		);
 	}
 
@@ -133,6 +139,12 @@ class HtmlTest extends MediaWikiTestCase {
 			' selected=""',
 			Html::expandAttributes( [ 'selected' ] ),
 			'Boolean attributes have no value when value is true (passed as numerical array)'
+		);
+
+		$this->assertEquals(
+			' selected=""',
+			Html::expandAttributes( [ 'selected' => true ] ),
+			'Boolean attributes have empty string value when value is true'
 		);
 	}
 
@@ -271,7 +283,7 @@ class HtmlTest extends MediaWikiTestCase {
 	/**
 	 * How do we handle duplicate keys in HTML attributes expansion?
 	 * We could pass a "class" the values: 'GREEN' and array( 'GREEN' => false )
-	 * The latter will take precedence.
+	 * The later will take precedence.
 	 *
 	 * Feature added by r96188
 	 * @covers Html::expandAttributes
@@ -514,6 +526,10 @@ class HtmlTest extends MediaWikiTestCase {
 			'canvas', [ 'width' => 300 ]
 		];
 
+		$cases[] = [ '<command/>',
+			'command', [ 'type' => 'command' ]
+		];
+
 		$cases[] = [ '<form></form>',
 			'form', [ 'action' => 'GET' ]
 		];
@@ -733,16 +749,6 @@ class HtmlTest extends MediaWikiTestCase {
 				[ '1'  => '1x.png', '1.5' => '1_5x.png', '2'  => '2x.png' ],
 				'1x.png 1x, 1_5x.png 1.5x, 2x.png 2x',
 				'pixel depth keys may omit a trailing "x"'
-			],
-			[
-				[ '1'  => 'small.png', '1.5' => 'large.png', '2'  => 'large.png' ],
-				'small.png 1x, large.png 1.5x',
-				'omit larger duplicates'
-			],
-			[
-				[ '1'  => 'small.png', '2'  => 'large.png', '1.5' => 'large.png' ],
-				'small.png 1x, large.png 1.5x',
-				'omit larger duplicates in irregular order'
 			],
 		];
 	}

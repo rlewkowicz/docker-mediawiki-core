@@ -19,9 +19,7 @@ ve.ui.MWEditModeTool = function VeUiMWEditModeTool( toolGroup, config ) {
 	var tool = this,
 		$content = $( '<p>' ).text( mw.msg( 'visualeditor-mweditmodewt-popup-body' ) ),
 		showAgainLayout, showAgainCheckbox;
-
-	// Parent constructor
-	ve.ui.MWEditModeTool.super.call( this, mw.msg( 'visualeditor-mweditmodewt-popup-title' ), toolGroup, config );
+	ve.ui.MWPopupTool.call( this, mw.msg( 'visualeditor-mweditmodewt-popup-title' ), toolGroup, config );
 
 	if ( !mw.user.isAnon() ) {
 		showAgainCheckbox = new OO.ui.CheckboxInputWidget()
@@ -85,7 +83,6 @@ ve.ui.MWEditModeTool.prototype.onUpdateState = function () {
  * @param {Object} [config] Config options
  */
 ve.ui.MWEditModeSourceTool = function VeUiMWEditModeSourceTool() {
-	// Parent constructor
 	ve.ui.MWEditModeSourceTool.super.apply( this, arguments );
 };
 OO.inheritClass( ve.ui.MWEditModeSourceTool, ve.ui.MWEditModeTool );

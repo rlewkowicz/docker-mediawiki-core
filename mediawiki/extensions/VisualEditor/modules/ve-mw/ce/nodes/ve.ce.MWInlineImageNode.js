@@ -16,10 +16,10 @@
  * @param {ve.dm.MWInlineImageNode} model Model to observe
  * @param {Object} [config] Configuration options
  */
-ve.ce.MWInlineImageNode = function VeCeMWInlineImageNode() {
+ve.ce.MWInlineImageNode = function VeCeMWInlineImageNode( model, config ) {
 	var isError;
 	// Parent constructor
-	ve.ce.MWInlineImageNode.super.apply( this, arguments );
+	ve.ce.LeafNode.call( this, model, config );
 
 	isError = this.model.getAttribute( 'isError' );
 

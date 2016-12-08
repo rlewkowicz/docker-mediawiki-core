@@ -1,7 +1,5 @@
 <?php
 
-use Wikimedia\ScopedCallback;
-
 class WikiCategoryPageTest extends MediaWikiLangTestCase {
 
 	/**

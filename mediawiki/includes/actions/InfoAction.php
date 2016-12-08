@@ -22,8 +22,6 @@
  * @ingroup Actions
  */
 
-use MediaWiki\MediaWikiServices;
-
 /**
  * Displays information about a page.
  *
@@ -202,7 +200,6 @@ class InfoAction extends FormlessAction {
 		$title = $this->getTitle();
 		$id = $title->getArticleID();
 		$config = $this->context->getConfig();
-		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
 
 		$pageCounts = $this->pageCounts( $this->page );
 
@@ -280,29 +277,10 @@ class InfoAction extends FormlessAction {
 			. ' ' . $this->msg( 'parentheses', $pageLang )->escaped() ];
 
 		// Content model of the page
-		$modelHtml = htmlspecialchars( ContentHandler::getLocalizedName( $title->getContentModel() ) );
-		// If the user can change it, add a link to Special:ChangeContentModel
-		if ( $title->quickUserCan( 'editcontentmodel' ) ) {
-			$modelHtml .= ' ' . $this->msg( 'parentheses' )->rawParams( $linkRenderer->makeLink(
-				SpecialPage::getTitleValueFor( 'ChangeContentModel', $title->getPrefixedText() ),
-				$this->msg( 'pageinfo-content-model-change' )->text()
-			) )->escaped();
-		}
-
 		$pageInfo['header-basic'][] = [
 			$this->msg( 'pageinfo-content-model' ),
-			$modelHtml
+			htmlspecialchars( ContentHandler::getLocalizedName( $title->getContentModel() ) )
 		];
-
-		if ( $title->inNamespace( NS_USER ) ) {
-			$pageUser = User::newFromName( $title->getRootText() );
-			if ( $pageUser && $pageUser->getId() && !$pageUser->isHidden() ) {
-				$pageInfo['header-basic'][] = [
-					$this->msg( 'pageinfo-user-id' ),
-					$pageUser->getId()
-				];
-			}
-		}
 
 		// Search engine status
 		$pOutput = new ParserOutput();
@@ -498,18 +476,16 @@ class InfoAction extends FormlessAction {
 		if ( $firstRev ) {
 			$firstRevUser = $firstRev->getUserText( Revision::FOR_THIS_USER );
 			if ( $firstRevUser !== '' ) {
-				$firstRevUserTitle = Title::makeTitle( NS_USER, $firstRevUser );
-				$batch->addObj( $firstRevUserTitle );
-				$batch->addObj( $firstRevUserTitle->getTalkPage() );
+				$batch->add( NS_USER, $firstRevUser );
+				$batch->add( NS_USER_TALK, $firstRevUser );
 			}
 		}
 
 		if ( $lastRev ) {
 			$lastRevUser = $lastRev->getUserText( Revision::FOR_THIS_USER );
 			if ( $lastRevUser !== '' ) {
-				$lastRevUserTitle = Title::makeTitle( NS_USER, $lastRevUser );
-				$batch->addObj( $lastRevUserTitle );
-				$batch->addObj( $lastRevUserTitle->getTalkPage() );
+				$batch->add( NS_USER, $lastRevUser );
+				$batch->add( NS_USER_TALK, $lastRevUser );
 			}
 		}
 
@@ -641,15 +617,14 @@ class InfoAction extends FormlessAction {
 					$more = null;
 				}
 
-				$templateListFormatter = new TemplatesOnThisPageFormatter(
-					$this->getContext(),
-					$linkRenderer
-				);
-
 				$pageInfo['header-properties'][] = [
 					$this->msg( 'pageinfo-templates' )
 						->numParams( $pageCounts['transclusion']['from'] ),
-					$templateListFormatter->format( $transcludedTemplates, false, $more )
+					Linker::formatTemplates(
+						$transcludedTemplates,
+						false,
+						false,
+						$more )
 				];
 			}
 
@@ -665,15 +640,14 @@ class InfoAction extends FormlessAction {
 					$more = null;
 				}
 
-				$templateListFormatter = new TemplatesOnThisPageFormatter(
-					$this->getContext(),
-					$linkRenderer
-				);
-
 				$pageInfo['header-properties'][] = [
 					$this->msg( 'pageinfo-transclusions' )
 						->numParams( $pageCounts['transclusion']['to'] ),
-					$templateListFormatter->format( $transcludedTargets, false, $more )
+					Linker::formatTemplates(
+						$transcludedTargets,
+						false,
+						false,
+						$more )
 				];
 			}
 		}
@@ -693,16 +667,17 @@ class InfoAction extends FormlessAction {
 
 		return ObjectCache::getMainWANInstance()->getWithSetCallback(
 			self::getCacheKey( $page->getTitle(), $page->getLatest() ),
-			WANObjectCache::TTL_WEEK,
+			86400 * 7,
 			function ( $oldValue, &$ttl, &$setOpts ) use ( $page, $config, $fname ) {
 				$title = $page->getTitle();
 				$id = $title->getArticleID();
 
-				$dbr = wfGetDB( DB_REPLICA );
-				$dbrWatchlist = wfGetDB( DB_REPLICA, 'watchlist' );
+				$dbr = wfGetDB( DB_SLAVE );
+				$dbrWatchlist = wfGetDB( DB_SLAVE, 'watchlist' );
+
 				$setOpts += Database::getCacheSetOptions( $dbr, $dbrWatchlist );
 
-				$watchedItemStore = MediaWikiServices::getInstance()->getWatchedItemStore();
+				$watchedItemStore = WatchedItemStore::getDefaultInstance();
 
 				$result = [];
 				$result['watchers'] = $watchedItemStore->countWatchers( $title );

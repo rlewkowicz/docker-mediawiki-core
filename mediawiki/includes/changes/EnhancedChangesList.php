@@ -54,8 +54,7 @@ class EnhancedChangesList extends ChangesList {
 		// message is set by the parent ChangesList class
 		$this->cacheEntryFactory = new RCCacheEntryFactory(
 			$context,
-			$this->message,
-			$this->linkRenderer
+			$this->message
 		);
 	}
 
@@ -358,7 +357,8 @@ class EnhancedChangesList extends ChangesList {
 	protected function getLineData( array $block, RCCacheEntry $rcObj, array $queryParams = [] ) {
 		$RCShowChangedSize = $this->getConfig()->get( 'RCShowChangedSize' );
 
-		$classes = [ 'mw-enhanced-rc' ];
+		# Classes to apply -- TODO implement
+		$classes = [];
 		$type = $rcObj->mAttribs['rc_type'];
 		$data = [];
 		$lineParams = [];
@@ -366,9 +366,8 @@ class EnhancedChangesList extends ChangesList {
 		if ( $rcObj->watched
 			&& $rcObj->mAttribs['rc_timestamp'] >= $rcObj->watched
 		) {
-			$classes = [ 'mw-enhanced-watched' ];
+			$lineParams['classes'] = [ 'mw-enhanced-watched' ];
 		}
-
 		$separator = ' <span class="mw-changeslist-separator">. .</span> ';
 
 		$data['recentChangesFlags'] = [
@@ -391,9 +390,9 @@ class EnhancedChangesList extends ChangesList {
 		} elseif ( !ChangesList::userCan( $rcObj, Revision::DELETED_TEXT, $this->getUser() ) ) {
 			$link = '<span class="history-deleted">' . $rcObj->timestamp . '</span> ';
 		} else {
-			$link = $this->linkRenderer->makeKnownLink(
+			$link = Linker::linkKnown(
 				$rcObj->getTitle(),
-				new HtmlArmor( $rcObj->timestamp ),
+				$rcObj->timestamp,
 				[],
 				$params
 			);
@@ -442,7 +441,7 @@ class EnhancedChangesList extends ChangesList {
 
 		// give the hook a chance to modify the data
 		$success = Hooks::run( 'EnhancedChangesListModifyLineData',
-			[ $this, &$data, $block, $rcObj, &$classes ] );
+			[ $this, &$data, $block, $rcObj ] );
 		if ( !$success ) {
 			// skip entry if hook aborted it
 			return [];
@@ -460,8 +459,6 @@ class EnhancedChangesList extends ChangesList {
 			$lineParams['timestampLink'] = $data['timestampLink'];
 			unset( $data['timestampLink'] );
 		}
-
-		$lineParams['classes'] = array_values( $classes );
 
 		// everything else: makes it easier for extensions to add or remove data
 		$lineParams['data'] = array_values( $data );
@@ -527,24 +524,26 @@ class EnhancedChangesList extends ChangesList {
 			) {
 				$links['total-changes'] = $nchanges[$n];
 			} else {
-				$links['total-changes'] = $this->linkRenderer->makeKnownLink(
+				$links['total-changes'] = Linker::link(
 					$block0->getTitle(),
-					new HtmlArmor( $nchanges[$n] ),
+					$nchanges[$n],
 					[],
 					$queryParams + [
 						'diff' => $currentRevision,
 						'oldid' => $last->mAttribs['rc_last_oldid'],
-					]
+					],
+					[ 'known', 'noclasses' ]
 				);
 				if ( $sinceLast > 0 && $sinceLast < $n ) {
-					$links['total-changes-since-last'] = $this->linkRenderer->makeKnownLink(
+					$links['total-changes-since-last'] = Linker::link(
 							$block0->getTitle(),
-							new HtmlArmor( $sinceLastVisitMsg[$sinceLast] ),
+							$sinceLastVisitMsg[$sinceLast],
 							[],
 							$queryParams + [
 								'diff' => $currentRevision,
 								'oldid' => $unvisitedOldid,
-							]
+							],
+							[ 'known', 'noclasses' ]
 						);
 				}
 			}
@@ -559,9 +558,9 @@ class EnhancedChangesList extends ChangesList {
 			$params = $queryParams;
 			$params['action'] = 'history';
 
-			$links['history'] = $this->linkRenderer->makeKnownLink(
+			$links['history'] = Linker::linkKnown(
 					$block0->getTitle(),
-					new HtmlArmor( $this->message['enhancedrc-history'] ),
+					$this->message['enhancedrc-history'],
 					[],
 					$params
 				);
@@ -619,11 +618,9 @@ class EnhancedChangesList extends ChangesList {
 		if ( $logType ) {
 			$logPage = new LogPage( $logType );
 			$logTitle = SpecialPage::getTitleFor( 'Log', $logType );
-			$logName = $logPage->getName()->text();
+			$logName = $logPage->getName()->escaped();
 			$data['logLink'] = $this->msg( 'parentheses' )
-				->rawParams(
-					$this->linkRenderer->makeKnownLink( $logTitle, $logName )
-				)->escaped();
+				->rawParams( Linker::linkKnown( $logTitle, $logName ) )->escaped();
 		} else {
 			$data['articleLink'] = $this->getArticleLink( $rcObj, $rcObj->unpatrolled, $rcObj->watched );
 		}
@@ -713,10 +710,9 @@ class EnhancedChangesList extends ChangesList {
 		}
 
 		$retVal = ' ' . $this->msg( 'parentheses' )
-				->rawParams( $rc->difflink . $this->message['pipe-separator']
-					. $this->linkRenderer->makeKnownLink(
+				->rawParams( $rc->difflink . $this->message['pipe-separator'] . Linker::linkKnown(
 						$pageTitle,
-						new HtmlArmor( $this->message['hist'] ),
+						$this->message['hist'],
 						[],
 						$query
 					) )->escaped();

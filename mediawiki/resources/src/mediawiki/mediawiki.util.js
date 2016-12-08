@@ -387,7 +387,7 @@
 			// - atext   : defined in RFC 5322 section 3.2.3
 			// - ldh-str : defined in RFC 1034 section 3.5
 			//
-			// (see STD 68 / RFC 5234 https://tools.ietf.org/html/std68)
+			// (see STD 68 / RFC 5234 http://tools.ietf.org/html/std68)
 			// First, define the RFC 5322 'atext' which is pretty easy:
 			// atext = ALPHA / DIGIT / ; Printable US-ASCII
 			//     "!" / "#" /    ; characters not including
@@ -451,7 +451,7 @@
 				RE_IP_BYTE = '(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|0?[0-9]?[0-9])',
 				RE_IP_ADD = '(?:' + RE_IP_BYTE + '\\.){3}' + RE_IP_BYTE;
 
-			return ( new RegExp( '^' + RE_IP_ADD + block + '$' ).test( address ) );
+			return address.search( new RegExp( '^' + RE_IP_ADD + block + '$' ) ) !== -1;
 		},
 
 		/**
@@ -476,18 +476,15 @@
 			'[0-9A-Fa-f]{1,4}' + '(?::' + '[0-9A-Fa-f]{1,4}' + '){7}' +
 			')';
 
-			if ( new RegExp( '^' + RE_IPV6_ADD + block + '$' ).test( address ) ) {
+			if ( address.search( new RegExp( '^' + RE_IPV6_ADD + block + '$' ) ) !== -1 ) {
 				return true;
 			}
 
-			// contains one "::" in the middle (single '::' check below)
-			RE_IPV6_ADD = '[0-9A-Fa-f]{1,4}' + '(?:::?' + '[0-9A-Fa-f]{1,4}' + '){1,6}';
+			RE_IPV6_ADD = // contains one "::" in the middle (single '::' check below)
+				'[0-9A-Fa-f]{1,4}' + '(?:::?' + '[0-9A-Fa-f]{1,4}' + '){1,6}';
 
-			return (
-				new RegExp( '^' + RE_IPV6_ADD + block + '$' ).test( address )
-				&& /::/.test( address )
-				&& !/::.*::/.test( address )
-			);
+			return address.search( new RegExp( '^' + RE_IPV6_ADD + block + '$' ) ) !== -1
+				&& address.search( /::/ ) !== -1 && address.search( /::.*::/ ) === -1;
 		},
 
 		/**
@@ -512,10 +509,38 @@
 	mw.log.deprecate( util, 'wikiGetlink', util.getUrl, 'Use mw.util.getUrl instead.' );
 
 	/**
+	 * Access key prefix. Might be wrong for browsers implementing the accessKeyLabel property.
+	 * @property {string} tooltipAccessKeyPrefix
+	 * @deprecated since 1.24 Use the module jquery.accessKeyLabel instead.
+	 */
+	mw.log.deprecate( util, 'tooltipAccessKeyPrefix', $.fn.updateTooltipAccessKeys.getAccessKeyPrefix(), 'Use jquery.accessKeyLabel instead.' );
+
+	/**
+	 * Regex to match accesskey tooltips.
+	 *
+	 * Should match:
+	 *
+	 * - "[ctrl-option-x]"
+	 * - "[alt-shift-x]"
+	 * - "[ctrl-alt-x]"
+	 * - "[ctrl-x]"
+	 *
+	 * The accesskey is matched in group $6.
+	 *
+	 * Will probably not work for browsers implementing the accessKeyLabel property.
+	 *
+	 * @property {RegExp} tooltipAccessKeyRegexp
+	 * @deprecated since 1.24 Use the module jquery.accessKeyLabel instead.
+	 */
+	mw.log.deprecate( util, 'tooltipAccessKeyRegexp', /\[(ctrl-)?(option-)?(alt-)?(shift-)?(esc-)?(.)\]$/, 'Use jquery.accessKeyLabel instead.' );
+
+	/**
 	 * Add the appropriate prefix to the accesskey shown in the tooltip.
 	 *
 	 * If the `$nodes` parameter is given, only those nodes are updated;
-	 * otherwise we update all elements with accesskeys on the page.
+	 * otherwise, depending on browser support, we update either all elements
+	 * with accesskeys on the page or a bunch of elements which are likely to
+	 * have them on core skins.
 	 *
 	 * @method updateTooltipAccessKeys
 	 * @param {Array|jQuery} [$nodes] A jQuery object, or array of nodes to update.
@@ -523,7 +548,19 @@
 	 */
 	mw.log.deprecate( util, 'updateTooltipAccessKeys', function ( $nodes ) {
 		if ( !$nodes ) {
-			$nodes = $( '[accesskey]' );
+			if ( document.querySelectorAll ) {
+				// If we're running on a browser where we can do this efficiently,
+				// just find all elements that have accesskeys. We can't use jQuery's
+				// polyfill for the selector since looping over all elements on page
+				// load might be too slow.
+				$nodes = $( document.querySelectorAll( '[accesskey]' ) );
+			} else {
+				// Otherwise go through some elements likely to have accesskeys rather
+				// than looping over all of them. Unfortunately this will not fully
+				// work for custom skins with different HTML structures. Input, label
+				// and button should be rare enough that no optimizations are needed.
+				$nodes = $( '#column-one a, #mw-head a, #mw-panel a, #p-logo a, input, label, button' );
+			}
 		} else if ( !( $nodes instanceof $ ) ) {
 			$nodes = $( $nodes );
 		}

@@ -22,7 +22,7 @@ ve.dm.BranchNode = function VeDmBranchNode( element, children ) {
 	ve.BranchNode.call( this );
 
 	// Parent constructor
-	ve.dm.BranchNode.super.call( this, element );
+	ve.dm.Node.call( this, element );
 
 	// Properties
 	this.slugPositions = {};

@@ -3,8 +3,7 @@
 		"authors": [
 			"Alison",
 			"Kscanne",
-			"Tem",
-			"Moilleadóir"
+			"Tem"
 		]
 	},
 	"tooltip-ca-ve-edit": "Athraigh an lch seo",
@@ -21,7 +20,6 @@
 	"visualeditor-dialog-transclusion-options": "Roghanna",
 	"visualeditor-dialogbutton-media-tooltip": "Meáin",
 	"visualeditor-preference-core-label": "EagarthóirAmhairc",
-	"visualeditor-savedialog-label-publish-short": "Foilsigh",
 	"visualeditor-savedialog-label-warning": "Rabhadh",
 	"visualeditor-version-label": "Leagan"
 }

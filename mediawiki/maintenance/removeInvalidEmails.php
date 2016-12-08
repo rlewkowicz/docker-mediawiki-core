@@ -23,7 +23,7 @@ class RemoveInvalidEmails extends Maintenance {
 	}
 	public function execute() {
 		$this->commit = $this->hasOption( 'commit' );
-		$dbr = $this->getDB( DB_REPLICA );
+		$dbr = $this->getDB( DB_SLAVE );
 		$dbw = $this->getDB( DB_MASTER );
 		$lastId = 0;
 		do {

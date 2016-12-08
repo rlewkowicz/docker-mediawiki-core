@@ -103,7 +103,7 @@ span.mw-protectedpages-actions {
 	font-size: 90%;
 }
 span.mw-protectedpages-unknown {
-	color: #808080;
+	color: grey;
 	font-size: 90%;
 }
 
@@ -114,4 +114,10 @@ span.mw-protectedpages-unknown {
 table.mw-userrights-groups * td,
 table.mw-userrights-groups * th {
 	padding-right: 1.5em;
+}
+
+/* Special:Upload */
+p.mw-upload-editlicenses {
+	font-size: 90%;
+	text-align: right;
 }

@@ -19,7 +19,6 @@
  *
  * @file
  */
-use MediaWiki\MediaWikiServices;
 
 /**
  * Job to add recent change entries mentioning category membership changes
@@ -33,9 +32,6 @@ use MediaWiki\MediaWikiServices;
  * @since 1.27
  */
 class CategoryMembershipChangeJob extends Job {
-	/** @var integer|null */
-	private $ticket;
-
 	const ENQUEUE_FUDGE_SEC = 60;
 
 	public function __construct( Title $title, array $params ) {
@@ -46,34 +42,29 @@ class CategoryMembershipChangeJob extends Job {
 	}
 
 	public function run() {
-		$lbFactory = MediaWikiServices::getInstance()->getDBLoadBalancerFactory();
-		$lb = $lbFactory->getMainLB();
-		$dbw = $lb->getConnection( DB_MASTER );
-
-		$this->ticket = $lbFactory->getEmptyTransactionTicket( __METHOD__ );
-
 		$page = WikiPage::newFromID( $this->params['pageId'], WikiPage::READ_LATEST );
 		if ( !$page ) {
 			$this->setLastError( "Could not find page #{$this->params['pageId']}" );
 			return false; // deleted?
 		}
 
+		$dbw = wfGetDB( DB_MASTER );
 		// Use a named lock so that jobs for this page see each others' changes
 		$lockKey = "CategoryMembershipUpdates:{$page->getId()}";
-		$scopedLock = $dbw->getScopedLockAndFlush( $lockKey, __METHOD__, 3 );
+		$scopedLock = $dbw->getScopedLockAndFlush( $lockKey, __METHOD__, 10 );
 		if ( !$scopedLock ) {
 			$this->setLastError( "Could not acquire lock '$lockKey'" );
 			return false;
 		}
 
-		$dbr = $lb->getConnection( DB_REPLICA, [ 'recentchanges' ] );
-		// Wait till the replica DB is caught up so that jobs for this page see each others' changes
-		if ( !$lb->safeWaitForMasterPos( $dbr ) ) {
-			$this->setLastError( "Timed out while waiting for replica DB to catch up" );
+		$dbr = wfGetDB( DB_SLAVE, [ 'recentchanges' ] );
+		// Wait till the slave is caught up so that jobs for this page see each others' changes
+		if ( !wfGetLB()->safeWaitForMasterPos( $dbr ) ) {
+			$this->setLastError( "Timed out while waiting for slave to catch up" );
 			return false;
 		}
 		// Clear any stale REPEATABLE-READ snapshot
-		$dbr->flushSnapshot( __METHOD__ );
+		$dbr->commit( __METHOD__, 'flush' );
 
 		$cutoffUnix = wfTimestamp( TS_UNIX, $this->params['revTimestamp'] );
 		// Using ENQUEUE_FUDGE_SEC handles jobs inserted out of revision order due to the delay
@@ -128,21 +119,18 @@ class CategoryMembershipChangeJob extends Job {
 
 		// Apply all category updates in revision timestamp order
 		foreach ( $res as $row ) {
-			$this->notifyUpdatesForRevision( $lbFactory, $page, Revision::newFromRow( $row ) );
+			$this->notifyUpdatesForRevision( $page, Revision::newFromRow( $row ) );
 		}
 
 		return true;
 	}
 
 	/**
-	 * @param LBFactory $lbFactory
 	 * @param WikiPage $page
 	 * @param Revision $newRev
 	 * @throws MWException
 	 */
-	protected function notifyUpdatesForRevision(
-		LBFactory $lbFactory, WikiPage $page, Revision $newRev
-	) {
+	protected function notifyUpdatesForRevision( WikiPage $page, Revision $newRev ) {
 		$config = RequestContext::getMain()->getConfig();
 		$title = $page->getTitle();
 
@@ -168,6 +156,7 @@ class CategoryMembershipChangeJob extends Job {
 			return; // nothing to do
 		}
 
+		$dbw = wfGetDB( DB_MASTER );
 		$catMembChange = new CategoryMembershipChange( $title, $newRev );
 		$catMembChange->checkTemplateLinks();
 
@@ -178,7 +167,8 @@ class CategoryMembershipChangeJob extends Job {
 			$categoryTitle = Title::makeTitle( NS_CATEGORY, $categoryName );
 			$catMembChange->triggerCategoryAddedNotification( $categoryTitle );
 			if ( $insertCount++ && ( $insertCount % $batchSize ) == 0 ) {
-				$lbFactory->commitAndWaitForReplication( __METHOD__, $this->ticket );
+				$dbw->commit( __METHOD__, 'flush' );
+				wfGetLBFactory()->waitForReplication();
 			}
 		}
 
@@ -186,7 +176,8 @@ class CategoryMembershipChangeJob extends Job {
 			$categoryTitle = Title::makeTitle( NS_CATEGORY, $categoryName );
 			$catMembChange->triggerCategoryRemovedNotification( $categoryTitle );
 			if ( $insertCount++ && ( $insertCount++ % $batchSize ) == 0 ) {
-				$lbFactory->commitAndWaitForReplication( __METHOD__, $this->ticket );
+				$dbw->commit( __METHOD__, 'flush' );
+				wfGetLBFactory()->waitForReplication();
 			}
 		}
 	}

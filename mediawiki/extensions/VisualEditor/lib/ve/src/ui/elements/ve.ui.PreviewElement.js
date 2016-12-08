@@ -18,7 +18,7 @@
  */
 ve.ui.PreviewElement = function VeUiPreviewElement( model, config ) {
 	// Parent constructor
-	ve.ui.PreviewElement.super.call( this, config );
+	OO.ui.Element.call( this, config );
 
 	// Mixin constructor
 	OO.EventEmitter.call( this );
@@ -79,12 +79,12 @@ ve.ui.PreviewElement.prototype.replaceWithModelDom = function () {
 	// Replace content
 	this.$element.empty().append( $preview.contents() );
 
+	// Event
+	this.emit( 'render' );
+
 	// Cleanup
 	this.view.destroy();
 	this.view = null;
-
-	// Event
-	this.emit( 'render' );
 };
 
 /**
@@ -110,7 +110,7 @@ ve.ui.PreviewElement.prototype.updatePreview = function () {
 
 	// Traverse children to see when they are all rerendered
 	if ( this.view instanceof ve.ce.BranchNode ) {
-		this.view.traverse( queueNode );
+		ve.BranchNode.static.traverse( this.view, queueNode );
 	} else {
 		queueNode( this.view );
 	}
@@ -131,5 +131,5 @@ ve.ui.PreviewElement.prototype.updatePreview = function () {
  * @return {boolean} Still generating
  */
 ve.ui.PreviewElement.prototype.isGenerating = function () {
-	return !!this.view;
+	return !!( this.view && this.view.isGenerating && this.view.isGenerating() );
 };

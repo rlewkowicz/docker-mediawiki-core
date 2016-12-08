@@ -332,7 +332,8 @@ class WikiImporter {
 		}
 
 		try {
-			return $revision->importOldRevision();
+			$dbw = wfGetDB( DB_MASTER );
+			return $dbw->deadlockLoop( [ $revision, 'importOldRevision' ] );
 		} catch ( MWContentSerializationException $ex ) {
 			$this->notice( 'import-error-unserialize',
 				$revision->getTitle()->getPrefixedText(),
@@ -350,7 +351,8 @@ class WikiImporter {
 	 * @return bool
 	 */
 	public function importLogItem( $revision ) {
-		return $revision->importLogItem();
+		$dbw = wfGetDB( DB_MASTER );
+		return $dbw->deadlockLoop( [ $revision, 'importLogItem' ] );
 	}
 
 	/**
@@ -359,7 +361,8 @@ class WikiImporter {
 	 * @return bool
 	 */
 	public function importUpload( $revision ) {
-		return $revision->importUpload();
+		$dbw = wfGetDB( DB_MASTER );
+		return $dbw->deadlockLoop( [ $revision, 'importUpload' ] );
 	}
 
 	/**
@@ -377,7 +380,7 @@ class WikiImporter {
 		// Update article count statistics (T42009)
 		// The normal counting logic in WikiPage->doEditUpdates() is designed for
 		// one-revision-at-a-time editing, not bulk imports. In this situation it
-		// suffers from issues of replica DB lag. We let WikiPage handle the total page
+		// suffers from issues of slave lag. We let WikiPage handle the total page
 		// and revision count, and we implement our own custom logic for the
 		// article (content page) count.
 		$page = WikiPage::factory( $title );
@@ -837,7 +840,7 @@ class WikiImporter {
 				'text',
 				''
 			] ) ) &&
-			strlen( $revisionInfo['text'] ) > $wgMaxArticleSize * 1024
+			(int)( strlen( $revisionInfo['text'] ) / 1024 ) > $wgMaxArticleSize
 		) {
 			throw new MWException( 'The text of ' .
 				( isset( $revisionInfo['id'] ) ?

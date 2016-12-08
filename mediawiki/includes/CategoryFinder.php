@@ -33,8 +33,8 @@
  *
  *     $cf = new CategoryFinder;
  *     $cf->seed(
- *         [ 12345 ],
- *         [ 'Category 1', 'Category 2' ],
+ *         array( 12345 ),
+ *         array( 'Category 1', 'Category 2' ),
  *         'AND'
  *     );
  *     $a = $cf->run();
@@ -49,7 +49,7 @@ class CategoryFinder {
 	/** @var array Array of DBKEY category names for categories that don't have a page */
 	protected $deadend = [];
 
-	/** @var array Array of [ ID => [] ] */
+	/** @var array Array of [ID => array()] */
 	protected $parents = [];
 
 	/** @var array Array of article/category IDs */
@@ -64,7 +64,7 @@ class CategoryFinder {
 	/** @var string "AND" or "OR" */
 	protected $mode;
 
-	/** @var IDatabase Read-DB replica DB */
+	/** @var IDatabase Read-DB slave */
 	protected $dbr;
 
 	/**
@@ -96,7 +96,7 @@ class CategoryFinder {
 	 * @return array Array of page_ids (those given to seed() that match the conditions)
 	 */
 	public function run() {
-		$this->dbr = wfGetDB( DB_REPLICA );
+		$this->dbr = wfGetDB( DB_SLAVE );
 		while ( count( $this->next ) > 0 ) {
 			$this->scanNextLayer();
 		}

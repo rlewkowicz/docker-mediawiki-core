@@ -14,9 +14,9 @@
  * @param {ve.dm.MWNowikiAnnotation} model Model to observe
  * @param {Object} [config] Configuration options
  */
-ve.ce.MWNowikiAnnotation = function VeCeMWNowikiAnnotation() {
+ve.ce.MWNowikiAnnotation = function VeCeMWNowikiAnnotation( model, config ) {
 	// Parent constructor
-	ve.ce.MWNowikiAnnotation.super.apply( this, arguments );
+	ve.ce.Annotation.call( this, model, config );
 
 	// DOM changes
 	this.$element.addClass( 've-ce-mwNowikiAnnotation' );

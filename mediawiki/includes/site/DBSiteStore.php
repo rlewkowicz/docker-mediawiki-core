@@ -73,7 +73,7 @@ class DBSiteStore implements SiteStore {
 	protected function loadSites() {
 		$this->sites = new SiteList();
 
-		$dbr = $this->dbLoadBalancer->getConnection( DB_REPLICA );
+		$dbr = $this->dbLoadBalancer->getConnection( DB_SLAVE );
 
 		$res = $dbr->select(
 			'sites',
@@ -130,6 +130,8 @@ class DBSiteStore implements SiteStore {
 				$this->sites->setSite( $site );
 			}
 		}
+
+		$this->dbLoadBalancer->reuseConnection( $dbr );
 	}
 
 	/**
@@ -247,6 +249,8 @@ class DBSiteStore implements SiteStore {
 
 		$dbw->endAtomic( __METHOD__ );
 
+		$this->dbLoadBalancer->reuseConnection( $dbw );
+
 		$this->reset();
 
 		return $success;
@@ -275,6 +279,8 @@ class DBSiteStore implements SiteStore {
 		$ok = $dbw->delete( 'sites', '*', __METHOD__ );
 		$ok = $dbw->delete( 'site_identifiers', '*', __METHOD__ ) && $ok;
 		$dbw->endAtomic( __METHOD__ );
+
+		$this->dbLoadBalancer->reuseConnection( $dbw );
 
 		$this->reset();
 

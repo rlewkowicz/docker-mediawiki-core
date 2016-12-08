@@ -345,17 +345,16 @@ ve.ui.DesktopContext.prototype.setPopupSizeAndPosition = function ( repositionOn
 	}
 
 	if ( this.position ) {
-		// Float the content if it's bigger than the viewport. Exactly how /
-		// whether it should be floated is situational, so this is a
-		// preliminary determination. Checks below might cancel the float.
 		floating =
 			( !this.embeddable && this.position.y + this.dimensions.height > viewport.bottom - margin ) ||
 			( this.embeddable && this.position.y < viewport.top + margin );
+		this.$element.toggleClass( 've-ui-desktopContext-floating', floating );
+		this.popup.toggleAnchor( !floating && !this.embeddable );
 
 		if ( floating ) {
 			if ( this.embeddable ) {
 				if ( this.boundingRect.bottom - viewport.top - minimumVisibleHeight < this.dimensions.height + margin ) {
-					floating = false;
+					this.$element.toggleClass( 've-ui-desktopContext-floating', false );
 					this.$element.css( {
 						left: this.position.x,
 						top: this.position.y + this.boundingRect.height - this.dimensions.height - minimumVisibleHeight,
@@ -370,10 +369,10 @@ ve.ui.DesktopContext.prototype.setPopupSizeAndPosition = function ( repositionOn
 				}
 			} else {
 				if ( viewport.bottom - this.boundingRect.top - minimumVisibleHeight < this.dimensions.height + margin ) {
-					floating = false;
+					this.$element.toggleClass( 've-ui-desktopContext-floating', false );
 					this.$element.css( {
 						left: this.position.x,
-						top: this.position.y,
+						top: this.boundingRect.top + minimumVisibleHeight,
 						bottom: ''
 					} );
 				} else {
@@ -391,9 +390,6 @@ ve.ui.DesktopContext.prototype.setPopupSizeAndPosition = function ( repositionOn
 				bottom: ''
 			} );
 		}
-
-		this.$element.toggleClass( 've-ui-desktopContext-floating', !!floating );
-		this.popup.toggleAnchor( !floating && !this.embeddable );
 	}
 
 	if ( !repositionOnly ) {

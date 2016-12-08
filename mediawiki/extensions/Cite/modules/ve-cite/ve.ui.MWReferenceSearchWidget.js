@@ -207,7 +207,8 @@ ve.ui.MWReferenceSearchWidget.prototype.isIndexEmpty = function () {
  */
 ve.ui.MWReferenceSearchWidget.prototype.addResults = function () {
 	var i, len, item, $citation, $name,
-		query = this.query.getValue().trim().toLowerCase(),
+		value = this.query.getValue(),
+		query = value.toLowerCase(),
 		items = [];
 
 	for ( i = 0, len = this.index.length; i < len; i++ ) {

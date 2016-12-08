@@ -159,7 +159,7 @@ class RandomPage extends SpecialPage {
 	}
 
 	private function selectRandomPageFromDB( $randstr, $fname = __METHOD__ ) {
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = wfGetDB( DB_SLAVE );
 
 		$query = $this->getQueryInfo( $randstr );
 		$res = $dbr->select(

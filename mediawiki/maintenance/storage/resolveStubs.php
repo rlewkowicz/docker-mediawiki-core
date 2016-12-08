@@ -37,7 +37,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 function resolveStubs() {
 	$fname = 'resolveStubs';
 
-	$dbr = wfGetDB( DB_REPLICA );
+	$dbr = wfGetDB( DB_SLAVE );
 	$maxID = $dbr->selectField( 'text', 'MAX(old_id)', false, $fname );
 	$blockSize = 10000;
 	$numBlocks = intval( $maxID / $blockSize ) + 1;
@@ -73,7 +73,7 @@ function resolveStub( $id, $stubText, $flags ) {
 	$stub = unserialize( $stubText );
 	$flags = explode( ',', $flags );
 
-	$dbr = wfGetDB( DB_REPLICA );
+	$dbr = wfGetDB( DB_SLAVE );
 	$dbw = wfGetDB( DB_MASTER );
 
 	if ( strtolower( get_class( $stub ) ) !== 'historyblobstub' ) {

@@ -67,7 +67,7 @@ ve.ui.MWReferenceContextItem.prototype.getRendering = function () {
 /**
  * Get the reference node in the containing document (not the internal list document)
  *
- * @return {ve.dm.InternalItemNode|null} Reference item node
+ * @return {ve.dm.Node} Reference node
  */
 ve.ui.MWReferenceContextItem.prototype.getReferenceNode = function () {
 	var refModel;

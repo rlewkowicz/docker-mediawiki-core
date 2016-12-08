@@ -150,7 +150,7 @@ class OracleInstaller extends DatabaseInstaller {
 		}
 
 		/**
-		 * @var $conn Database
+		 * @var $conn DatabaseBase
 		 */
 		$conn = $status->value;
 

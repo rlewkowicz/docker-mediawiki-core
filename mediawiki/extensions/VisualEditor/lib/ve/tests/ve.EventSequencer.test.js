@@ -9,9 +9,9 @@ QUnit.module( 've.EventSequencer' );
 /* Stubs */
 
 // EventSequencer with script-controlled implementation of "postpone"
-ve.TestEventSequencer = function VeTestEventSequencer() {
+ve.TestEventSequencer = function VeTestEventSequencer( eventNames ) {
 	// Parent constructor
-	ve.TestEventSequencer.super.apply( this, arguments );
+	ve.EventSequencer.call( this, eventNames );
 	// { number: callback } (for faking setTimeout/clearTimeout)
 	this.postponedCallbacks = {};
 	this.postponedCallbackId = 1;

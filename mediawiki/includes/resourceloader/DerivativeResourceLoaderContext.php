@@ -121,7 +121,7 @@ class DerivativeResourceLoaderContext extends ResourceLoaderContext {
 	}
 
 	/**
-	 * @param string|null $user
+	 * @param string $user
 	 */
 	public function setUser( $user ) {
 		$this->user = $user;

@@ -25,7 +25,7 @@ ve.ui.MWTemplatePage = function VeUiMWTemplatePage( template, name, config ) {
 	}, config );
 
 	// Parent constructor
-	ve.ui.MWTemplatePage.super.call( this, name, config );
+	OO.ui.PageLayout.call( this, name, config );
 
 	// Properties
 	this.template = template;
@@ -95,9 +95,9 @@ OO.inheritClass( ve.ui.MWTemplatePage, OO.ui.PageLayout );
 /**
  * @inheritdoc
  */
-ve.ui.MWTemplatePage.prototype.setOutlineItem = function () {
+ve.ui.MWTemplatePage.prototype.setOutlineItem = function ( outlineItem ) {
 	// Parent method
-	ve.ui.MWTemplatePage.super.prototype.setOutlineItem.apply( this, arguments );
+	OO.ui.PageLayout.prototype.setOutlineItem.call( this, outlineItem );
 
 	if ( this.outlineItem ) {
 		this.outlineItem

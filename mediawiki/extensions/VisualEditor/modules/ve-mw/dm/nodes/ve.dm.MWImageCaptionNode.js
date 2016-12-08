@@ -17,7 +17,7 @@
  */
 ve.dm.MWImageCaptionNode = function VeDmMWImageCaptionNode() {
 	// Parent constructor
-	ve.dm.MWImageCaptionNode.super.apply( this, arguments );
+	ve.dm.BranchNode.apply( this, arguments );
 };
 
 OO.inheritClass( ve.dm.MWImageCaptionNode, ve.dm.BranchNode );

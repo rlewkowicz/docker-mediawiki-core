@@ -8,8 +8,8 @@
 /**
  * Dialog for saving MediaWiki pages in mobile.
  *
- * TODO: Currently this does no overriding so could be removed, but we may want
- * to customise the mobile save dialog in the near future.
+ * Note that most methods are not safe to call before the dialog has initialized, except where
+ * noted otherwise.
  *
  * @class
  * @extends ve.ui.MWSaveDialog
@@ -17,9 +17,9 @@
  * @constructor
  * @param {Object} [config] Config options
  */
-ve.ui.MWMobileSaveDialog = function VeUiMwMobileSaveDialog() {
+ve.ui.MWMobileSaveDialog = function VeUiMwMobileSaveDialog( config ) {
 	// Parent constructor
-	ve.ui.MWMobileSaveDialog.super.apply( this, arguments );
+	ve.ui.MWMobileSaveDialog.super.call( this, config );
 
 	// Initialization
 	this.$element.addClass( 've-ui-mwMobileSaveDialog' );
@@ -28,6 +28,23 @@ ve.ui.MWMobileSaveDialog = function VeUiMwMobileSaveDialog() {
 /* Inheritance */
 
 OO.inheritClass( ve.ui.MWMobileSaveDialog, ve.ui.MWSaveDialog );
+
+/* Methods */
+ve.ui.MWMobileSaveDialog.prototype.getSetupProcess = function ( data ) {
+	return ve.ui.MWMobileSaveDialog.super.prototype.getSetupProcess.call( this, data )
+		.next( function () {
+			// Update save button label
+			this.actions.forEach( { actions: 'save' }, function ( action ) {
+				action.setLabel(
+					ve.msg(
+						// Possible messages:
+						// visualeditor-savedialog-label-restore-short, visualeditor-savedialog-label-save-short
+						'visualeditor-savedialog-label-' + ( this.restoring ? 'restore' : 'save' ) + '-short'
+					)
+				);
+			} );
+		}, this );
+};
 
 /* Registration */
 

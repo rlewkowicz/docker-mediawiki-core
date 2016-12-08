@@ -4,8 +4,12 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit7482c628a49a0fd8f1aba785a3b3120f
+class ComposerStaticInitbf9b6d96e7eec21733072df0c29348de
 {
+    public static $files = array (
+        'dc4b5f4e25c85e752b42e9496a811112' => __DIR__ . '/../..' . '/LocalisationUpdate.php',
+    );
+
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {

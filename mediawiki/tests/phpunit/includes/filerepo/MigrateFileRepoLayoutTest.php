@@ -59,8 +59,7 @@ class MigrateFileRepoLayoutTest extends MediaWikiTestCase {
 			->method( 'getRepo' )
 			->will( $this->returnValue( $repoMock ) );
 
-		$this->tmpFilepath = TempFSFile::factory(
-			'migratefilelayout-test-', 'png', wfTempDir() )->getPath();
+		$this->tmpFilepath = TempFSFile::factory( 'migratefilelayout-test-', 'png' )->getPath();
 
 		file_put_contents( $this->tmpFilepath, $this->text );
 

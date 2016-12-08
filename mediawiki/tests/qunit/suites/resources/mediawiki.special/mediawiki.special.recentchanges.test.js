@@ -4,8 +4,7 @@
 	// TODO: verify checkboxes == [ 'nsassociated', 'nsinvert' ]
 
 	QUnit.test( '"all" namespace disable checkboxes', 8, function ( assert ) {
-		var selectHtml, $env, $options,
-			rc = require( 'mediawiki.special.recentchanges' );
+		var selectHtml, $env, $options;
 
 		// from Special:Recentchanges
 		selectHtml = '<select id="namespace" name="namespace" class="namespaceselector">'
@@ -33,7 +32,7 @@
 		assert.strictEqual( $( '#nsassociated' ).prop( 'disabled' ), false );
 
 		// Initiate the recentchanges module
-		rc.init();
+		mw.special.recentchanges.init();
 
 		// By default
 		assert.strictEqual( $( '#nsinvert' ).prop( 'disabled' ), true );

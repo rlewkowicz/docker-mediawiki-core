@@ -1,10 +1,10 @@
 <?php
 
 /**
- * Helper for testing the methods from the Database class
+ * Helper for testing the methods from the DatabaseBase class
  * @since 1.22
  */
-class DatabaseTestHelper extends Database {
+class DatabaseTestHelper extends DatabaseBase {
 
 	/**
 	 * __CLASS__ of the test suite,
@@ -14,13 +14,10 @@ class DatabaseTestHelper extends Database {
 
 	/**
 	 * Array of lastSqls passed to query(),
-	 * This is an array since some methods in Database can do more than one
+	 * This is an array since some methods in DatabaseBase can do more than one
 	 * query. Cleared when calling getLastSqls().
 	 */
 	protected $lastSqls = [];
-
-	/** @var array List of row arrays */
-	protected $nextResult = [];
 
 	/**
 	 * Array of tables to be considered as existing by tableExist()
@@ -28,18 +25,8 @@ class DatabaseTestHelper extends Database {
 	 */
 	protected $tablesExists;
 
-	public function __construct( $testName, array $opts = [] ) {
+	public function __construct( $testName ) {
 		$this->testName = $testName;
-
-		$this->profiler = new ProfilerStub( [] );
-		$this->trxProfiler = new TransactionProfiler();
-		$this->cliMode = isset( $opts['cliMode'] ) ? $opts['cliMode'] : true;
-		$this->connLogger = new \Psr\Log\NullLogger();
-		$this->queryLogger = new \Psr\Log\NullLogger();
-		$this->errorLogger = function ( Exception $e ) {
-			wfWarn( get_class( $e ) . ": {$e->getMessage()}" );
-		};
-		$this->currentDomain = DatabaseDomain::newUnspecified();
 	}
 
 	/**
@@ -55,13 +42,6 @@ class DatabaseTestHelper extends Database {
 
 	public function setExistingTables( $tablesExists ) {
 		$this->tablesExists = (array)$tablesExists;
-	}
-
-	/**
-	 * @param mixed $res Use an array of row arrays to set row result
-	 */
-	public function forceNextResult( $res ) {
-		$this->nextResult = $res;
 	}
 
 	protected function addSql( $sql ) {
@@ -98,11 +78,6 @@ class DatabaseTestHelper extends Database {
 	}
 
 	public function tableExists( $table, $fname = __METHOD__ ) {
-		$tableRaw = $this->tableName( $table, 'raw' );
-		if ( isset( $this->mSessionTempTables[$tableRaw] ) ) {
-			return true; // already known to exist
-		}
-
 		$this->checkFunctionName( $fname );
 
 		return in_array( $table, (array)$this->tablesExists );
@@ -161,7 +136,7 @@ class DatabaseTestHelper extends Database {
 		return false;
 	}
 
-	function indexInfo( $table, $index, $fname = 'Database::indexInfo' ) {
+	function indexInfo( $table, $index, $fname = 'DatabaseBase::indexInfo' ) {
 		return false;
 	}
 
@@ -185,19 +160,11 @@ class DatabaseTestHelper extends Database {
 		return true;
 	}
 
-	function ping( &$rtt = null ) {
-		$rtt = 0.0;
-		return true;
-	}
-
 	protected function closeConnection() {
 		return false;
 	}
 
 	protected function doQuery( $sql ) {
-		$res = $this->nextResult;
-		$this->nextResult = [];
-
-		return new FakeResultWrapper( $res );
+		return [];
 	}
 }

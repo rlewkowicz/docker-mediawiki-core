@@ -4,15 +4,13 @@
 // author: Mattia Larentis: https://github.com/nostalgiaz
 
 (function (factory) {
-    // Comment out broken wrapper, see T145382
-    /*if (typeof define === 'function' && define.amd) {
+    if (typeof define === 'function' && define.amd) {
         define(['moment'], factory); // AMD
     } else if (typeof exports === 'object') {
         module.exports = factory(require('../moment')); // Node
     } else {
         factory((typeof global !== 'undefined' ? global : this).moment); // node or other global
-    }*/
-    factory(this.moment);
+    }
 }(function (moment) {
     return moment.defineLocale('it', {
         months : 'gennaio_febbraio_marzo_aprile_maggio_giugno_luglio_agosto_settembre_ottobre_novembre_dicembre'.split('_'),

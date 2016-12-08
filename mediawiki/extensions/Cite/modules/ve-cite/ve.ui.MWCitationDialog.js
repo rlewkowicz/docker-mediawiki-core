@@ -202,8 +202,7 @@ ve.ui.MWCitationDialog.prototype.getActionProcess = function ( action ) {
 							// first (and empty) child
 							dialog.getFragment().clone(
 								new ve.dm.LinearSelection( doc, item.getChildren()[ 0 ].getRange() )
-							),
-							'inline'
+							)
 						);
 					}
 				}

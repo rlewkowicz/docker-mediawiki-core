@@ -2,8 +2,7 @@
 	"@metadata": {
 		"authors": [
 			"Slomox",
-			"Zylbath",
-			"Servien"
+			"Zylbath"
 		]
 	},
 	"vector-action-addsection": "Thema tofögen",
@@ -16,6 +15,5 @@
 	"vector-view-edit": "Ännern",
 	"vector-view-history": "Historie bekieken",
 	"vector-view-view": "Lesen",
-	"vector-view-viewsource": "Borntext bekieken",
-	"vector-more-actions": "Mehr"
+	"vector-view-viewsource": "Borntext bekieken"
 }

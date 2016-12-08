@@ -13,9 +13,9 @@
  * @constructor
  * @param {Object} element Reference to element in meta-linmod
  */
-ve.dm.MWTOCForceMetaItem = function VeDmMWTOCForceMetaItem() {
+ve.dm.MWTOCForceMetaItem = function VeDmMWTOCForceMetaItem( element ) {
 	// Parent constructor
-	ve.dm.MWTOCForceMetaItem.super.apply( this, arguments );
+	ve.dm.MetaItem.call( this, element );
 };
 
 /* Inheritance */

@@ -15,19 +15,19 @@ Usage
 -----
 
 <pre lang="php">
-use Wikimedia\PhpSessionSerializer;
+use Wikimedia\PhpSesssionSerializer;
 
 // (optional) Send logs to a PSR-3 logger
-PhpSessionSerializer::setLogger( $logger )
+PhpSesssionSerializer::setLogger( $logger )
 
 // (optional) Ensure that session.serialize_handler is set to a usable value
-PhpSessionSerializer::setSerializeHandler();
+PhpSesssionSerializer::setSerializeHandler();
 
 // Encode session data
-$string = PhpSessionSerializer::encode( $array );
+$string = PhpSesssionSerializer::encode( $array );
 
 // Decode session data
-$array = PhpSessionSerializer::decode( $string );
+$array = PhpSesssionSerializer::decode( $string );
 </pre>
 
 Running tests

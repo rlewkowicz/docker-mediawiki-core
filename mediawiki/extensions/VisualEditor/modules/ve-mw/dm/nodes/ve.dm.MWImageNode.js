@@ -209,7 +209,16 @@ ve.dm.MWImageNode.prototype.getFilename = function () {
 	var resource = this.getAttribute( 'resource' ) || '',
 		filename = resource.replace( /^(\.+\/)*/, '' );
 
-	return ve.decodeURIComponentIntoArticleTitle( filename, true );
+	return ve.safeDecodeURIComponent( filename );
+};
+
+/**
+ * Get the store hash for the original dimensions of the image
+ *
+ * @return {string} Store hash
+ */
+ve.dm.MWImageNode.prototype.getSizeHash = function () {
+	return 'MWImageOriginalSize:' + this.getFilename();
 };
 
 /**
@@ -238,7 +247,7 @@ ve.dm.MWImageNode.prototype.getScalable = function () {
 			}
 		} );
 	}
-	// Mixin method
+	// Parent method
 	return ve.dm.ResizableNode.prototype.getScalable.call( this );
 };
 

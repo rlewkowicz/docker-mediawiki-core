@@ -19,7 +19,6 @@
  *
  * @file
  */
-use MediaWiki\Linker\LinkRenderer;
 
 class RCCacheEntryFactory {
 
@@ -30,21 +29,12 @@ class RCCacheEntryFactory {
 	private $messages;
 
 	/**
-	 * @var LinkRenderer
-	 */
-	private $linkRenderer;
-
-	/**
 	 * @param IContextSource $context
 	 * @param string[] $messages
-	 * @param LinkRenderer $linkRenderer
 	 */
-	public function __construct(
-		IContextSource $context, $messages, LinkRenderer $linkRenderer
-	) {
+	public function __construct( IContextSource $context, $messages ) {
 		$this->context = $context;
 		$this->messages = $messages;
-		$this->linkRenderer = $linkRenderer;
 	}
 
 	/**
@@ -109,7 +99,7 @@ class RCCacheEntryFactory {
 
 		// New unpatrolled pages
 		if ( $cacheEntry->unpatrolled && $type == RC_NEW ) {
-			$clink = $this->linkRenderer->makeKnownLink( $cacheEntry->getTitle() );
+			$clink = Linker::linkKnown( $cacheEntry->getTitle() );
 		// Log entries
 		} elseif ( $type == RC_LOG ) {
 			$logType = $cacheEntry->mAttribs['rc_log_type'];
@@ -118,7 +108,7 @@ class RCCacheEntryFactory {
 				$clink = $this->getLogLink( $logType );
 			} else {
 				wfDebugLog( 'recentchanges', 'Unexpected log entry with no log type in recent changes' );
-				$clink = $this->linkRenderer->makeLink( $cacheEntry->getTitle() );
+				$clink = Linker::link( $cacheEntry->getTitle() );
 			}
 		// Log entries (old format) and special pages
 		} elseif ( $cacheEntry->mAttribs['rc_namespace'] == NS_SPECIAL ) {
@@ -126,7 +116,7 @@ class RCCacheEntryFactory {
 			$clink = '';
 		// Edits
 		} else {
-			$clink = $this->linkRenderer->makeKnownLink( $cacheEntry->getTitle() );
+			$clink = Linker::linkKnown( $cacheEntry->getTitle() );
 		}
 
 		return $clink;
@@ -135,12 +125,10 @@ class RCCacheEntryFactory {
 	private function getLogLink( $logType ) {
 		$logtitle = SpecialPage::getTitleFor( 'Log', $logType );
 		$logpage = new LogPage( $logType );
-		$logname = $logpage->getName()->text();
+		$logname = $logpage->getName()->escaped();
 
 		$logLink = $this->context->msg( 'parentheses' )
-			->rawParams(
-				$this->linkRenderer->makeKnownLink( $logtitle, $logname )
-			)->escaped();
+			->rawParams( Linker::linkKnown( $logtitle, $logname ) )->escaped();
 
 		return $logLink;
 	}
@@ -186,7 +174,7 @@ class RCCacheEntryFactory {
 			$curLink = $curMessage;
 		} else {
 			$curUrl = htmlspecialchars( $cacheEntry->getTitle()->getLinkURL( $queryParams ) );
-			$curLink = "<a href=\"$curUrl\">$curMessage</a>";
+			$curLink = "<a href=\"$curUrl\" tabindex=\"$counter\">$curMessage</a>";
 		}
 
 		return $curLink;
@@ -229,10 +217,10 @@ class RCCacheEntryFactory {
 				return $diffMessage;
 			}
 			$diffUrl = htmlspecialchars( $pageTitle->getLinkURL( $queryParams ) );
-			$diffLink = "<a href=\"$diffUrl\">$diffMessage</a>";
+			$diffLink = "<a href=\"$diffUrl\" tabindex=\"$counter\">$diffMessage</a>";
 		} else {
 			$diffUrl = htmlspecialchars( $cacheEntry->getTitle()->getLinkURL( $queryParams ) );
-			$diffLink = "<a href=\"$diffUrl\">$diffMessage</a>";
+			$diffLink = "<a href=\"$diffUrl\" tabindex=\"$counter\">$diffMessage</a>";
 		}
 
 		return $diffLink;
@@ -254,9 +242,9 @@ class RCCacheEntryFactory {
 		if ( !$showDiffLinks || !$lastOldid || in_array( $type, $logTypes ) ) {
 			$lastLink = $lastMessage;
 		} else {
-			$lastLink = $this->linkRenderer->makeKnownLink(
+			$lastLink = Linker::linkKnown(
 				$cacheEntry->getTitle(),
-				new HtmlArmor( $lastMessage ),
+				$lastMessage,
 				[],
 				$this->buildDiffQueryParams( $cacheEntry )
 			);

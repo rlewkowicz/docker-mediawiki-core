@@ -24,8 +24,6 @@
  */
 
 /**
- * Implements Special:Activeusers
- *
  * @ingroup SpecialPage
  */
 class SpecialActiveUsers extends SpecialPage {
@@ -43,26 +41,17 @@ class SpecialActiveUsers extends SpecialPage {
 	 * @param string $par Parameter passed to the page or null
 	 */
 	public function execute( $par ) {
-		$out = $this->getOutput();
+		$days = $this->getConfig()->get( 'ActiveUserDays' );
 
 		$this->setHeaders();
 		$this->outputHeader();
 
-		$opts = new FormOptions();
-
-		$opts->add( 'username', '' );
-		$opts->add( 'hidebots', false, FormOptions::BOOL );
-		$opts->add( 'hidesysops', false, FormOptions::BOOL );
-
-		$opts->fetchValuesFromRequest( $this->getRequest() );
-
-		if ( $par !== null ) {
-			$opts->setValue( 'username', $par );
-		}
+		$out = $this->getOutput();
+		$out->wrapWikiMsg( "<div class='mw-activeusers-intro'>\n$1\n</div>",
+			[ 'activeusers-intro', $this->getLanguage()->formatNum( $days ) ] );
 
 		// Mention the level of cache staleness...
-		$cacheText = '';
-		$dbr = wfGetDB( DB_REPLICA, 'recentchanges' );
+		$dbr = wfGetDB( DB_SLAVE, 'recentchanges' );
 		$rcMax = $dbr->selectField( 'recentchanges', 'MAX(rc_timestamp)', '', __METHOD__ );
 		if ( $rcMax ) {
 			$cTime = $dbr->selectField( 'querycache_info',
@@ -77,51 +66,22 @@ class SpecialActiveUsers extends SpecialPage {
 				$secondsOld = time() - wfTimestamp( TS_UNIX, $rcMin );
 			}
 			if ( $secondsOld > 0 ) {
-				$cacheTxt = '<br>' . $this->msg( 'cachedspecial-viewing-cached-ttl' )
-					->durationParams( $secondsOld );
+				$out->addWikiMsg( 'cachedspecial-viewing-cached-ttl',
+				$this->getLanguage()->formatDuration( $secondsOld ) );
 			}
 		}
 
-		$pager = new ActiveUsersPager( $this->getContext(), $opts );
-		$usersBody = $pager->getBody();
+		$up = new ActiveUsersPager( $this->getContext(), null, $par );
 
-		$days = $this->getConfig()->get( 'ActiveUserDays' );
+		# getBody() first to check, if empty
+		$usersbody = $up->getBody();
 
-		$formDescriptor = [
-			'username' => [
-				'type' => 'user',
-				'name' => 'username',
-				'label-message' => 'activeusers-from',
-			],
-
-			'hidebots' => [
-				'type' => 'check',
-				'name' => 'hidebots',
-				'label-message' => 'activeusers-hidebots',
-				'default' => false,
-			],
-
-			'hidesysops' => [
-				'type' => 'check',
-				'name' => 'hidesysops',
-				'label-message' => 'activeusers-hidesysops',
-				'default' => false,
-			],
-		];
-
-		$htmlForm = HTMLForm::factory( 'ooui', $formDescriptor, $this->getContext() )
-			->setIntro( $this->msg( 'activeusers-intro' )->numParams( $days ) . $cacheText )
-			->setWrapperLegendMsg( 'activeusers' )
-			->setSubmitTextMsg( 'activeusers-submit' )
-			->setMethod( 'get' )
-			->prepareForm()
-			->displayForm( false );
-
-		if ( $usersBody ) {
+		$out->addHTML( $up->getPageHeader() );
+		if ( $usersbody ) {
 			$out->addHTML(
-				$pager->getNavigationBar() .
-				Html::rawElement( 'ul', [], $usersBody ) .
-				$pager->getNavigationBar()
+				$up->getNavigationBar() .
+				Html::rawElement( 'ul', [], $usersbody ) .
+				$up->getNavigationBar()
 			);
 		} else {
 			$out->addWikiMsg( 'activeusers-noresult' );
