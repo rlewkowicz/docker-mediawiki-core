@@ -199,4 +199,12 @@ class SpecialCiteThisPage extends FormSpecialPage {
 	protected function getDisplayFormat() {
 		return 'ooui';
 	}
+
+	public function requiresUnblock() {
+		return false;
+	}
+
+	public function requiresWrite() {
+		return false;
+	}
 }
