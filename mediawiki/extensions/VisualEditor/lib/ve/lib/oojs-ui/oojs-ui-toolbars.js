@@ -1,12 +1,12 @@
 /*!
- * OOjs UI v0.18.2
+ * OOjs UI v0.17.1
  * https://www.mediawiki.org/wiki/OOjs_UI
  *
  * Copyright 2011–2016 OOjs UI Team and other contributors.
  * Released under the MIT license
  * http://oojs.mit-license.org
  *
- * Date: 2016-12-06T23:32:53Z
+ * Date: 2016-05-03T22:58:02Z
  */
 ( function ( OO ) {
 
@@ -320,7 +320,6 @@ OO.ui.Toolbar = function OoUiToolbar( toolFactory, toolGroupFactory, config ) {
 	this.$bar = $( '<div>' );
 	this.$actions = $( '<div>' );
 	this.initialized = false;
-	this.narrowThreshold = null;
 	this.onWindowResizeHandler = this.onWindowResize.bind( this );
 
 	// Events
@@ -403,22 +402,8 @@ OO.ui.Toolbar.prototype.onPointerDown = function ( e ) {
 OO.ui.Toolbar.prototype.onWindowResize = function () {
 	this.$element.toggleClass(
 		'oo-ui-toolbar-narrow',
-		this.$bar.width() <= this.getNarrowThreshold()
+		this.$bar.width() <= this.narrowThreshold
 	);
-};
-
-/**
- * Get the (lazily-computed) width threshold for applying the oo-ui-toolbar-narrow
- * class.
- *
- * @private
- * @return {number} Width threshold in pixels
- */
-OO.ui.Toolbar.prototype.getNarrowThreshold = function () {
-	if ( this.narrowThreshold === null ) {
-		this.narrowThreshold = this.$group.width() + this.$actions.width();
-	}
-	return this.narrowThreshold;
 };
 
 /**
@@ -428,6 +413,7 @@ OO.ui.Toolbar.prototype.getNarrowThreshold = function () {
 OO.ui.Toolbar.prototype.initialize = function () {
 	if ( !this.initialized ) {
 		this.initialized = true;
+		this.narrowThreshold = this.$group.width() + this.$actions.width();
 		$( this.getElementWindow() ).on( 'resize', this.onWindowResizeHandler );
 		this.onWindowResize();
 	}
@@ -795,10 +781,8 @@ OO.ui.Tool.prototype.setActive = function ( state ) {
 	this.active = !!state;
 	if ( this.active ) {
 		this.$element.addClass( 'oo-ui-tool-active' );
-		this.setFlags( 'progressive' );
 	} else {
 		this.$element.removeClass( 'oo-ui-tool-active' );
-		this.clearFlags();
 	}
 };
 
@@ -1308,26 +1292,24 @@ OO.ui.ToolFactory.prototype.extract = function ( collection, used ) {
 	var i, len, item, name, tool,
 		names = [];
 
-	collection = !Array.isArray( collection ) ? [ collection ] : collection;
-
-	for ( i = 0, len = collection.length; i < len; i++ ) {
-		item = collection[ i ];
-		if ( item === '*' ) {
-			for ( name in this.registry ) {
-				tool = this.registry[ name ];
-				if (
-					// Only add tools by group name when auto-add is enabled
-					tool.static.autoAddToCatchall &&
-					// Exclude already used tools
-					( !used || !used[ name ] )
-				) {
-					names.push( name );
-					if ( used ) {
-						used[ name ] = true;
-					}
+	if ( collection === '*' ) {
+		for ( name in this.registry ) {
+			tool = this.registry[ name ];
+			if (
+				// Only add tools by group name when auto-add is enabled
+				tool.static.autoAddToCatchall &&
+				// Exclude already used tools
+				( !used || !used[ name ] )
+			) {
+				names.push( name );
+				if ( used ) {
+					used[ name ] = true;
 				}
 			}
-		} else {
+		}
+	} else if ( Array.isArray( collection ) ) {
+		for ( i = 0, len = collection.length; i < len; i++ ) {
+			item = collection[ i ];
 			// Allow plain strings as shorthand for named tools
 			if ( typeof item === 'string' ) {
 				item = { name: item };
@@ -1910,8 +1892,6 @@ OO.ui.PopupToolGroup.prototype.onHandleMouseKeyDown = function ( e ) {
  *
  * When active, the popup is visible. A mouseup event anywhere in the document will trigger
  * deactivation.
- *
- * @param {boolean} value The active state to set
  */
 OO.ui.PopupToolGroup.prototype.setActive = function ( value ) {
 	var containerWidth, containerLeft;

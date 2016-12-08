@@ -1,12 +1,12 @@
 /*!
- * OOjs UI v0.18.2
+ * OOjs UI v0.17.1
  * https://www.mediawiki.org/wiki/OOjs_UI
  *
  * Copyright 2011–2016 OOjs UI Team and other contributors.
  * Released under the MIT license
  * http://oojs.mit-license.org
  *
- * Date: 2016-12-06T23:32:53Z
+ * Date: 2016-05-03T22:58:02Z
  */
 ( function ( OO ) {
 
@@ -85,7 +85,7 @@ OO.ui.mixin.DraggableElement.static.cancelButtonMouseDownEvents = false;
  * Respond to mousedown event.
  *
  * @private
- * @param {jQuery.Event} e Drag event
+ * @param {jQuery.Event} e jQuery event
  */
 OO.ui.mixin.DraggableElement.prototype.onDragMouseDown = function ( e ) {
 	this.wasHandleUsed =
@@ -99,8 +99,7 @@ OO.ui.mixin.DraggableElement.prototype.onDragMouseDown = function ( e ) {
  * Respond to dragstart event.
  *
  * @private
- * @param {jQuery.Event} e Drag event
- * @return {boolean} False if the event is cancelled
+ * @param {jQuery.Event} e jQuery event
  * @fires dragstart
  */
 OO.ui.mixin.DraggableElement.prototype.onDragStart = function ( e ) {
@@ -150,7 +149,7 @@ OO.ui.mixin.DraggableElement.prototype.onDragEnd = function () {
  * Handle drop event.
  *
  * @private
- * @param {jQuery.Event} e Drop event
+ * @param {jQuery.Event} e jQuery event
  * @fires drop
  */
 OO.ui.mixin.DraggableElement.prototype.onDrop = function ( e ) {
@@ -162,7 +161,6 @@ OO.ui.mixin.DraggableElement.prototype.onDrop = function ( e ) {
  * In order for drag/drop to work, the dragover event must
  * return false and stop propogation.
  *
- * @param {jQuery.Event} e Drag event
  * @private
  */
 OO.ui.mixin.DraggableElement.prototype.onDragOver = function ( e ) {
@@ -376,22 +374,18 @@ OO.ui.mixin.DraggableGroupElement.prototype.reorder = function ( item, newIndex 
  * @param {OO.ui.mixin.DraggableElement} item Dragged item
  */
 OO.ui.mixin.DraggableGroupElement.prototype.setDragItem = function ( item ) {
-	if ( this.dragItem !== item ) {
-		this.dragItem = item;
-		this.$element.on( 'dragover', this.onDragOver.bind( this ) );
-		this.$element.addClass( 'oo-ui-draggableGroupElement-dragging' );
-	}
+	this.dragItem = item;
+	this.$element.on( 'dragover', this.onDragOver.bind( this ) );
+	this.$element.addClass( 'oo-ui-draggableGroupElement-dragging' );
 };
 
 /**
  * Unset the current dragged item
  */
 OO.ui.mixin.DraggableGroupElement.prototype.unsetDragItem = function () {
-	if ( this.dragItem ) {
-		this.dragItem = null;
-		this.$element.off( 'dragover' );
-		this.$element.removeClass( 'oo-ui-draggableGroupElement-dragging' );
-	}
+	this.dragItem = null;
+	this.$element.off( 'dragover' );
+	this.$element.removeClass( 'oo-ui-draggableGroupElement-dragging' );
 };
 
 /**
@@ -545,7 +539,6 @@ OO.ui.mixin.RequestManager.prototype.getRequestCacheDataFromResponse = null;
  *
  * @class
  * @abstract
- * @mixins OO.ui.mixin.RequestManager
  *
  * @constructor
  * @param {Object} [config] Configuration options
@@ -1428,12 +1421,10 @@ OO.ui.StackLayout.prototype.updateHiddenState = function ( items, selectedItem )
 		for ( i = 0, len = items.length; i < len; i++ ) {
 			if ( !selectedItem || selectedItem !== items[ i ] ) {
 				items[ i ].$element.addClass( 'oo-ui-element-hidden' );
-				items[ i ].$element.attr( 'aria-hidden', 'true' );
 			}
 		}
 		if ( selectedItem ) {
 			selectedItem.$element.removeClass( 'oo-ui-element-hidden' );
-			selectedItem.$element.removeAttr( 'aria-hidden' );
 		}
 	}
 };
@@ -1557,7 +1548,6 @@ OO.ui.MenuLayout.prototype.toggleMenu = function ( showMenu ) {
 		this.$element
 			.toggleClass( 'oo-ui-menuLayout-showMenu', this.showMenu )
 			.toggleClass( 'oo-ui-menuLayout-hideMenu', !this.showMenu );
-		this.$menu.attr( 'aria-hidden', this.showMenu ? 'false' : 'true' );
 	}
 
 	return this;
@@ -1779,13 +1769,11 @@ OO.ui.BookletLayout.prototype.onStackLayoutVisibleItemChange = function ( page )
 OO.ui.BookletLayout.prototype.onStackLayoutSet = function ( page ) {
 	var layout = this;
 	if ( !this.scrolling && page ) {
-		page.scrollElementIntoView( {
-			complete: function () {
-				if ( layout.autoFocus ) {
-					layout.focus();
-				}
+		page.scrollElementIntoView( { complete: function () {
+			if ( layout.autoFocus ) {
+				layout.focus();
 			}
-		} );
+		} } );
 	}
 };
 
@@ -2172,7 +2160,7 @@ OO.ui.BookletLayout.prototype.selectFirstSelectablePage = function () {
  *     };
  *
  *     var card1 = new CardOneLayout( 'one' ),
- *         card2 = new OO.ui.CardLayout( 'two', { label: 'Card two' } );
+ *         card2 = new CardLayout( 'two', { label: 'Card two' } );
  *
  *     card2.$element.append( '<p>Second card</p>' );
  *
@@ -2289,13 +2277,11 @@ OO.ui.IndexLayout.prototype.onStackLayoutFocus = function ( e ) {
 OO.ui.IndexLayout.prototype.onStackLayoutSet = function ( card ) {
 	var layout = this;
 	if ( card ) {
-		card.scrollElementIntoView( {
-			complete: function () {
-				if ( layout.autoFocus ) {
-					layout.focus();
-				}
+		card.scrollElementIntoView( { complete: function () {
+			if ( layout.autoFocus ) {
+				layout.focus();
 			}
-		} );
+		} } );
 	}
 };
 
@@ -2711,7 +2697,7 @@ OO.ui.ToggleButtonWidget = function OoUiToggleButtonWidget( config ) {
 	OO.ui.ToggleButtonWidget.parent.call( this, config );
 
 	// Mixin constructors
-	OO.ui.mixin.ButtonElement.call( this, $.extend( {}, config, { active: this.active } ) );
+	OO.ui.mixin.ButtonElement.call( this, config );
 	OO.ui.mixin.IconElement.call( this, config );
 	OO.ui.mixin.IndicatorElement.call( this, config );
 	OO.ui.mixin.LabelElement.call( this, config );
@@ -3059,7 +3045,7 @@ OO.inheritClass( OO.ui.OutlineOptionWidget, OO.ui.DecoratedOptionWidget );
 
 /* Static Properties */
 
-OO.ui.OutlineOptionWidget.static.highlightable = true;
+OO.ui.OutlineOptionWidget.static.highlightable = false;
 
 OO.ui.OutlineOptionWidget.static.scrollIntoViewOnSelect = true;
 
@@ -3101,19 +3087,6 @@ OO.ui.OutlineOptionWidget.prototype.getLevel = function () {
 };
 
 /**
- * @inheritdoc
- */
-OO.ui.OutlineOptionWidget.prototype.setPressed = function ( state ) {
-	OO.ui.OutlineOptionWidget.parent.prototype.setPressed.call( this, state );
-	if ( this.pressed ) {
-		this.setFlags( 'progressive' );
-	} else if ( !this.selected ) {
-		this.clearFlags();
-	}
-	return this;
-};
-
-/**
  * Set movability.
  *
  * Movability is used by {@link OO.ui.OutlineControlsWidget outline controls}.
@@ -3138,19 +3111,6 @@ OO.ui.OutlineOptionWidget.prototype.setMovable = function ( movable ) {
 OO.ui.OutlineOptionWidget.prototype.setRemovable = function ( removable ) {
 	this.removable = !!removable;
 	this.updateThemeClasses();
-	return this;
-};
-
-/**
- * @inheritdoc
- */
-OO.ui.OutlineOptionWidget.prototype.setSelected = function ( state ) {
-	OO.ui.OutlineOptionWidget.parent.prototype.setSelected.call( this, state );
-	if ( this.selected ) {
-		this.setFlags( 'progressive' );
-	} else {
-		this.clearFlags();
-	}
 	return this;
 };
 
@@ -3226,6 +3186,7 @@ OO.mixinClass( OO.ui.OutlineSelectWidget, OO.ui.mixin.TabIndexedElement );
  * @mixins OO.ui.mixin.ButtonElement
  * @mixins OO.ui.mixin.IconElement
  * @mixins OO.ui.mixin.IndicatorElement
+ * @mixins OO.ui.mixin.TabIndexedElement
  * @mixins OO.ui.mixin.TitledElement
  *
  * @constructor
@@ -3243,6 +3204,10 @@ OO.ui.ButtonOptionWidget = function OoUiButtonOptionWidget( config ) {
 	OO.ui.mixin.IconElement.call( this, config );
 	OO.ui.mixin.IndicatorElement.call( this, config );
 	OO.ui.mixin.TitledElement.call( this, $.extend( {}, config, { $titled: this.$button } ) );
+	OO.ui.mixin.TabIndexedElement.call( this, $.extend( {}, config, {
+		$tabIndexed: this.$button,
+		tabIndex: -1
+	} ) );
 
 	// Initialization
 	this.$element.addClass( 'oo-ui-buttonOptionWidget' );
@@ -3257,6 +3222,7 @@ OO.mixinClass( OO.ui.ButtonOptionWidget, OO.ui.mixin.ButtonElement );
 OO.mixinClass( OO.ui.ButtonOptionWidget, OO.ui.mixin.IconElement );
 OO.mixinClass( OO.ui.ButtonOptionWidget, OO.ui.mixin.IndicatorElement );
 OO.mixinClass( OO.ui.ButtonOptionWidget, OO.ui.mixin.TitledElement );
+OO.mixinClass( OO.ui.ButtonOptionWidget, OO.ui.mixin.TabIndexedElement );
 
 /* Static Properties */
 
@@ -3410,8 +3376,8 @@ OO.inheritClass( OO.ui.TabSelectWidget, OO.ui.SelectWidget );
 OO.mixinClass( OO.ui.TabSelectWidget, OO.ui.mixin.TabIndexedElement );
 
 /**
- * CapsuleItemWidgets are used within a {@link OO.ui.CapsuleMultiselectWidget
- * CapsuleMultiselectWidget} to display the selected items.
+ * CapsuleItemWidgets are used within a {@link OO.ui.CapsuleMultiSelectWidget
+ * CapsuleMultiSelectWidget} to display the selected items.
  *
  * @class
  * @extends OO.ui.Widget
@@ -3492,8 +3458,6 @@ OO.ui.CapsuleItemWidget.prototype.onClick = function () {
 
 /**
  * Handle keyDown event for the entire capsule
- *
- * @param {jQuery.Event} e Key down event
  */
 OO.ui.CapsuleItemWidget.prototype.onKeyDown = function ( e ) {
 	var element = this.getElementGroup();
@@ -3520,15 +3484,15 @@ OO.ui.CapsuleItemWidget.prototype.focus = function () {
 };
 
 /**
- * CapsuleMultiselectWidgets are something like a {@link OO.ui.ComboBoxInputWidget combo box widget}
+ * CapsuleMultiSelectWidgets are something like a {@link OO.ui.ComboBoxInputWidget combo box widget}
  * that allows for selecting multiple values.
  *
  * For more information about menus and options, please see the [OOjs UI documentation on MediaWiki][1].
  *
  *     @example
- *     // Example: A CapsuleMultiselectWidget.
- *     var capsule = new OO.ui.CapsuleMultiselectWidget( {
- *         label: 'CapsuleMultiselectWidget',
+ *     // Example: A CapsuleMultiSelectWidget.
+ *     var capsule = new OO.ui.CapsuleMultiSelectWidget( {
+ *         label: 'CapsuleMultiSelectWidget',
  *         selected: [ 'Option 1', 'Option 3' ],
  *         menu: {
  *             items: [
@@ -3561,17 +3525,13 @@ OO.ui.CapsuleItemWidget.prototype.focus = function () {
  *
  * @class
  * @extends OO.ui.Widget
- * @mixins OO.ui.mixin.GroupElement
- * @mixins OO.ui.mixin.PopupElement
  * @mixins OO.ui.mixin.TabIndexedElement
- * @mixins OO.ui.mixin.IndicatorElement
- * @mixins OO.ui.mixin.IconElement
+ * @mixins OO.ui.mixin.GroupElement
  * @uses OO.ui.CapsuleItemWidget
  * @uses OO.ui.FloatingMenuSelectWidget
  *
  * @constructor
  * @param {Object} [config] Configuration options
- * @cfg {string} [placeholder] Placeholder text
  * @cfg {boolean} [allowArbitrary=false] Allow data items to be added even if not present in the menu.
  * @cfg {Object} [menu] (required) Configuration options to pass to the
  *  {@link OO.ui.MenuSelectWidget menu select widget}.
@@ -3585,11 +3545,11 @@ OO.ui.CapsuleItemWidget.prototype.focus = function () {
  *  the containing `<div>` and has a larger area. By default, the menu uses
  *  relative positioning.
  */
-OO.ui.CapsuleMultiselectWidget = function OoUiCapsuleMultiselectWidget( config ) {
+OO.ui.CapsuleMultiSelectWidget = function OoUiCapsuleMultiSelectWidget( config ) {
 	var $tabFocus;
 
 	// Parent constructor
-	OO.ui.CapsuleMultiselectWidget.parent.call( this, config );
+	OO.ui.CapsuleMultiSelectWidget.parent.call( this, config );
 
 	// Configuration initialization
 	config = $.extend( {
@@ -3598,11 +3558,8 @@ OO.ui.CapsuleMultiselectWidget = function OoUiCapsuleMultiselectWidget( config )
 	}, config );
 
 	// Properties (must be set before mixin constructor calls)
-	this.$handle = $( '<div>' );
 	this.$input = config.popup ? null : $( '<input>' );
-	if ( config.placeholder !== undefined && config.placeholder !== '' ) {
-		this.$input.attr( 'placeholder', config.placeholder );
-	}
+	this.$handle = $( '<div>' );
 
 	// Mixin constructors
 	OO.ui.mixin.GroupElement.call( this, config );
@@ -3663,7 +3620,6 @@ OO.ui.CapsuleMultiselectWidget = function OoUiCapsuleMultiselectWidget( config )
 	}
 	this.menu.connect( this, {
 		choose: 'onMenuChoose',
-		toggle: 'onMenuToggle',
 		add: 'onMenuItemsChange',
 		remove: 'onMenuItemsChange'
 	} );
@@ -3678,16 +3634,17 @@ OO.ui.CapsuleMultiselectWidget = function OoUiCapsuleMultiselectWidget( config )
 			role: 'combobox',
 			'aria-autocomplete': 'list'
 		} );
+		this.updateInputSize();
 	}
 	if ( config.data ) {
 		this.setItemsFromData( config.data );
 	}
-	this.$content.addClass( 'oo-ui-capsuleMultiselectWidget-content' )
+	this.$content.addClass( 'oo-ui-capsuleMultiSelectWidget-content' )
 		.append( this.$group );
-	this.$group.addClass( 'oo-ui-capsuleMultiselectWidget-group' );
-	this.$handle.addClass( 'oo-ui-capsuleMultiselectWidget-handle' )
+	this.$group.addClass( 'oo-ui-capsuleMultiSelectWidget-group' );
+	this.$handle.addClass( 'oo-ui-capsuleMultiSelectWidget-handle' )
 		.append( this.$indicator, this.$icon, this.$content );
-	this.$element.addClass( 'oo-ui-capsuleMultiselectWidget' )
+	this.$element.addClass( 'oo-ui-capsuleMultiSelectWidget' )
 		.append( this.$handle );
 	if ( this.popup ) {
 		this.$content.append( $tabFocus );
@@ -3696,25 +3653,17 @@ OO.ui.CapsuleMultiselectWidget = function OoUiCapsuleMultiselectWidget( config )
 		this.$content.append( this.$input );
 		this.$overlay.append( this.menu.$element );
 	}
-
-	// Input size needs to be calculated after everything else is rendered
-	setTimeout( function () {
-		if ( this.$input ) {
-			this.updateInputSize();
-		}
-	}.bind( this ) );
-
 	this.onMenuItemsChange();
 };
 
 /* Setup */
 
-OO.inheritClass( OO.ui.CapsuleMultiselectWidget, OO.ui.Widget );
-OO.mixinClass( OO.ui.CapsuleMultiselectWidget, OO.ui.mixin.GroupElement );
-OO.mixinClass( OO.ui.CapsuleMultiselectWidget, OO.ui.mixin.PopupElement );
-OO.mixinClass( OO.ui.CapsuleMultiselectWidget, OO.ui.mixin.TabIndexedElement );
-OO.mixinClass( OO.ui.CapsuleMultiselectWidget, OO.ui.mixin.IndicatorElement );
-OO.mixinClass( OO.ui.CapsuleMultiselectWidget, OO.ui.mixin.IconElement );
+OO.inheritClass( OO.ui.CapsuleMultiSelectWidget, OO.ui.Widget );
+OO.mixinClass( OO.ui.CapsuleMultiSelectWidget, OO.ui.mixin.GroupElement );
+OO.mixinClass( OO.ui.CapsuleMultiSelectWidget, OO.ui.mixin.PopupElement );
+OO.mixinClass( OO.ui.CapsuleMultiSelectWidget, OO.ui.mixin.TabIndexedElement );
+OO.mixinClass( OO.ui.CapsuleMultiSelectWidget, OO.ui.mixin.IndicatorElement );
+OO.mixinClass( OO.ui.CapsuleMultiSelectWidget, OO.ui.mixin.IconElement );
 
 /* Events */
 
@@ -3737,17 +3686,13 @@ OO.mixinClass( OO.ui.CapsuleMultiselectWidget, OO.ui.mixin.IconElement );
 
 /**
  * Construct a OO.ui.CapsuleItemWidget (or a subclass thereof) from given label and data.
- * May return `null` if the given label and data are not valid.
  *
  * @protected
  * @param {Mixed} data Custom data of any type.
  * @param {string} label The label text.
- * @return {OO.ui.CapsuleItemWidget|null}
+ * @return {OO.ui.CapsuleItemWidget}
  */
-OO.ui.CapsuleMultiselectWidget.prototype.createItemWidget = function ( data, label ) {
-	if ( label === '' ) {
-		return null;
-	}
+OO.ui.CapsuleMultiSelectWidget.prototype.createItemWidget = function ( data, label ) {
 	return new OO.ui.CapsuleItemWidget( { data: data, label: label } );
 };
 
@@ -3756,10 +3701,8 @@ OO.ui.CapsuleMultiselectWidget.prototype.createItemWidget = function ( data, lab
  *
  * @return {Mixed[]}
  */
-OO.ui.CapsuleMultiselectWidget.prototype.getItemsData = function () {
-	return this.getItems().map( function ( item ) {
-		return item.data;
-	} );
+OO.ui.CapsuleMultiSelectWidget.prototype.getItemsData = function () {
+	return $.map( this.getItems(), function ( e ) { return e.data; } );
 };
 
 /**
@@ -3767,9 +3710,9 @@ OO.ui.CapsuleMultiselectWidget.prototype.getItemsData = function () {
  *
  * @chainable
  * @param {Mixed[]} datas
- * @return {OO.ui.CapsuleMultiselectWidget}
+ * @return {OO.ui.CapsuleMultiSelectWidget}
  */
-OO.ui.CapsuleMultiselectWidget.prototype.setItemsFromData = function ( datas ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.setItemsFromData = function ( datas ) {
 	var widget = this,
 		menu = this.menu,
 		items = this.getItems();
@@ -3797,9 +3740,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.setItemsFromData = function ( datas ) {
 		if ( !item ) {
 			item = widget.createItemWidget( data, label );
 		}
-		if ( item ) {
-			widget.addItems( [ item ], i );
-		}
+		widget.addItems( [ item ], i );
 	} );
 
 	if ( items.length ) {
@@ -3814,9 +3755,9 @@ OO.ui.CapsuleMultiselectWidget.prototype.setItemsFromData = function ( datas ) {
  *
  * @chainable
  * @param {Mixed[]} datas
- * @return {OO.ui.CapsuleMultiselectWidget}
+ * @return {OO.ui.CapsuleMultiSelectWidget}
  */
-OO.ui.CapsuleMultiselectWidget.prototype.addItemsFromData = function ( datas ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.addItemsFromData = function ( datas ) {
 	var widget = this,
 		menu = this.menu,
 		items = [];
@@ -3827,12 +3768,9 @@ OO.ui.CapsuleMultiselectWidget.prototype.addItemsFromData = function ( datas ) {
 		if ( !widget.getItemFromData( data ) ) {
 			item = menu.getItemFromData( data );
 			if ( item ) {
-				item = widget.createItemWidget( data, item.label );
+				items.push( widget.createItemWidget( data, item.label ) );
 			} else if ( widget.allowArbitrary ) {
-				item = widget.createItemWidget( data, String( data ) );
-			}
-			if ( item ) {
-				items.push( item );
+				items.push( widget.createItemWidget( data, String( data ) ) );
 			}
 		}
 	} );
@@ -3850,16 +3788,14 @@ OO.ui.CapsuleMultiselectWidget.prototype.addItemsFromData = function ( datas ) {
  * @param {string} label
  * @return {boolean} Whether the item was added or not
  */
-OO.ui.CapsuleMultiselectWidget.prototype.addItemFromLabel = function ( label ) {
-	var item, items;
-	item = this.menu.getItemFromLabel( label, true );
+OO.ui.CapsuleMultiSelectWidget.prototype.addItemFromLabel = function ( label ) {
+	var item = this.menu.getItemFromLabel( label, true );
 	if ( item ) {
 		this.addItemsFromData( [ item.data ] );
 		return true;
-	} else if ( this.allowArbitrary ) {
-		items = this.getItems();
+	} else if ( this.allowArbitrary && this.$input.val().trim() !== '' ) {
 		this.addItemsFromData( [ label ] );
-		return !OO.compare( this.getItems(), items );
+		return true;
 	}
 	return false;
 };
@@ -3869,9 +3805,9 @@ OO.ui.CapsuleMultiselectWidget.prototype.addItemFromLabel = function ( label ) {
  *
  * @chainable
  * @param {Mixed[]} datas
- * @return {OO.ui.CapsuleMultiselectWidget}
+ * @return {OO.ui.CapsuleMultiSelectWidget}
  */
-OO.ui.CapsuleMultiselectWidget.prototype.removeItemsFromData = function ( datas ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.removeItemsFromData = function ( datas ) {
 	var widget = this,
 		items = [];
 
@@ -3892,7 +3828,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.removeItemsFromData = function ( datas 
 /**
  * @inheritdoc
  */
-OO.ui.CapsuleMultiselectWidget.prototype.addItems = function ( items ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.addItems = function ( items ) {
 	var same, i, l,
 		oldItems = this.items.slice();
 
@@ -3919,20 +3855,17 @@ OO.ui.CapsuleMultiselectWidget.prototype.addItems = function ( items ) {
  *
  * @param {Object} item
  */
-OO.ui.CapsuleMultiselectWidget.prototype.editItem = function ( item ) {
-	this.addItemFromLabel( this.$input.val() );
-	this.clearInput();
+OO.ui.CapsuleMultiSelectWidget.prototype.editItem = function ( item ) {
 	this.$input.val( item.label );
 	this.updateInputSize();
 	this.focus();
-	this.menu.updateItemVisibility(); // Hack, we shouldn't be calling this method directly
 	this.removeItems( [ item ] );
 };
 
 /**
  * @inheritdoc
  */
-OO.ui.CapsuleMultiselectWidget.prototype.removeItems = function ( items ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.removeItems = function ( items ) {
 	var same, i, l,
 		oldItems = this.items.slice();
 
@@ -3957,7 +3890,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.removeItems = function ( items ) {
 /**
  * @inheritdoc
  */
-OO.ui.CapsuleMultiselectWidget.prototype.clearItems = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.clearItems = function () {
 	if ( this.items.length ) {
 		OO.ui.mixin.GroupElement.prototype.clearItems.call( this );
 		this.emit( 'change', this.getItemsData() );
@@ -3974,7 +3907,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.clearItems = function () {
  * @param {OO.ui.CapsuleItemWidget} [item]
  * @return {OO.ui.CapsuleItemWidget|jQuery|boolean}
  */
-OO.ui.CapsuleMultiselectWidget.prototype.getNextItem = function ( item ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.getNextItem = function ( item ) {
 	var itemIndex;
 
 	if ( item === undefined ) {
@@ -3999,7 +3932,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.getNextItem = function ( item ) {
  * @param {OO.ui.CapsuleItemWidget} [item]
  * @return {OO.ui.CapsuleItemWidget|jQuery|boolean}
  */
-OO.ui.CapsuleMultiselectWidget.prototype.getPreviousItem = function ( item ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.getPreviousItem = function ( item ) {
 	var itemIndex;
 
 	if ( item === undefined ) {
@@ -4021,7 +3954,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.getPreviousItem = function ( item ) {
  *
  * @return {OO.ui.MenuSelectWidget} Menu widget
  */
-OO.ui.CapsuleMultiselectWidget.prototype.getMenu = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.getMenu = function () {
 	return this.menu;
 };
 
@@ -4031,7 +3964,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.getMenu = function () {
  * @private
  * @param {jQuery.Event} event
  */
-OO.ui.CapsuleMultiselectWidget.prototype.onInputFocus = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.onInputFocus = function () {
 	if ( !this.isDisabled() ) {
 		this.menu.toggle( true );
 	}
@@ -4043,7 +3976,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.onInputFocus = function () {
  * @private
  * @param {jQuery.Event} event
  */
-OO.ui.CapsuleMultiselectWidget.prototype.onInputBlur = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.onInputBlur = function () {
 	this.addItemFromLabel( this.$input.val() );
 	this.clearInput();
 };
@@ -4054,11 +3987,14 @@ OO.ui.CapsuleMultiselectWidget.prototype.onInputBlur = function () {
  * @private
  * @param {jQuery.Event} event
  */
-OO.ui.CapsuleMultiselectWidget.prototype.onFocusForPopup = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.onFocusForPopup = function () {
 	if ( !this.isDisabled() ) {
 		this.popup.setSize( this.$handle.width() );
 		this.popup.toggle( true );
-		OO.ui.findFocusable( this.popup.$element ).focus();
+		this.popup.$element.find( '*' )
+			.filter( function () { return OO.ui.isFocusableElement( $( this ), true ); } )
+			.first()
+			.focus();
 	}
 };
 
@@ -4068,13 +4004,14 @@ OO.ui.CapsuleMultiselectWidget.prototype.onFocusForPopup = function () {
  * @private
  * @param {jQuery.Event} e Focus out event
  */
-OO.ui.CapsuleMultiselectWidget.prototype.onPopupFocusOut = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.onPopupFocusOut = function () {
 	var widget = this.popup;
 
 	setTimeout( function () {
 		if (
 			widget.isVisible() &&
-			!OO.ui.contains( widget.$element.add( widget.$autoCloseIgnore ).get(), document.activeElement, true )
+			!OO.ui.contains( widget.$element[ 0 ], document.activeElement, true ) &&
+			( !widget.$autoCloseIgnore || !widget.$autoCloseIgnore.has( document.activeElement ).length )
 		) {
 			widget.toggle( false );
 		}
@@ -4087,7 +4024,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.onPopupFocusOut = function () {
  * @private
  * @param {jQuery.Event} e Mouse down event
  */
-OO.ui.CapsuleMultiselectWidget.prototype.onMouseDown = function ( e ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.onMouseDown = function ( e ) {
 	if ( e.which === OO.ui.MouseButtons.LEFT ) {
 		this.focus();
 		return false;
@@ -4102,7 +4039,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.onMouseDown = function ( e ) {
  * @private
  * @param {jQuery.Event} e Key press event
  */
-OO.ui.CapsuleMultiselectWidget.prototype.onKeyPress = function ( e ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.onKeyPress = function ( e ) {
 	if ( !this.isDisabled() ) {
 		if ( e.which === OO.ui.Keys.ESCAPE ) {
 			this.clearInput();
@@ -4130,7 +4067,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.onKeyPress = function ( e ) {
  * @private
  * @param {jQuery.Event} e Key down event
  */
-OO.ui.CapsuleMultiselectWidget.prototype.onKeyDown = function ( e ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.onKeyDown = function ( e ) {
 	if (
 		!this.isDisabled() &&
 		this.$input.val() === '' &&
@@ -4158,33 +4095,13 @@ OO.ui.CapsuleMultiselectWidget.prototype.onKeyDown = function ( e ) {
  * @private
  * @param {jQuery.Event} e Event of some sort
  */
-OO.ui.CapsuleMultiselectWidget.prototype.updateInputSize = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.updateInputSize = function () {
 	var $lastItem, direction, contentWidth, currentWidth, bestWidth;
-	if ( this.$input && !this.isDisabled() ) {
+	if ( !this.isDisabled() ) {
 		this.$input.css( 'width', '1em' );
 		$lastItem = this.$group.children().last();
 		direction = OO.ui.Element.static.getDir( this.$handle );
-
-		// Get the width of the input with the placeholder text as
-		// the value and save it so that we don't keep recalculating
-		if (
-			this.contentWidthWithPlaceholder === undefined &&
-			this.$input.val() === '' &&
-			this.$input.attr( 'placeholder' ) !== undefined
-		) {
-			this.$input.val( this.$input.attr( 'placeholder' ) );
-			this.contentWidthWithPlaceholder = this.$input[ 0 ].scrollWidth;
-			this.$input.val( '' );
-
-		}
-
-		// Always keep the input wide enough for the placeholder text
-		contentWidth = Math.max(
-			this.$input[ 0 ].scrollWidth,
-			// undefined arguments in Math.max lead to NaN
-			( this.contentWidthWithPlaceholder === undefined ) ?
-				0 : this.contentWidthWithPlaceholder
-		);
+		contentWidth = this.$input[ 0 ].scrollWidth;
 		currentWidth = this.$input.width();
 
 		if ( contentWidth < currentWidth ) {
@@ -4192,14 +4109,13 @@ OO.ui.CapsuleMultiselectWidget.prototype.updateInputSize = function () {
 			return;
 		}
 
-		if ( $lastItem.length === 0 ) {
+		if ( !$lastItem.length ) {
 			bestWidth = this.$content.innerWidth();
 		} else {
 			bestWidth = direction === 'ltr' ?
 				this.$content.innerWidth() - $lastItem.position().left - $lastItem.outerWidth() :
 				$lastItem.position().left;
 		}
-
 		// Some safety margin for sanity, because I *really* don't feel like finding out where the few
 		// pixels this is off by are coming from.
 		bestWidth -= 10;
@@ -4217,7 +4133,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.updateInputSize = function () {
  *
  * @private
  */
-OO.ui.CapsuleMultiselectWidget.prototype.updateIfHeightChanged = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.updateIfHeightChanged = function () {
 	var height = this.$element.height();
 	if ( height !== this.height ) {
 		this.height = height;
@@ -4232,7 +4148,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.updateIfHeightChanged = function () {
  * @private
  * @param {OO.ui.OptionWidget} item Chosen item
  */
-OO.ui.CapsuleMultiselectWidget.prototype.onMenuChoose = function ( item ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.onMenuChoose = function ( item ) {
 	if ( item && item.isVisible() ) {
 		this.addItemsFromData( [ item.getData() ] );
 		this.clearInput();
@@ -4240,23 +4156,13 @@ OO.ui.CapsuleMultiselectWidget.prototype.onMenuChoose = function ( item ) {
 };
 
 /**
- * Handle menu toggle events.
- *
- * @private
- * @param {boolean} isVisible Menu toggle event
- */
-OO.ui.CapsuleMultiselectWidget.prototype.onMenuToggle = function ( isVisible ) {
-	this.$element.toggleClass( 'oo-ui-capsuleMultiselectWidget-open', isVisible );
-};
-
-/**
  * Handle menu item change events.
  *
  * @private
  */
-OO.ui.CapsuleMultiselectWidget.prototype.onMenuItemsChange = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.onMenuItemsChange = function () {
 	this.setItemsFromData( this.getItemsData() );
-	this.$element.toggleClass( 'oo-ui-capsuleMultiselectWidget-empty', this.menu.isEmpty() );
+	this.$element.toggleClass( 'oo-ui-capsuleMultiSelectWidget-empty', this.menu.isEmpty() );
 };
 
 /**
@@ -4264,7 +4170,7 @@ OO.ui.CapsuleMultiselectWidget.prototype.onMenuItemsChange = function () {
  *
  * @private
  */
-OO.ui.CapsuleMultiselectWidget.prototype.clearInput = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.clearInput = function () {
 	if ( this.$input ) {
 		this.$input.val( '' );
 		this.updateInputSize();
@@ -4280,11 +4186,11 @@ OO.ui.CapsuleMultiselectWidget.prototype.clearInput = function () {
 /**
  * @inheritdoc
  */
-OO.ui.CapsuleMultiselectWidget.prototype.setDisabled = function ( disabled ) {
+OO.ui.CapsuleMultiSelectWidget.prototype.setDisabled = function ( disabled ) {
 	var i, len;
 
 	// Parent method
-	OO.ui.CapsuleMultiselectWidget.parent.prototype.setDisabled.call( this, disabled );
+	OO.ui.CapsuleMultiSelectWidget.parent.prototype.setDisabled.call( this, disabled );
 
 	if ( this.$input ) {
 		this.$input.prop( 'disabled', this.isDisabled() );
@@ -4309,14 +4215,17 @@ OO.ui.CapsuleMultiselectWidget.prototype.setDisabled = function ( disabled ) {
  * Focus the widget
  *
  * @chainable
- * @return {OO.ui.CapsuleMultiselectWidget}
+ * @return {OO.ui.CapsuleMultiSelectWidget}
  */
-OO.ui.CapsuleMultiselectWidget.prototype.focus = function () {
+OO.ui.CapsuleMultiSelectWidget.prototype.focus = function () {
 	if ( !this.isDisabled() ) {
 		if ( this.popup ) {
 			this.popup.setSize( this.$handle.width() );
 			this.popup.toggle( true );
-			OO.ui.findFocusable( this.popup.$element ).focus();
+			this.popup.$element.find( '*' )
+				.filter( function () { return OO.ui.isFocusableElement( $( this ), true ); } )
+				.first()
+				.focus();
 		} else {
 			this.updateInputSize();
 			this.menu.toggle( true );
@@ -4325,12 +4234,6 @@ OO.ui.CapsuleMultiselectWidget.prototype.focus = function () {
 	}
 	return this;
 };
-
-/**
- * @class
- * @deprecated since 0.17.3; use OO.ui.CapsuleMultiselectWidget instead
- */
-OO.ui.CapsuleMultiSelectWidget = OO.ui.CapsuleMultiselectWidget;
 
 /**
  * SelectFileWidgets allow for selecting files, using the HTML5 File API. These
@@ -4440,8 +4343,8 @@ OO.ui.SelectFileWidget = function OoUiSelectFileWidget( config ) {
 		this.selectButton.setIcon( 'upload' );
 		this.$thumbnail = $( '<div>' ).addClass( 'oo-ui-selectFileWidget-thumbnail' );
 		this.setPendingElement( this.$thumbnail );
-		this.$element
-			.addClass( 'oo-ui-selectFileWidget-dropTarget oo-ui-selectFileWidget' )
+		this.$dropTarget = $( '<div>' )
+			.addClass( 'oo-ui-selectFileWidget-dropTarget' )
 			.on( {
 				click: this.onDropTargetClick.bind( this )
 			} )
@@ -4453,6 +4356,7 @@ OO.ui.SelectFileWidget = function OoUiSelectFileWidget( config ) {
 					.addClass( 'oo-ui-selectFileWidget-dropLabel' )
 					.text( OO.ui.msg( 'ooui-selectfile-dragdrop-placeholder' ) )
 			);
+		this.$element.append( this.$dropTarget );
 	} else {
 		this.$element
 			.addClass( 'oo-ui-selectFileWidget' )
@@ -4555,6 +4459,13 @@ OO.ui.SelectFileWidget.prototype.updateUI = function () {
 					.addClass( 'oo-ui-selectFileWidget-fileName' )
 					.text( this.currentFile.name )
 			);
+			if ( this.currentFile.type !== '' ) {
+				$label = $label.add(
+					$( '<span>' )
+						.addClass( 'oo-ui-selectFileWidget-fileType' )
+						.text( this.currentFile.type )
+				);
+			}
 			this.setLabel( $label );
 
 			if ( this.showDropTarget ) {
@@ -4571,12 +4482,12 @@ OO.ui.SelectFileWidget.prototype.updateUI = function () {
 				}.bind( this ) ).always( function () {
 					this.popPending();
 				}.bind( this ) );
-				this.$element.off( 'click' );
+				this.$dropTarget.off( 'click' );
 			}
 		} else {
 			if ( this.showDropTarget ) {
-				this.$element.off( 'click' );
-				this.$element.on( {
+				this.$dropTarget.off( 'click' );
+				this.$dropTarget.on( {
 					click: this.onDropTargetClick.bind( this )
 				} );
 				this.$thumbnail
@@ -4839,6 +4750,103 @@ OO.ui.SelectFileWidget.prototype.setDisabled = function ( disabled ) {
 };
 
 /**
+ * Progress bars visually display the status of an operation, such as a download,
+ * and can be either determinate or indeterminate:
+ *
+ * - **determinate** process bars show the percent of an operation that is complete.
+ *
+ * - **indeterminate** process bars use a visual display of motion to indicate that an operation
+ *   is taking place. Because the extent of an indeterminate operation is unknown, the bar does
+ *   not use percentages.
+ *
+ * The value of the `progress` configuration determines whether the bar is determinate or indeterminate.
+ *
+ *     @example
+ *     // Examples of determinate and indeterminate progress bars.
+ *     var progressBar1 = new OO.ui.ProgressBarWidget( {
+ *         progress: 33
+ *     } );
+ *     var progressBar2 = new OO.ui.ProgressBarWidget();
+ *
+ *     // Create a FieldsetLayout to layout progress bars
+ *     var fieldset = new OO.ui.FieldsetLayout;
+ *     fieldset.addItems( [
+ *        new OO.ui.FieldLayout( progressBar1, {label: 'Determinate', align: 'top'}),
+ *        new OO.ui.FieldLayout( progressBar2, {label: 'Indeterminate', align: 'top'})
+ *     ] );
+ *     $( 'body' ).append( fieldset.$element );
+ *
+ * @class
+ * @extends OO.ui.Widget
+ *
+ * @constructor
+ * @param {Object} [config] Configuration options
+ * @cfg {number|boolean} [progress=false] The type of progress bar (determinate or indeterminate).
+ *  To create a determinate progress bar, specify a number that reflects the initial percent complete.
+ *  By default, the progress bar is indeterminate.
+ */
+OO.ui.ProgressBarWidget = function OoUiProgressBarWidget( config ) {
+	// Configuration initialization
+	config = config || {};
+
+	// Parent constructor
+	OO.ui.ProgressBarWidget.parent.call( this, config );
+
+	// Properties
+	this.$bar = $( '<div>' );
+	this.progress = null;
+
+	// Initialization
+	this.setProgress( config.progress !== undefined ? config.progress : false );
+	this.$bar.addClass( 'oo-ui-progressBarWidget-bar' );
+	this.$element
+		.attr( {
+			role: 'progressbar',
+			'aria-valuemin': 0,
+			'aria-valuemax': 100
+		} )
+		.addClass( 'oo-ui-progressBarWidget' )
+		.append( this.$bar );
+};
+
+/* Setup */
+
+OO.inheritClass( OO.ui.ProgressBarWidget, OO.ui.Widget );
+
+/* Static Properties */
+
+OO.ui.ProgressBarWidget.static.tagName = 'div';
+
+/* Methods */
+
+/**
+ * Get the percent of the progress that has been completed. Indeterminate progresses will return `false`.
+ *
+ * @return {number|boolean} Progress percent
+ */
+OO.ui.ProgressBarWidget.prototype.getProgress = function () {
+	return this.progress;
+};
+
+/**
+ * Set the percent of the process completed or `false` for an indeterminate process.
+ *
+ * @param {number|boolean} progress Progress percent or `false` for indeterminate
+ */
+OO.ui.ProgressBarWidget.prototype.setProgress = function ( progress ) {
+	this.progress = progress;
+
+	if ( progress !== false ) {
+		this.$bar.css( 'width', this.progress + '%' );
+		this.$element.attr( 'aria-valuenow', this.progress );
+	} else {
+		this.$bar.css( 'width', '' );
+		this.$element.removeAttr( 'aria-valuenow' );
+	}
+	this.$element.toggleClass( 'oo-ui-progressBarWidget-indeterminate', !progress );
+};
+
+/**
  * SearchWidgets combine a {@link OO.ui.TextInputWidget text input field}, where users can type a search query,
  * and a menu of search results, which is displayed beneath the query
  * field. Unlike {@link OO.ui.mixin.LookupElement lookup menus}, search result menus are always visible to the user.
@@ -5023,20 +5031,24 @@ OO.ui.NumberInputWidget = function OoUiNumberInputWidget( config ) {
 		this.minusButton = new OO.ui.ButtonWidget( $.extend(
 			{
 				disabled: this.isDisabled(),
-				tabIndex: -1,
+				tabIndex: -1
+			},
+			config.minusButton,
+			{
 				classes: [ 'oo-ui-numberInputWidget-minusButton' ],
 				label: '−'
-			},
-			config.minusButton
+			}
 		) );
 		this.plusButton = new OO.ui.ButtonWidget( $.extend(
 			{
 				disabled: this.isDisabled(),
-				tabIndex: -1,
+				tabIndex: -1
+			},
+			config.plusButton,
+			{
 				classes: [ 'oo-ui-numberInputWidget-plusButton' ],
 				label: '+'
-			},
-			config.plusButton
+			}
 		) );
 	}
 
@@ -5234,11 +5246,11 @@ OO.ui.NumberInputWidget.prototype.validateNumber = function ( value ) {
 		return false;
 	}
 
-	/* eslint-disable no-bitwise */
+	/*jshint bitwise: false */
 	if ( this.isInteger && ( n | 0 ) !== n ) {
 		return false;
 	}
-	/* eslint-enable no-bitwise */
+	/*jshint bitwise: true */
 
 	if ( n < this.min || n > this.max ) {
 		return false;

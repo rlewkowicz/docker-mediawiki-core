@@ -38,7 +38,7 @@ ve.ce.FocusableNode = function VeCeFocusableNode( $focusable, config ) {
 	this.rects = null;
 	this.boundingRect = null;
 	this.startAndEndRects = null;
-	this.$icon = null;
+	this.icon = null;
 	this.touchMoved = false;
 
 	if ( Array.isArray( config.classes ) ) {
@@ -144,11 +144,7 @@ ve.ce.FocusableNode.prototype.onFocusableSetup = function () {
 	// handles mousedown events.
 	if ( !this.$element.is( this.$focusable ) ) {
 		this.$element.on( {
-			'mousedown.ve-ce-focusableNode': function ( e ) {
-				if ( !ve.isContentEditable( e.target ) ) {
-					e.preventDefault();
-				}
-			}
+			'mousedown.ve-ce-focusableNode': function ( e ) { e.preventDefault(); }
 		} );
 	}
 
@@ -176,46 +172,25 @@ ve.ce.FocusableNode.prototype.onFocusableSetup = function () {
  * @method
  */
 ve.ce.FocusableNode.prototype.updateInvisibleIcon = function () {
-	var showIcon,
-		rAF = window.requestAnimationFrame || setTimeout,
-		node = this;
-
 	if ( !this.constructor.static.iconWhenInvisible ) {
 		return;
 	}
-
-	showIcon = !this.hasRendering();
-
-	// Defer updating the DOM. If we don't do this, the hasRendering() call for the next
-	// FocusableNode will force a reflow, which is slow.
-	rAF( function () {
-		if ( showIcon ) {
-			if ( !node.$icon ) {
-				node.$icon = node.createInvisibleIcon();
-			}
-			node.$element.first()
-				.addClass( 've-ce-focusableNode-invisible' )
-				.prepend( node.$icon );
-		} else if ( node.$icon ) {
-			node.$element.first().removeClass( 've-ce-focusableNode-invisible' );
-			node.$icon.detach();
+	if ( !this.hasRendering() ) {
+		if ( !this.icon ) {
+			this.icon = new OO.ui.IconWidget( {
+				classes: [ 've-ce-focusableNode-invisibleIcon' ],
+				icon: this.constructor.static.iconWhenInvisible
+			} );
+			// Add em space for selection highlighting
+			this.icon.$element.text( '\u2003' );
 		}
-	} );
-};
-
-/**
- * Create a element to show if the node is invisible
- *
- * @return {jQuery} Element to show
- */
-ve.ce.FocusableNode.prototype.createInvisibleIcon = function () {
-	var icon = new OO.ui.IconWidget( {
-		classes: [ 've-ce-focusableNode-invisibleIcon' ],
-		icon: this.constructor.static.iconWhenInvisible
-	} );
-	// Add em space for selection highlighting
-	icon.$element.text( '\u2003' );
-	return icon.$element;
+		this.$element.first()
+			.addClass( 've-ce-focusableNode-invisible' )
+			.prepend( this.icon.$element );
+	} else if ( this.icon ) {
+		this.$element.first().removeClass( 've-ce-focusableNode-invisible' );
+		this.icon.$element.detach();
+	}
 };
 
 /**
@@ -266,7 +241,7 @@ ve.ce.FocusableNode.prototype.onFocusableMouseDown = function ( e ) {
 		return;
 	}
 
-	if ( e.which === OO.ui.MouseButtons.RIGHT ) {
+	if ( e.which === 3 ) {
 		// Hide images, and select spans so context menu shows 'copy', but not 'copy image'
 		this.$highlights.addClass( 've-ce-focusableNode-highlights-contextOpen' );
 		// Make ce=true so we get cut/paste options in context menu
@@ -315,7 +290,7 @@ ve.ce.FocusableNode.prototype.onFocusableDblClick = function () {
 ve.ce.FocusableNode.prototype.executeCommand = function () {
 	var command, surface;
 	if ( !this.model.isInspectable() ) {
-		return;
+		return false;
 	}
 	surface = this.focusableSurface.getSurface();
 	command = surface.commandRegistry.getCommandForNode( this );

@@ -215,11 +215,6 @@ ve.ui.DesktopContext.prototype.updateDimensions = function () {
 	// Selection when the inspector was opened. Used to stop the context from
 	// jumping when an inline selection expands, e.g. to cover a long word
 	startingSelection = !focusedNode && this.inspector && this.inspector.previousSelection;
-	// Don't use start selection if it comes from another document, e.g. the fake document used in
-	// source mode.
-	if ( startingSelection && startingSelection.getDocument() !== surface.getModel().getDocument ) {
-		startingSelection = null;
-	}
 	currentSelection = this.surface.getModel().getSelection();
 	isTableSelection = ( startingSelection || currentSelection ) instanceof ve.dm.TableSelection;
 
@@ -350,17 +345,16 @@ ve.ui.DesktopContext.prototype.setPopupSizeAndPosition = function ( repositionOn
 	}
 
 	if ( this.position ) {
-		// Float the content if it's bigger than the viewport. Exactly how /
-		// whether it should be floated is situational, so this is a
-		// preliminary determination. Checks below might cancel the float.
 		floating =
 			( !this.embeddable && this.position.y + this.dimensions.height > viewport.bottom - margin ) ||
 			( this.embeddable && this.position.y < viewport.top + margin );
+		this.$element.toggleClass( 've-ui-desktopContext-floating', floating );
+		this.popup.toggleAnchor( !floating && !this.embeddable );
 
 		if ( floating ) {
 			if ( this.embeddable ) {
 				if ( this.boundingRect.bottom - viewport.top - minimumVisibleHeight < this.dimensions.height + margin ) {
-					floating = false;
+					this.$element.toggleClass( 've-ui-desktopContext-floating', false );
 					this.$element.css( {
 						left: this.position.x,
 						top: this.position.y + this.boundingRect.height - this.dimensions.height - minimumVisibleHeight,
@@ -375,10 +369,10 @@ ve.ui.DesktopContext.prototype.setPopupSizeAndPosition = function ( repositionOn
 				}
 			} else {
 				if ( viewport.bottom - this.boundingRect.top - minimumVisibleHeight < this.dimensions.height + margin ) {
-					floating = false;
+					this.$element.toggleClass( 've-ui-desktopContext-floating', false );
 					this.$element.css( {
 						left: this.position.x,
-						top: this.position.y,
+						top: this.boundingRect.top + minimumVisibleHeight,
 						bottom: ''
 					} );
 				} else {
@@ -396,9 +390,6 @@ ve.ui.DesktopContext.prototype.setPopupSizeAndPosition = function ( repositionOn
 				bottom: ''
 			} );
 		}
-
-		this.$element.toggleClass( 've-ui-desktopContext-floating', !!floating );
-		this.popup.toggleAnchor( !floating && !this.embeddable );
 	}
 
 	if ( !repositionOnly ) {

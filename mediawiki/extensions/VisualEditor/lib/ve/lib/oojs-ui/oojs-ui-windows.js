@@ -1,12 +1,12 @@
 /*!
- * OOjs UI v0.18.2
+ * OOjs UI v0.17.1
  * https://www.mediawiki.org/wiki/OOjs_UI
  *
  * Copyright 2011–2016 OOjs UI Team and other contributors.
  * Released under the MIT license
  * http://oojs.mit-license.org
  *
- * Date: 2016-12-06T23:32:53Z
+ * Date: 2016-05-03T22:58:02Z
  */
 ( function ( OO ) {
 
@@ -183,7 +183,6 @@ OO.ui.ActionWidget.prototype.toggle = function () {
 	return this;
 };
 
-/* eslint-disable no-unused-vars */
 /**
  * ActionSets manage the behavior of the {@link OO.ui.ActionWidget action widgets} that comprise them.
  * Actions can be made available for specific contexts (modes) and circumstances
@@ -284,7 +283,6 @@ OO.ui.ActionSet = function OoUiActionSet( config ) {
 	this.changing = false;
 	this.changed = false;
 };
-/* eslint-enable no-unused-vars */
 
 /* Setup */
 
@@ -804,6 +802,7 @@ OO.ui.Error.prototype.getMessageText = function () {
  *  that must be resolved before proceeding, or a function to execute. See #createStep for more information. see #createStep for more information
  * @param {Object} [context=null] Execution context of the function. The context is ignored if the step is
  *  a number or promise.
+ * @return {Object} Step object, with `callback` and `context` properties
  */
 OO.ui.Process = function ( step, context ) {
 	// Properties
@@ -1025,7 +1024,6 @@ OO.ui.WindowManager = function OoUiWindowManager( config ) {
 	this.preparingToClose = null;
 	this.currentWindow = null;
 	this.globalEvents = false;
-	this.$returnFocusTo = null;
 	this.$ariaHidden = null;
 	this.onWindowResizeTimeout = null;
 	this.onWindowResizeHandler = this.onWindowResize.bind( this );
@@ -1142,7 +1140,6 @@ OO.ui.WindowManager.prototype.afterWindowResize = function () {
 /**
  * Check if window is opening.
  *
- * @param {OO.ui.Window} win Window to check
  * @return {boolean} Window is opening
  */
 OO.ui.WindowManager.prototype.isOpening = function ( win ) {
@@ -1152,7 +1149,6 @@ OO.ui.WindowManager.prototype.isOpening = function ( win ) {
 /**
  * Check if window is closing.
  *
- * @param {OO.ui.Window} win Window to check
  * @return {boolean} Window is closing
  */
 OO.ui.WindowManager.prototype.isClosing = function ( win ) {
@@ -1162,7 +1158,6 @@ OO.ui.WindowManager.prototype.isClosing = function ( win ) {
 /**
  * Check if window is opened.
  *
- * @param {OO.ui.Window} win Window to check
  * @return {boolean} Window is opened
  */
 OO.ui.WindowManager.prototype.isOpened = function ( win ) {
@@ -1286,8 +1281,6 @@ OO.ui.WindowManager.prototype.getCurrentWindow = function () {
  *
  * @param {OO.ui.Window|string} win Window object or symbolic name of window to open
  * @param {Object} [data] Window opening data
- * @param {jQuery|null} [data.$returnFocusTo] Element to which the window will return focus when closed.
- *  Defaults the current activeElement. If set to null, focus isn't changed on close.
  * @return {jQuery.Promise} An `opening` promise resolved when the window is done opening.
  *  See {@link #event-opening 'opening' event}  for more information about `opening` promises.
  * @fires opening
@@ -1295,7 +1288,6 @@ OO.ui.WindowManager.prototype.getCurrentWindow = function () {
 OO.ui.WindowManager.prototype.openWindow = function ( win, data ) {
 	var manager = this,
 		opening = $.Deferred();
-	data = data || {};
 
 	// Argument handling
 	if ( typeof win === 'string' ) {
@@ -1325,7 +1317,6 @@ OO.ui.WindowManager.prototype.openWindow = function ( win, data ) {
 				manager.toggleGlobalEvents( true );
 				manager.toggleAriaIsolation( true );
 			}
-			manager.$returnFocusTo = data.$returnFocusTo || $( document.activeElement );
 			manager.currentWindow = win;
 			manager.opening = opening;
 			manager.preparingToOpen = null;
@@ -1419,9 +1410,6 @@ OO.ui.WindowManager.prototype.closeWindow = function ( win, data ) {
 								manager.toggleGlobalEvents( false );
 								manager.toggleAriaIsolation( false );
 							}
-							if ( manager.$returnFocusTo && manager.$returnFocusTo.length ) {
-								manager.$returnFocusTo[ 0 ].focus();
-							}
 							manager.closing = null;
 							manager.currentWindow = null;
 							closing.resolve( data );
@@ -1457,9 +1445,6 @@ OO.ui.WindowManager.prototype.addWindows = function ( windows ) {
 			name = windows[ i ].constructor.static.name;
 			if ( typeof name !== 'string' ) {
 				throw new Error( 'Cannot add window' );
-			}
-			if ( !name ) {
-				OO.ui.warnDeprecation( 'OO.ui.WindowManager#addWindows: Windows must have a `name` static property defined.' );
 			}
 			list[ name ] = windows[ i ];
 		}
@@ -1527,7 +1512,6 @@ OO.ui.WindowManager.prototype.clearWindows = function () {
  *
  * Fullscreen mode will be used if the dialog is too wide to fit in the screen.
  *
- * @param {OO.ui.Window} win Window to update, should be the current window
  * @chainable
  */
 OO.ui.WindowManager.prototype.updateWindowSize = function ( win ) {
@@ -1561,7 +1545,7 @@ OO.ui.WindowManager.prototype.toggleGlobalEvents = function ( on ) {
 		$body = $( this.getElementDocument().body ),
 		// We could have multiple window managers open so only modify
 		// the body css at the bottom of the stack
-		stackDepth = $body.data( 'windowManagerGlobalEvents' ) || 0;
+		stackDepth = $body.data( 'windowManagerGlobalEvents' ) || 0 ;
 
 	on = on === undefined ? !!this.globalEvents : !!on;
 
@@ -1866,20 +1850,17 @@ OO.ui.Window.prototype.getSizeProperties = function () {
 OO.ui.Window.prototype.withoutSizeTransitions = function ( callback ) {
 	// Temporarily resize the frame so getBodyHeight() can use scrollHeight measurements.
 	// Disable transitions first, otherwise we'll get values from when the window was animating.
-	// We need to build the transition CSS properties using these specific properties since
-	// Firefox doesn't return anything useful when asked just for 'transition'.
-	var oldTransition = this.$frame.css( 'transition-property' ) + ' ' +
-		this.$frame.css( 'transition-duration' ) + ' ' +
-		this.$frame.css( 'transition-timing-function' ) + ' ' +
-		this.$frame.css( 'transition-delay' );
-
-	this.$frame.css( 'transition', 'none' );
+	var oldTransition,
+		styleObj = this.$frame[ 0 ].style;
+	oldTransition = styleObj.transition || styleObj.OTransition || styleObj.MsTransition ||
+		styleObj.MozTransition || styleObj.WebkitTransition;
+	styleObj.transition = styleObj.OTransition = styleObj.MsTransition =
+		styleObj.MozTransition = styleObj.WebkitTransition = 'none';
 	callback();
-
-	// Force reflow to make sure the style changes done inside callback
-	// really are not transitioned
+	// Force reflow to make sure the style changes done inside callback really are not transitioned
 	this.$frame.height();
-	this.$frame.css( 'transition', oldTransition );
+	styleObj.transition = styleObj.OTransition = styleObj.MsTransition =
+		styleObj.MozTransition = styleObj.WebkitTransition = oldTransition;
 };
 
 /**
@@ -2154,18 +2135,10 @@ OO.ui.Window.prototype.initialize = function () {
  * @param {jQuery.Event} event Focus event
  */
 OO.ui.Window.prototype.onFocusTrapFocused = function ( event ) {
-	var backwards = this.$focusTrapBefore.is( event.target ),
-		element = OO.ui.findFocusable( this.$content, backwards );
-	if ( element ) {
-		// There's a focusable element inside the content, at the front or
-		// back depending on which focus trap we hit; select it.
-		element.focus();
+	if ( this.$focusTrapBefore.is( event.target ) ) {
+		OO.ui.findFocusable( this.$content, true ).focus();
 	} else {
-		// There's nothing focusable inside the content. As a fallback,
-		// this.$content is focusable, and focusing it will keep our focus
-		// properly trapped. It's not a *meaningful* focus, since it's just
-		// the content-div for the Window, but it's better than letting focus
-		// escape into the page.
+		// this.$content is the part of the focus cycle, and is the first focusable element
 		this.$content.focus();
 	}
 };
@@ -2539,10 +2512,11 @@ OO.ui.Dialog.prototype.getSetupProcess = function ( data ) {
 	return OO.ui.Dialog.parent.prototype.getSetupProcess.call( this, data )
 		.next( function () {
 			var config = this.constructor.static,
-				actions = data.actions !== undefined ? data.actions : config.actions,
-				title = data.title !== undefined ? data.title : config.title;
+				actions = data.actions !== undefined ? data.actions : config.actions;
 
-			this.title.setLabel( title ).setTitle( title );
+			this.title.setLabel(
+				data.title !== undefined ? data.title : this.constructor.static.title
+			);
 			this.actions.add( this.getActionWidgets( actions ) );
 
 			this.$element.on( 'keydown', this.onDialogKeyDownHandler );
@@ -3140,11 +3114,7 @@ OO.ui.ProcessDialog.prototype.initialize = function () {
 		.append( this.$errors );
 	this.$navigation
 		.addClass( 'oo-ui-processDialog-navigation' )
-		// Note: Order of appends below is important. These are in the order
-		// we want tab to go through them. Display-order is handled entirely
-		// by CSS absolute-positioning. As such, primary actions like "done"
-		// should go first.
-		.append( this.$primaryActions, this.$location, this.$safeActions );
+		.append( this.$safeActions, this.$location, this.$primaryActions );
 	this.$head.append( this.$navigation );
 	this.$foot.append( this.$otherActions );
 };

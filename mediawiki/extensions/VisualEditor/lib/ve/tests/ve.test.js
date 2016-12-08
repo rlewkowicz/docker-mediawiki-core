@@ -27,69 +27,68 @@ QUnit.module( 've' );
 // ve.extendObject: Tested upstream (jQuery)
 
 QUnit.test( 'compareClassLists', 1, function ( assert ) {
-	var i,
-		cases = [
-			{
-				args: [ '', '' ],
-				expected: true
-			},
-			{
-				args: [ '', [] ],
-				expected: true
-			},
-			{
-				args: [ [], [] ],
-				expected: true
-			},
-			{
-				args: [ '', [ '' ] ],
-				expected: true
-			},
-			{
-				args: [ [], [ '' ] ],
-				expected: true
-			},
-			{
-				args: [ 'foo', '' ],
-				expected: false
-			},
-			{
-				args: [ 'foo', 'foo' ],
-				expected: true
-			},
-			{
-				args: [ 'foo', 'bar' ],
-				expected: false
-			},
-			{
-				args: [ 'foo', 'foo bar' ],
-				expected: false
-			},
-			{
-				args: [ 'foo', [ 'foo' ] ],
-				expected: true
-			},
-			{
-				args: [ [ 'foo' ], 'bar' ],
-				expected: false
-			},
-			{
-				args: [ 'foo', [ 'foo', 'bar' ] ],
-				expected: false
-			},
-			{
-				args: [ 'foo', [ 'foo', 'foo' ] ],
-				expected: true
-			},
-			{
-				args: [ [ 'foo' ], 'foo foo' ],
-				expected: true
-			},
-			{
-				args: [ 'foo bar foo', 'foo foo' ],
-				expected: false
-			}
-		];
+	var i, cases = [
+		{
+			args: [ '', '' ],
+			expected: true
+		},
+		{
+			args: [ '', [] ],
+			expected: true
+		},
+		{
+			args: [ [], [] ],
+			expected: true
+		},
+		{
+			args: [ '', [ '' ] ],
+			expected: true
+		},
+		{
+			args: [ [], [ '' ] ],
+			expected: true
+		},
+		{
+			args: [ 'foo', '' ],
+			expected: false
+		},
+		{
+			args: [ 'foo', 'foo' ],
+			expected: true
+		},
+		{
+			args: [ 'foo', 'bar' ],
+			expected: false
+		},
+		{
+			args: [ 'foo', 'foo bar' ],
+			expected: false
+		},
+		{
+			args: [ 'foo', [ 'foo' ] ],
+			expected: true
+		},
+		{
+			args: [ [ 'foo' ], 'bar' ],
+			expected: false
+		},
+		{
+			args: [ 'foo', [ 'foo', 'bar' ] ],
+			expected: false
+		},
+		{
+			args: [ 'foo', [ 'foo', 'foo' ] ],
+			expected: true
+		},
+		{
+			args: [ [ 'foo' ], 'foo foo' ],
+			expected: true
+		},
+		{
+			args: [ 'foo bar foo', 'foo foo' ],
+			expected: false
+		}
+	];
 
 	QUnit.expect( cases.length );
 	for ( i = 0; i < cases.length; i++ ) {
@@ -267,71 +266,6 @@ QUnit.test( 'getOpeningHtmlTag', 3, function ( assert ) {
 	);
 } );
 
-QUnit.test( 'sparseSplice', function ( assert ) {
-	var tests, i, len, test;
-	// Convert a sparse array of primitives to an array of strings, with '' for holes.
-	// This is needed because QUnit.equiv treats holes as equivalent to undefined.
-	function mapToString( flatArray ) {
-		var j, jLen,
-			strings = [];
-		for ( j = 0, jLen = flatArray.length; j < jLen; j++ ) {
-			strings.push( flatArray.hasOwnProperty( j ) ? String( flatArray[ j ] ) : '' );
-		}
-		return strings;
-	}
-	function runTest( arr, offset, remove, data, expectedReturn, expectedArray, msg ) {
-		var observedReturn,
-			testArr = arr.slice();
-
-		observedReturn = ve.sparseSplice( testArr, offset, remove, data );
-		assert.deepEqual(
-			mapToString( observedReturn ),
-			mapToString( expectedReturn ),
-			msg + ': return'
-		);
-		assert.deepEqual(
-			mapToString( testArr ),
-			mapToString( expectedArray ),
-			msg + ': modification'
-		);
-	}
-	tests =	[
-		/* eslint-disable no-sparse-arrays */
-		// arr, offset, remove, data, expectedReturn, expectedArray, msg
-		[ [], 0, 0, [ , 3 ], [], [ , 3 ], 'insert empty, leading hole' ],
-		[ [], 0, 0, [ 1, , 3 ], [], [ 1, , 3 ], 'insert empty, middle hole' ],
-		// Note: the first trailing comma does not create a hole
-		[ [], 0, 0, [ 1, , ], [], [ 1, , ], 'insert empty, trailing hole' ],
-		[ [ 4, , 5 ], 0, 0, [ 1, , 3 ], [], [ 1, , 3, 4, , 5 ], 'insert start' ],
-		[ [ 0, , 4 ], 1, 0, [ 1, , 3 ], [], [ 0, 1, , 3, , 4 ], 'insert mid' ],
-		[ [ 0, , 4 ], 3, 0, [ 1, , 3 ], [], [ 0, , 4, 1, , 3 ], 'insert end' ],
-
-		[ [ 4, , 5, , 6 ], 0, 4, [ 1, , 3 ], [ 4, , 5, , ], [ 1, , 3, 6 ], 'diff<0 start' ],
-		[ [ 4, , , 5, , 6 ], 1, 4, [ 1, , 3 ], [ , , 5, , ], [ 4, 1, , 3, 6 ], 'diff<0 mid' ],
-		[ [ 4, , 5, , 6 ], 1, 4, [ 1, , 3 ], [ , 5, , 6 ], [ 4, 1, , 3 ], 'diff<0 end' ],
-
-		[ [ 4, , 5, , 6 ], 0, 2, [ 1, , 3 ], [ 4, , ], [ 1, , 3, 5, , 6 ], 'diff>0 start' ],
-		[ [ 4, , 5, , 6 ], 1, 2, [ 1, , 3 ], [ , 5 ], [ 4, 1, , 3, , 6 ], 'diff>0 mid' ],
-		[ [ 4, , 5, , 6 ], 3, 2, [ 1, , 3 ], [ , 6 ], [ 4, , 5, 1, , 3 ], 'diff>0 end' ],
-
-		[ [ 4, , 5, , 6 ], 0, 3, [ 1, , 3 ], [ 4, , 5 ], [ 1, , 3, , 6 ], 'diff=0 start' ],
-		[ [ 4, , 5, , 6 ], 1, 3, [ 1, , 3 ], [ , 5, , ], [ 4, 1, , 3, 6 ], 'diff=0 mid' ],
-		[ [ 4, , 5, , 6 ], 2, 3, [ 1, , 3 ], [ 5, , 6 ], [ 4, , 1, , 3 ], 'diff=0 end' ]
-		/* eslint-enable no-sparse-arrays */
-	];
-	QUnit.expect( 2 * tests.length + 1 );
-	assert.notDeepEqual(
-		// eslint-disable-next-line no-sparse-arrays
-		mapToString( [ 1, , ] ),
-		mapToString( [ 1, undefined ] ),
-		'holes look different to undefined'
-	);
-	for ( i = 0, len = tests.length; i < len; i++ ) {
-		test = tests[ i ];
-		runTest.apply( null, test );
-	}
-} );
-
 QUnit.test( 'batchSplice', function ( assert ) {
 	var spliceWasSupported = ve.supportsSplice;
 
@@ -379,33 +313,6 @@ QUnit.test( 'batchSplice', function ( assert ) {
 		assertBatchSplice();
 		ve.supportsSplice = true;
 	}
-} );
-
-QUnit.test( 'batchPush', function ( assert ) {
-	var i, actual, actualRet,
-		bigArr = [];
-
-	actual = [];
-	actualRet = ve.batchPush( actual, [ 1, 2, 3 ] );
-	assert.deepEqual( actualRet, 3, 'Adding to an empty array: return' );
-	assert.deepEqual( actual, [ 1, 2, 3 ], 'Adding to an empty array: value' );
-
-	actual = [ 1 ];
-	actualRet = ve.batchPush( actual, [ 1, 2, 3 ] );
-	assert.deepEqual( actualRet, 4, 'Adding to a non-empty array: return' );
-	assert.deepEqual( actual, [ 1, 1, 2, 3 ], 'Adding to a non-empty array: value' );
-
-	// batchPush takes a separate codepath for really long arrays, make sure it's behaving similarly:
-
-	for ( i = 0; i < 2100; i++ ) {
-		bigArr[ i ] = i;
-	}
-
-	actual = [ 'a' ];
-	actualRet = ve.batchPush( actual, bigArr );
-	assert.deepEqual( actualRet, 2101, 'Adding a huge array: return' );
-	assert.deepEqual( actual[ 0 ], 'a', 'Adding a huge array: first value' );
-	assert.deepEqual( actual[ actual.length - 1 ], 2099, 'Adding a huge array: last value' );
 } );
 
 QUnit.test( 'insertIntoArray', 3, function ( assert ) {
@@ -559,19 +466,13 @@ QUnit.test( 'resolveUrl', function ( assert ) {
 } );
 
 QUnit.test( 'resolveAttributes', function ( assert ) {
-	var i, doc, div,
+	var i, doc, $html,
 		cases = [
 			{
 				base: 'http://example.com',
 				html: '<div><a href="foo">foo</a></div><a href="bar">bar</a><img src="baz">',
 				resolved: '<div><a href="http://example.com/foo">foo</a></div><a href="http://example.com/bar">bar</a><img src="http://example.com/baz">',
 				msg: 'href and src resolved'
-			},
-			{
-				base: 'http://example.com',
-				html: '<a href="foo">foo</a>',
-				resolved: '<a href="http://example.com/foo">foo</a>',
-				msg: 'href resolved on self (unwrapped)'
 			}
 		];
 
@@ -580,11 +481,10 @@ QUnit.test( 'resolveAttributes', function ( assert ) {
 	for ( i = 0; i < cases.length; i++ ) {
 		doc = ve.createDocumentFromHtml( '' );
 		doc.head.appendChild( $( '<base>', doc ).attr( 'href', cases[ i ].base )[ 0 ] );
-		div = document.createElement( 'div' );
-		div.innerHTML = cases[ i ].html;
-		ve.resolveAttributes( div.childNodes, doc, ve.dm.Converter.static.computedAttributes );
+		$html = $( '<div>' ).append( cases[ i ].html );
+		ve.resolveAttributes( $html, doc, ve.dm.Converter.static.computedAttributes );
 		assert.strictEqual(
-			div.innerHTML,
+			$html.html(),
 			cases[ i ].resolved,
 			cases[ i ].msg
 		);
@@ -791,8 +691,6 @@ QUnit.test( 'transformStyleAttributes', function ( assert ) {
 			ve.normalizeAttributeValue = oldNormalizeAttributeValue;
 		}
 	}
-
-	ve.isStyleAttributeBroken = wasStyleAttributeBroken;
 } );
 
 QUnit.test( 'normalizeNode', function ( assert ) {
@@ -977,46 +875,6 @@ QUnit.test( 'getCommonAncestor', function ( assert ) {
 			ve.getCommonAncestor.apply( null, testNodes ),
 			ancestorNode,
 			test.nodes + ' -> ' + test.ancestor
-		);
-	}
-} );
-
-QUnit.test( 'getCommonStartSequenceLength', function ( assert ) {
-	var i, len, tests, test;
-	tests = [
-		{
-			sequences: [ [ 0, 1, 2 ], [ 0, 1, 2 ], [ '0', 1, 2 ] ],
-			commonLength: 0,
-			title: 'No common start sequence'
-		},
-		{
-			sequences: [ [ 1, 2, 3 ], [] ],
-			commonLength: 0,
-			title: 'Empty sequence'
-		},
-		{
-			sequences: [ [ 'five', 6 ], [ 'five' ] ],
-			commonLength: 1,
-			title: 'Differing lengths'
-		},
-		{
-			sequences: [ [ 1, 2 ] ],
-			commonLength: 2,
-			title: 'Single sequence'
-		},
-		{
-			sequences: [ 'Cymru', 'Cymry', 'Cymraes', 'Cymro', 'Cymraeg' ],
-			commonLength: 4,
-			title: 'String sequences'
-		}
-	];
-	QUnit.expect( tests.length );
-	for ( i = 0, len = tests.length; i < len; i++ ) {
-		test = tests[ i ];
-		assert.strictEqual(
-			ve.getCommonStartSequenceLength( test.sequences ),
-			test.commonLength,
-			test.title
 		);
 	}
 } );

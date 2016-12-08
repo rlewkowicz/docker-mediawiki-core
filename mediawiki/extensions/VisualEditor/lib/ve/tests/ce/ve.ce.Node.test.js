@@ -8,9 +8,9 @@ QUnit.module( 've.ce.Node' );
 
 /* Stubs */
 
-ve.ce.NodeStub = function VeCeNodeStub() {
+ve.ce.NodeStub = function VeCeNodeStub( model ) {
 	// Parent constructor
-	ve.ce.NodeStub.super.apply( this, arguments );
+	ve.ce.Node.call( this, model );
 };
 
 OO.inheritClass( ve.ce.NodeStub, ve.ce.Node );

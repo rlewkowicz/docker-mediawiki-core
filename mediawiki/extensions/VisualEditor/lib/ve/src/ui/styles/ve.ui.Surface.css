@@ -9,7 +9,7 @@
 }
 
 .ve-ui-surface:after {
-	content: '.';
+	content: ".";
 	display: block;
 	clear: both;
 	visibility: hidden;
@@ -30,13 +30,4 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-}
-
-.ve-ui-surface-source .ve-ce-documentNode {
-	font-size: 1.2821em;
-	font-family: monospace;
-}
-
-.ve-ui-surface-source .ve-ce-paragraphNode {
-	margin: 0;
 }

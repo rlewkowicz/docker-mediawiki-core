@@ -14,9 +14,9 @@
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.IndentationTool = function VeUiIndentationTool() {
+ve.ui.IndentationTool = function VeUiIndentationTool( toolGroup, config ) {
 	// Parent constructor
-	ve.ui.IndentationTool.super.apply( this, arguments );
+	ve.ui.Tool.call( this, toolGroup, config );
 };
 
 /* Inheritance */
@@ -32,8 +32,8 @@ OO.inheritClass( ve.ui.IndentationTool, ve.ui.Tool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.IncreaseIndentationTool = function VeUiIncreaseIndentationTool() {
-	ve.ui.IncreaseIndentationTool.super.apply( this, arguments );
+ve.ui.IncreaseIndentationTool = function VeUiIncreaseIndentationTool( toolGroup, config ) {
+	ve.ui.IndentationTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.IncreaseIndentationTool, ve.ui.IndentationTool );
 ve.ui.IncreaseIndentationTool.static.name = 'indent';
@@ -55,8 +55,8 @@ ve.ui.toolFactory.register( ve.ui.IncreaseIndentationTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.DecreaseIndentationTool = function VeUiDecreaseIndentationTool() {
-	ve.ui.DecreaseIndentationTool.super.apply( this, arguments );
+ve.ui.DecreaseIndentationTool = function VeUiDecreaseIndentationTool( toolGroup, config ) {
+	ve.ui.IndentationTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.DecreaseIndentationTool, ve.ui.IndentationTool );
 ve.ui.DecreaseIndentationTool.static.name = 'outdent';

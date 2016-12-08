@@ -17,9 +17,8 @@ ve.ui.Toolbar = function VeUiToolbar( config ) {
 	config = config || {};
 
 	// Parent constructor
-	ve.ui.Toolbar.super.call( this, ve.ui.toolFactory, ve.ui.toolGroupFactory, config );
+	OO.ui.Toolbar.call( this, ve.ui.toolFactory, ve.ui.toolGroupFactory, config );
 
-	this.groups = null;
 	// Default directions
 	this.contextDirection = { inline: 'ltr', block: 'ltr' };
 	// The following classes can be used here:
@@ -63,14 +62,8 @@ ve.ui.Toolbar.prototype.setup = function ( groups, surface ) {
 
 	this.surface = surface;
 
-	// The parent method just rebuilds the tool groups so only
-	// do this if they have changed
-	if ( groups !== this.groups ) {
-		// Parent method
-		ve.ui.Toolbar.super.prototype.setup.call( this, groups );
-	}
-
-	this.groups = groups;
+	// Parent method
+	ve.ui.Toolbar.super.prototype.setup.call( this, groups );
 
 	// Events
 	this.getSurface().getModel().connect( this, { contextChange: 'onContextChange' } );
@@ -216,9 +209,7 @@ ve.ui.Toolbar.prototype.getToolAccelerator = function ( name ) {
 /**
  * Gets the surface which the toolbar controls.
  *
- * Returns null if the toolbar hasn't been set up yet.
- *
- * @return {ve.ui.Surface|null} Surface being controlled
+ * @return {ve.ui.Surface} Surface being controlled
  */
 ve.ui.Toolbar.prototype.getSurface = function () {
 	return this.surface;
@@ -242,7 +233,7 @@ ve.ui.Toolbar.prototype.detach = function () {
  */
 ve.ui.Toolbar.prototype.destroy = function () {
 	// Parent method
-	ve.ui.Toolbar.super.prototype.destroy.call( this );
+	OO.ui.Toolbar.prototype.destroy.call( this );
 
 	// Detach surface last, because tool destructors need getSurface()
 	this.detach();

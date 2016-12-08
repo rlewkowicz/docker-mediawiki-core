@@ -139,8 +139,8 @@ ve.ce.TableNode.prototype.onTableMouseDown = function ( e ) {
 		return;
 	}
 
-	// Right-click on a cell which isn't being edited
-	if ( e.which === OO.ui.MouseButtons.RIGHT && !this.getActiveCellNode() ) {
+	// Right-click
+	if ( e.which === 3 ) {
 		// Select the cell to the browser renders the correct context menu
 		ve.selectElement( cellNode.$element[ 0 ] );
 		setTimeout( function () {
@@ -375,7 +375,7 @@ ve.ce.TableNode.prototype.onSurfaceModelSelect = function ( selection ) {
 		}
 		// Ignore update the overlay if the table selection changed, i.e. not an in-cell selection change
 		if ( selection instanceof ve.dm.TableSelection ) {
-			this.updateOverlayDebounced( true );
+			this.updateOverlayDebounced( true  );
 		}
 	} else if ( !active && this.active ) {
 		this.$overlay.addClass( 'oo-ui-element-hidden' );

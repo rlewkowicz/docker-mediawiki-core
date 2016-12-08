@@ -78,14 +78,14 @@ QUnit.test( 'getSelectedModels', 4, function ( assert ) {
 	);
 	assert.deepEqual(
 		surface.getLinearFragment( new ve.Range( 2, 3 ) ).getSelectedModels(),
-		[ doc.data.store.value( ve.dm.example.boldIndex ) ],
+		[ doc.data.store.value( 0 ) ],
 		'Bold annotation'
 	);
 	assert.deepEqual(
 		surface.getLinearFragment( new ve.Range( 1, 3 ) ).getSelectedModels( true ),
 		[
 			doc.getDocumentNode().children[ 0 ].children[ 0 ],
-			doc.data.store.value( ve.dm.example.boldIndex )
+			doc.data.store.value( 0 )
 		],
 		'Bold annotation and text node'
 	);
@@ -104,16 +104,16 @@ QUnit.test( 'getAnnotations', 4, function ( assert ) {
 
 	tableSelection = new ve.dm.TableSelection( doc, tableRange, 0, 0, 1, 0 );
 
-	assert.deepEqual( surface.getFragment( tableSelection ).getAnnotations().getIndexes(), [ ve.dm.example.boldIndex, ve.dm.example.strongIndex ], 'Comparable annotations: [B] ∩ [Strong] = [B,Strong] ' );
+	assert.deepEqual( surface.getFragment( tableSelection ).getAnnotations().getIndexes(), [ 0, 1 ], 'Comparable annotations: [B] ∩ [Strong] = [B,Strong] ' );
 
 	tableSelection = new ve.dm.TableSelection( doc, tableRange, 0, 0, 2, 0 );
 	assert.deepEqual( surface.getFragment( tableSelection ).getAnnotations().getIndexes(), [], 'Non-comparable annotations: [B] ∩ [Strong] ∩ [I] = [] ' );
 
 	tableSelection = new ve.dm.TableSelection( doc, tableRange, 0, 1, 1, 1 );
-	assert.deepEqual( surface.getFragment( tableSelection ).getAnnotations().getIndexes(), [ ve.dm.example.boldIndex, ve.dm.example.strongIndex ], 'Non-comparable in first cell: [B,I] ∩ [Strong] = [B,Strong]' );
+	assert.deepEqual( surface.getFragment( tableSelection ).getAnnotations().getIndexes(), [ 0, 1 ], 'Non-comparable in first cell: [B,I] ∩ [Strong] = [B,Strong]' );
 
 	tableSelection = new ve.dm.TableSelection( doc, tableRange, 0, 0, 2, 0 );
-	assert.deepEqual( surface.getFragment( tableSelection ).getAnnotations( true ).getIndexes(), [ ve.dm.example.boldIndex, ve.dm.example.strongIndex, ve.dm.example.italicIndex ], 'Get all annotations' );
+	assert.deepEqual( surface.getFragment( tableSelection ).getAnnotations( true ).getIndexes(), [ 0, 1, 2 ], 'Get all annotations' );
 } );
 
 QUnit.test( 'hasAnnotations', 2, function ( assert ) {
@@ -271,27 +271,26 @@ QUnit.test( 'expandLinearSelection (closest)', function ( assert ) {
 } );
 
 QUnit.test( 'expandLinearSelection (word)', 1, function ( assert ) {
-	var i, doc, surface, fragment, newFragment, range, word,
-		cases = [
-			{
-				phrase: 'the quick brown fox',
-				range: new ve.Range( 6, 13 ),
-				expected: 'quick brown',
-				msg: 'range starting and ending in latin words'
-			},
-			{
-				phrase: 'the quick brown fox',
-				range: new ve.Range( 18, 12 ),
-				expected: 'brown fox',
-				msg: 'backwards range starting and ending in latin words'
-			},
-			{
-				phrase: 'the quick brown fox',
-				range: new ve.Range( 7 ),
-				expected: 'quick',
-				msg: 'zero-length range'
-			}
-		];
+	var i, doc, surface, fragment, newFragment, range, word, cases = [
+		{
+			phrase: 'the quick brown fox',
+			range: new ve.Range( 6, 13 ),
+			expected: 'quick brown',
+			msg: 'range starting and ending in latin words'
+		},
+		{
+			phrase: 'the quick brown fox',
+			range: new ve.Range( 18, 12 ),
+			expected: 'brown fox',
+			msg: 'backwards range starting and ending in latin words'
+		},
+		{
+			phrase: 'the quick brown fox',
+			range: new ve.Range( 7 ),
+			expected: 'quick',
+			msg: 'zero-length range'
+		}
+	];
 	QUnit.expect( cases.length * 2 );
 	for ( i = 0; i < cases.length; i++ ) {
 		doc = new ve.dm.Document( cases[ i ].phrase.split( '' ) );
@@ -470,7 +469,7 @@ QUnit.test( 'insertContent', 11, function ( assert ) {
 	fragment.insertContent( [ 'a' ], true );
 	assert.deepEqual(
 		doc.getData( new ve.Range( 3, 4 ) ),
-		[ [ 'a', [ ve.dm.example.italicIndex ] ] ],
+		[ [ 'a', [ 1 ] ] ],
 		'inserting content (annotate=true) replaces selection with new annotated content'
 	);
 

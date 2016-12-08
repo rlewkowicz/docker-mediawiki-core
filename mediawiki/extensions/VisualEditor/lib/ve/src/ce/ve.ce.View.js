@@ -22,7 +22,7 @@ ve.ce.View = function VeCeView( model, config ) {
 	this.model = model;
 
 	// Parent constructor
-	ve.ce.View.super.call( this, config );
+	OO.ui.Element.call( this, config );
 
 	// Mixin constructors
 	OO.EventEmitter.call( this );
@@ -36,20 +36,18 @@ ve.ce.View = function VeCeView( model, config ) {
 		teardown: 'onTeardown'
 	} );
 
-	if ( this.model.element && this.model.element.originalDomElementsIndex !== undefined ) {
-		// Render attributes from original DOM elements
-		ve.dm.Converter.static.renderHtmlAttributeList(
-			this.model.getOriginalDomElements( this.model.getStore() ),
-			this.$element,
-			this.constructor.static.renderHtmlAttributes,
-			// computed attributes
-			true,
-			// deep
-			!( this.model instanceof ve.dm.Node ) ||
-			!this.model.canHaveChildren() ||
-			this.model.handlesOwnChildren()
-		);
-	}
+	// Render attributes from original DOM elements
+	ve.dm.Converter.static.renderHtmlAttributeList(
+		this.model.getOriginalDomElements(),
+		this.$element,
+		this.constructor.static.renderHtmlAttributes,
+		// computed attributes
+		true,
+		// deep
+		!ve.dm.nodeFactory.lookup( this.model.getType() ) ||
+			!ve.dm.nodeFactory.canNodeHaveChildren( this.model.getType() ) ||
+			ve.dm.nodeFactory.doesNodeHandleOwnChildren( this.model.getType() )
+	);
 };
 
 /* Inheritance */
@@ -70,7 +68,6 @@ OO.mixinClass( ve.ce.View, OO.EventEmitter );
 
 /* Static members */
 
-// eslint-disable-next-line valid-jsdoc
 /**
  * Allowed attributes for DOM elements, in the same format as ve.dm.Model#preserveHtmlAttributes
  *
@@ -83,7 +80,7 @@ OO.mixinClass( ve.ce.View, OO.EventEmitter );
  * sense for that view in particular.
  *
  * @static
- * @property {boolean|Function}
+ * @property {boolean|string|RegExp|Array|Object}
  * @inheritable
  */
 ve.ce.View.static.renderHtmlAttributes = function ( attribute ) {

@@ -36,7 +36,7 @@ ve.dm.AnnotationSet.prototype.getStore = function () {
  * @return {ve.dm.AnnotationSet} Copy of annotation set
  */
 ve.dm.AnnotationSet.prototype.clone = function () {
-	return new ve.dm.AnnotationSet( this.getStore(), this.storeIndexes.slice() );
+	return new ve.dm.AnnotationSet( this.getStore(), this.storeIndexes.slice( 0 ) );
 };
 
 /**
@@ -220,7 +220,7 @@ ve.dm.AnnotationSet.prototype.containsAllOf = function ( set ) {
  * @return {number} Offset of annotation in the set, or -1 if annotation is not in the set.
  */
 ve.dm.AnnotationSet.prototype.offsetOf = function ( annotation ) {
-	return this.offsetOfIndex( this.getStore().indexOfValue( annotation ) );
+	return this.offsetOfIndex( this.store.indexOfHash( OO.getHash( annotation ) ) );
 };
 
 /**
@@ -411,25 +411,15 @@ ve.dm.AnnotationSet.prototype.add = function ( annotation, offset ) {
 };
 
 /**
- * Add all annotations in the given set, removing any duplicates (including existing ones).
+ * Add all annotations in the given set to the end of the set.
  *
- * The offset calculation happens before duplicates are removed.
+ * Annotations from the other set that are already in the set will not be added again.
  *
  * @method
  * @param {ve.dm.AnnotationSet} set Set to add to the set
- * @param {number} [offset] Offset at which to insert; defaults to the end of the set
-
  */
-ve.dm.AnnotationSet.prototype.addSet = function ( set, offset ) {
-	var indexes = this.getIndexes();
-	if ( offset === undefined ) {
-		offset = indexes.length;
-	}
-	this.storeIndexes = OO.simpleArrayUnion(
-		indexes.slice( 0, offset ),
-		set.getIndexes(),
-		indexes.slice( offset )
-	);
+ve.dm.AnnotationSet.prototype.addSet = function ( set ) {
+	this.storeIndexes = OO.simpleArrayUnion( this.getIndexes(), set.getIndexes() );
 };
 
 /**

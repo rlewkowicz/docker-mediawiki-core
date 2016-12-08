@@ -10,23 +10,23 @@
 	cursor: default;
 }
 
-.ve-ce-tableCaptionNode {
-	cursor: text;
-}
-
-.ve-ce-tableCaptionNode.ve-ce-activeNode-active {
+.ve-ce-tableCaptionNode:focus {
 	border: 1px dotted #ccc;
 	border-bottom: 0;
 	margin-top: -1px;
 }
 
+.ve-ce-tableCaptionNode {
+	cursor: text;
+}
+
 .ve-ce-tableNodeOverlay {
 	position: absolute;
-	pointer-events: none; /* stylelint-disable-line no-unsupported-browser-features */
+	pointer-events: none;
 }
 
 .ve-ce-tableNodeOverlay .ve-ui-tableLineContext {
-	pointer-events: auto; /* stylelint-disable-line no-unsupported-browser-features */
+	pointer-events: auto;
 }
 
 .ve-ce-tableNodeOverlay-selection-box {
@@ -50,12 +50,10 @@
 }
 
 .ve-ce-tableNodeOverlay-selection-box-notEditable {
-	/* TODO: Support IE9 with fallback T135497 */
-	/* stylelint-disable no-unsupported-browser-features */
-	background-image: -webkit-repeating-linear-gradient( -45deg, transparent 0 transparent 5px, #95d14f 5px, #95d14f 10px );
-	background-image: -moz-repeating-linear-gradient( -45deg, transparent 0, transparent 5px, #95d14f 5px, #95d14f 10px );
-	background-image: repeating-linear-gradient( -45deg, transparent 0, transparent 5px, #95d14f 5px, #95d14f 10px );
-	/* stylelint-enable no-unsupported-browser-features */
+	background-image: -ms-repeating-linear-gradient( -45deg, transparent 0px, transparent 5px, #95d14f 5px, #95d14f 10px );
+	background-image: -webkit-repeating-linear-gradient( -45deg, transparent 0px, transparent 5px, #95d14f 5px, #95d14f 10px );
+	background-image: -moz-repeating-linear-gradient( -45deg, transparent 0px, transparent 5px, #95d14f 5px, #95d14f 10px);
+	background-image: repeating-linear-gradient( -45deg, transparent 0px, transparent 5px, #95d14f 5px, #95d14f 10px );
 }
 
 .ve-ce-tableNodeOverlay-selection-box-anchor {
@@ -96,5 +94,5 @@
 .ve-ce-tableNode-missingCell {
 	background-repeat: no-repeat;
 	background-position: center center;
-	border: 0 !important; /* stylelint-disable-line declaration-no-important */
+	border: 0!important;
 }

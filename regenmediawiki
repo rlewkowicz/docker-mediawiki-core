@@ -3,6 +3,7 @@ cloneDeps (){
 	git clone --depth 1 -b	REL1_27 --single-branch https://github.com/wikimedia/mediawiki.git
 	git clone --depth 1 -b REL1_27 --single-branch https://github.com/wikimedia/mediawiki-extensions.git
 	git clone --depth 1 -b REL1_27 --single-branch https://github.com/wikimedia/mediawiki-skins-Vector.git
+	git clone --depth 1 -b REL1_27 --single-branch https://gerrit.wikimedia.org/r/p/mediawiki/extensions/VisualEditor.git
 }
 
 pruneExtentions (){
@@ -26,7 +27,6 @@ pruneExtentions (){
 	SyntaxHighlight_GeSHi$
 	TitleBlacklist$
 	WikiEditor$
-	VisualEditor$
 	END
 	)`; do sed -i "s/branch \= \./\x00/g; /\[submodule \"$i\"\]/,/[^\x00]*\x00/d; s/\x00/branch \= \./g" .gitmodules; done
 	for i in `ls | egrep -vwf <(cat <<-END
@@ -48,7 +48,6 @@ pruneExtentions (){
 	SyntaxHighlight_GeSHi$
 	TitleBlacklist$
 	WikiEditor$
-	VisualEditor$
 	END
 	)`; do rm -rf $i; done
 	sed -i 's/branch = ./branch = REL1_27/g' .gitmodules
@@ -58,6 +57,8 @@ pruneExtentions (){
 }
 
 mergeSkinsAndExtentions (){
+  cd $DIR/VisualEditor/ && git submodule update --init
+	mv $DIR/VisualEditor $DIR/mediawiki-extensions
 	mv $DIR/mediawiki-skins-Vector $DIR/mediawiki/skins/Vector
 	rm -rf $DIR/mediawiki/extensions && mv $DIR/mediawiki-extensions $DIR/mediawiki/extensions
 }
@@ -65,10 +66,8 @@ mergeSkinsAndExtentions (){
 updateComposerDeps (){
 	cd $DIR/mediawiki
 	composer install --no-dev
-	for i in `find $DIR/mediawiki/extensions/ -type f | grep gitmodules$`; do echo 'branch = REL1_27' >> $i; done
 	for i in `find $DIR/mediawiki/extensions/ -maxdepth 1 -type d`;do cd "$i"; composer install --no-dev ;done
 	for i in `find $DIR/mediawiki/skins/ -maxdepth 1 -type d`;do cd "$i"; composer install --no-dev;done
-	cd $DIR/mediawiki && git submodule update --init --recursive --remote
 }
 
 pushToGit (){

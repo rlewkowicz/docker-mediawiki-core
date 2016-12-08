@@ -14,9 +14,9 @@
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.FormatTool = function VeUiFormatTool() {
+ve.ui.FormatTool = function VeUiFormatTool( toolGroup, config ) {
 	// Parent constructor
-	ve.ui.FormatTool.super.apply( this, arguments );
+	ve.ui.Tool.call( this, toolGroup, config );
 
 	// Properties
 	this.convertible = false;
@@ -48,8 +48,7 @@ ve.ui.FormatTool.static.format = null;
  * @inheritdoc
  */
 ve.ui.FormatTool.prototype.onUpdateState = function ( fragment ) {
-	var isMatching,
-		format = this.constructor.static.format;
+	var i, len, nodes, all, cells, selection, format;
 
 	// Parent method
 	ve.ui.FormatTool.super.prototype.onUpdateState.apply( this, arguments );
@@ -63,10 +62,30 @@ ve.ui.FormatTool.prototype.onUpdateState = function ( fragment ) {
 
 	this.toggle( true );
 
-	isMatching = fragment.hasMatchingAncestor( format.type, format.attributes );
+	selection = fragment.getSelection();
+	format = this.constructor.static.format;
 
-	this.convertible = !isMatching;
-	this.setActive( isMatching );
+	if ( selection instanceof ve.dm.LinearSelection ) {
+		nodes = fragment.getSelectedLeafNodes();
+		all = !!nodes.length;
+		for ( i = 0, len = nodes.length; i < len; i++ ) {
+			if ( !nodes[ i ].hasMatchingAncestor( format.type, format.attributes ) ) {
+				all = false;
+				break;
+			}
+		}
+	} else if ( selection instanceof ve.dm.TableSelection ) {
+		cells = selection.getMatrixCells();
+		all = true;
+		for ( i = cells.length - 1; i >= 0; i-- ) {
+			if ( !cells[ i ].node.matches( format.type, format.attributes ) ) {
+				all = false;
+				break;
+			}
+		}
+	}
+	this.convertible = !all;
+	this.setActive( all );
 };
 
 /**
@@ -78,8 +97,8 @@ ve.ui.FormatTool.prototype.onUpdateState = function ( fragment ) {
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.ParagraphFormatTool = function VeUiParagraphFormatTool() {
-	ve.ui.ParagraphFormatTool.super.apply( this, arguments );
+ve.ui.ParagraphFormatTool = function VeUiParagraphFormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.ParagraphFormatTool, ve.ui.FormatTool );
 ve.ui.ParagraphFormatTool.static.name = 'paragraph';
@@ -99,8 +118,8 @@ ve.ui.toolFactory.register( ve.ui.ParagraphFormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.Heading1FormatTool = function VeUiHeading1FormatTool() {
-	ve.ui.Heading1FormatTool.super.apply( this, arguments );
+ve.ui.Heading1FormatTool = function VeUiHeading1FormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.Heading1FormatTool, ve.ui.FormatTool );
 ve.ui.Heading1FormatTool.static.name = 'heading1';
@@ -120,8 +139,8 @@ ve.ui.toolFactory.register( ve.ui.Heading1FormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.Heading2FormatTool = function VeUiHeading2FormatTool() {
-	ve.ui.Heading2FormatTool.super.apply( this, arguments );
+ve.ui.Heading2FormatTool = function VeUiHeading2FormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.Heading2FormatTool, ve.ui.FormatTool );
 ve.ui.Heading2FormatTool.static.name = 'heading2';
@@ -141,8 +160,8 @@ ve.ui.toolFactory.register( ve.ui.Heading2FormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.Heading3FormatTool = function VeUiHeading3FormatTool() {
-	ve.ui.Heading3FormatTool.super.apply( this, arguments );
+ve.ui.Heading3FormatTool = function VeUiHeading3FormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.Heading3FormatTool, ve.ui.FormatTool );
 ve.ui.Heading3FormatTool.static.name = 'heading3';
@@ -162,8 +181,8 @@ ve.ui.toolFactory.register( ve.ui.Heading3FormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.Heading4FormatTool = function VeUiHeading4FormatTool() {
-	ve.ui.Heading4FormatTool.super.apply( this, arguments );
+ve.ui.Heading4FormatTool = function VeUiHeading4FormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.Heading4FormatTool, ve.ui.FormatTool );
 ve.ui.Heading4FormatTool.static.name = 'heading4';
@@ -183,8 +202,8 @@ ve.ui.toolFactory.register( ve.ui.Heading4FormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.Heading5FormatTool = function VeUiHeading5FormatTool() {
-	ve.ui.Heading5FormatTool.super.apply( this, arguments );
+ve.ui.Heading5FormatTool = function VeUiHeading5FormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.Heading5FormatTool, ve.ui.FormatTool );
 ve.ui.Heading5FormatTool.static.name = 'heading5';
@@ -204,8 +223,8 @@ ve.ui.toolFactory.register( ve.ui.Heading5FormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.Heading6FormatTool = function VeUiHeading6FormatTool() {
-	ve.ui.Heading6FormatTool.super.apply( this, arguments );
+ve.ui.Heading6FormatTool = function VeUiHeading6FormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.Heading6FormatTool, ve.ui.FormatTool );
 ve.ui.Heading6FormatTool.static.name = 'heading6';
@@ -225,8 +244,8 @@ ve.ui.toolFactory.register( ve.ui.Heading6FormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.PreformattedFormatTool = function VeUiPreformattedFormatTool() {
-	ve.ui.PreformattedFormatTool.super.apply( this, arguments );
+ve.ui.PreformattedFormatTool = function VeUiPreformattedFormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.PreformattedFormatTool, ve.ui.FormatTool );
 ve.ui.PreformattedFormatTool.static.name = 'preformatted';
@@ -246,8 +265,8 @@ ve.ui.toolFactory.register( ve.ui.PreformattedFormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.BlockquoteFormatTool = function VeUiBlockquoteFormatTool() {
-	ve.ui.BlockquoteFormatTool.super.apply( this, arguments );
+ve.ui.BlockquoteFormatTool = function VeUiBlockquoteFormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.BlockquoteFormatTool, ve.ui.FormatTool );
 ve.ui.BlockquoteFormatTool.static.name = 'blockquote';
@@ -267,8 +286,8 @@ ve.ui.toolFactory.register( ve.ui.BlockquoteFormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.TableCellHeaderFormatTool = function VeUiTableCellHeaderFormatTool() {
-	ve.ui.TableCellHeaderFormatTool.super.apply( this, arguments );
+ve.ui.TableCellHeaderFormatTool = function VeUiTableCellHeaderFormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.TableCellHeaderFormatTool, ve.ui.FormatTool );
 ve.ui.TableCellHeaderFormatTool.static.name = 'tableCellHeader';
@@ -288,8 +307,8 @@ ve.ui.toolFactory.register( ve.ui.TableCellHeaderFormatTool );
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.TableCellDataFormatTool = function VeUiTableCellDataFormatTool() {
-	ve.ui.TableCellDataFormatTool.super.apply( this, arguments );
+ve.ui.TableCellDataFormatTool = function VeUiTableCellDataFormatTool( toolGroup, config ) {
+	ve.ui.FormatTool.call( this, toolGroup, config );
 };
 OO.inheritClass( ve.ui.TableCellDataFormatTool, ve.ui.FormatTool );
 ve.ui.TableCellDataFormatTool.static.name = 'tableCellData';

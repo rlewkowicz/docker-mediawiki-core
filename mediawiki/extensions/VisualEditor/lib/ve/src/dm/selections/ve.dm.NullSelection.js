@@ -7,7 +7,6 @@
 /**
  * @class
  * @extends ve.dm.Selection
- * @param {ve.dm.Document} doc
  * @constructor
  */
 ve.dm.NullSelection = function VeDmNullSelection( doc ) {
@@ -74,8 +73,6 @@ ve.dm.NullSelection.prototype.isCollapsed = function () {
 
 ve.dm.NullSelection.prototype.translateByTransaction = ve.dm.NullSelection.prototype.clone;
 
-ve.dm.NullSelection.prototype.translateByTransactionWithAuthor = ve.dm.NullSelection.prototype.clone;
-
 /**
  * @inheritdoc
  */
@@ -94,11 +91,8 @@ ve.dm.NullSelection.prototype.getCoveringRange = function () {
  * @inheritdoc
  */
 ve.dm.NullSelection.prototype.equals = function ( other ) {
-	return this === other || (
-		!!other &&
-		other.constructor === this.constructor &&
-		this.getDocument() === other.getDocument()
-	);
+	return other instanceof ve.dm.NullSelection &&
+		this.getDocument() === other.getDocument();
 };
 
 /**

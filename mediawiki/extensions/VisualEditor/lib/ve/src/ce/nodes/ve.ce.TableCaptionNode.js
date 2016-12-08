@@ -17,20 +17,15 @@ ve.ce.TableCaptionNode = function VeCeTableCaptionNode() {
 	// Parent constructor
 	ve.ce.TableCaptionNode.super.apply( this, arguments );
 
-	// Mixin constructor
-	ve.ce.ActiveNode.call( this );
-
 	// DOM changes
 	this.$element
 		.addClass( 've-ce-tableCaptionNode' )
-		.prop( { contentEditable: 'true', spellcheck: true } );
+		.prop( 'contentEditable', 'true' );
 };
 
 /* Inheritance */
 
 OO.inheritClass( ve.ce.TableCaptionNode, ve.ce.BranchNode );
-
-OO.mixinClass( ve.ce.TableCaptionNode, ve.ce.ActiveNode );
 
 /* Static Properties */
 

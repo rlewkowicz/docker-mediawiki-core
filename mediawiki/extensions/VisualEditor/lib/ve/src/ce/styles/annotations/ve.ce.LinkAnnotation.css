@@ -5,11 +5,11 @@
  */
 
 .ve-ce-linkAnnotation-active {
-	box-shadow: 0 0 0 1px #c6e0ff;
+	box-shadow: 0 0 0 1px #C6E0FF;
 	border-radius: 0.2em;
 	padding: 2px;
 	margin: -2px;
-	background-color: #e6f1ff;
+	background-color: #E6F1FF;
 }
 
 .ve-ce-nail {

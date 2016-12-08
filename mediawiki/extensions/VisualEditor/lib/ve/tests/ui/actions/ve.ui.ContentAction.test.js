@@ -8,8 +8,31 @@ QUnit.module( 've.ui.ContentAction' );
 
 /* Tests */
 
-QUnit.test( 'insert/remove/select/selectAll', function ( assert ) {
+function runContentActionTest( assert, html, createView, method, args, rangeOrSelection, expectedData, expectedRangeOrSelection, msg ) {
+	var surface = createView ?
+			ve.test.utils.createViewOnlySurfaceFromHtml( html || ve.dm.example.html ) :
+			ve.test.utils.createModelOnlySurfaceFromHtml( html || ve.dm.example.html ),
+		contentAction = new ve.ui.ContentAction( surface ),
+		data = ve.copy( surface.getModel().getDocument().getFullData() ),
+		documentModel = surface.getModel().getDocument(),
+		selection = ve.test.utils.selectionFromRangeOrSelection( documentModel, rangeOrSelection ),
+		expectedSelection = expectedRangeOrSelection && ve.test.utils.selectionFromRangeOrSelection( documentModel, expectedRangeOrSelection );
+
+	if ( expectedData ) {
+		expectedData( data );
+	}
+	surface.getModel().setSelection( selection );
+	contentAction[ method ].apply( contentAction, args || [] );
+
+	assert.equalLinearData( surface.getModel().getDocument().getFullData(), data, msg + ': data models match' );
+	if ( expectedSelection ) {
+		assert.equalHash( surface.getModel().getSelection(), expectedSelection, msg + ': selections match' );
+	}
+}
+
+QUnit.test( 'insert', function ( assert ) {
 	var i,
+		expected = 0,
 		cases = [
 			{
 				rangeOrSelection: new ve.Range( 3, 4 ),
@@ -21,7 +44,6 @@ QUnit.test( 'insert/remove/select/selectAll', function ( assert ) {
 					);
 				},
 				expectedRangeOrSelection: new ve.Range( 3, 6 ),
-				undo: true,
 				msg: 'insert text (annotate=false)'
 			},
 			{
@@ -30,13 +52,12 @@ QUnit.test( 'insert/remove/select/selectAll', function ( assert ) {
 				args: [ 'Foo', true ],
 				expectedData: function ( data ) {
 					data.splice( 3, 1,
-						[ 'F', [ ve.dm.example.italic ] ],
-						[ 'o', [ ve.dm.example.italic ] ],
-						[ 'o', [ ve.dm.example.italic ] ]
+						[ 'F', [ 1 ] ],
+						[ 'o', [ 1 ] ],
+						[ 'o', [ 1 ] ]
 					);
 				},
 				expectedRangeOrSelection: new ve.Range( 3, 6 ),
-				undo: true,
 				msg: 'insert text (annotate=true)'
 			},
 			{
@@ -49,7 +70,6 @@ QUnit.test( 'insert/remove/select/selectAll', function ( assert ) {
 					);
 				},
 				expectedRangeOrSelection: new ve.Range( 6 ),
-				undo: true,
 				msg: 'insert text (collapseToEnd=true)'
 			},
 			{
@@ -59,7 +79,6 @@ QUnit.test( 'insert/remove/select/selectAll', function ( assert ) {
 					data.splice( 1, 3 );
 				},
 				expectedRangeOrSelection: new ve.Range( 1 ),
-				undo: true,
 				msg: 'remove text'
 			},
 			{
@@ -100,15 +119,16 @@ QUnit.test( 'insert/remove/select/selectAll', function ( assert ) {
 			}
 		];
 
-	QUnit.expect( ve.test.utils.countActionTests( cases ) );
 	for ( i = 0; i < cases.length; i++ ) {
-		ve.test.utils.runActionTest(
-			'content', assert, cases[ i ].html, cases[ i ].createView, cases[ i ].method, cases[ i ].args, cases[ i ].rangeOrSelection, cases[ i ].msg,
-			{
-				expectedData: cases[ i ].expectedData,
-				expectedRangeOrSelection: cases[ i ].expectedRangeOrSelection,
-				undo: cases[ i ].undo
-			}
+		expected++;
+		if ( cases[ i ].expectedRangeOrSelection ) {
+			expected++;
+		}
+	}
+	QUnit.expect( expected );	for ( i = 0; i < cases.length; i++ ) {
+		runContentActionTest(
+			assert, cases[ i ].html, cases[ i ].createView, cases[ i ].method, cases[ i ].args, cases[ i ].rangeOrSelection,
+			cases[ i ].expectedData, cases[ i ].expectedRangeOrSelection, cases[ i ].msg
 		);
 	}
 } );

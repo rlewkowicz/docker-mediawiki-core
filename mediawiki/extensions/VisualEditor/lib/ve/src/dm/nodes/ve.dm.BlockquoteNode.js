@@ -14,9 +14,9 @@
  * @param {ve.dm.LeafNode[]} [children] Child nodes to attach
  * @param {Object} [element] Reference to element in linear model
  */
-ve.dm.BlockquoteNode = function VeDmBlockquoteNode() {
+ve.dm.BlockquoteNode = function VeDmBlockquoteNode( children, element ) {
 	// Parent constructor
-	ve.dm.BlockquoteNode.super.apply( this, arguments );
+	ve.dm.BranchNode.call( this, children, element );
 };
 
 /* Inheritance */

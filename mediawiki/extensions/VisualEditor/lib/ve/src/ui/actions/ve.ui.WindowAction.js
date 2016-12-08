@@ -12,9 +12,9 @@
  * @constructor
  * @param {ve.ui.Surface} surface Surface to act on
  */
-ve.ui.WindowAction = function VeUiWindowAction() {
+ve.ui.WindowAction = function VeUiWindowAction( surface ) {
 	// Parent constructor
-	ve.ui.WindowAction.super.apply( this, arguments );
+	ve.ui.Action.call( this, surface );
 };
 
 /* Inheritance */
@@ -45,53 +45,20 @@ ve.ui.WindowAction.static.methods = [ 'open', 'close', 'toggle' ];
  * @return {boolean} Action was executed
  */
 ve.ui.WindowAction.prototype.open = function ( name, data, action ) {
-	var currentInspector, inspectorWindowManager, fragmentPromise,
-		originalFragment, text,
-		windowAction = this,
+	var currentInspector, inspectorWindowManager,
 		windowType = this.getWindowType( name ),
 		windowManager = windowType && this.getWindowManager( windowType ),
 		currentWindow = windowManager.getCurrentWindow(),
 		autoClosePromises = [],
 		surface = this.surface,
 		fragment = surface.getModel().getFragment( undefined, true ),
-		dir = surface.getView().getSelection().getDirection(),
-		// HACK: Allow $returnFocusTo to take null upstream
-		$noFocus = [ { focus: function () {} } ],
-		windowClass = ve.ui.windowFactory.lookup( name ),
-		mayContainFragment = windowClass.prototype instanceof ve.ui.FragmentDialog ||
-			windowClass.prototype instanceof ve.ui.FragmentInspector ||
-			windowType === 'toolbar' || windowType === 'inspector',
-		// TODO: Add 'doesHandleSource' method to factory
-		sourceMode = surface.getMode() === 'source' && !windowClass.static.handlesSource;
+		dir = surface.getView().getSelection().getDirection();
 
 	if ( !windowManager ) {
 		return false;
 	}
 
-	if ( !mayContainFragment ) {
-		fragmentPromise = $.Deferred().resolve().promise();
-	} else if ( sourceMode ) {
-		text = fragment.getText( true );
-		originalFragment = fragment;
-
-		fragmentPromise = fragment.convertFromSource( text ).then( function ( selectionDocument ) {
-			var tempSurfaceModel = new ve.dm.Surface( selectionDocument ),
-				tempFragment = tempSurfaceModel.getLinearFragment(
-					// TODO: Select all content using content offset methods
-					new ve.Range(
-						1,
-						Math.max( 1, selectionDocument.getInternalList().getListNode().getOuterRange().start - 1 )
-					)
-				);
-
-			return tempFragment;
-		} );
-	} else {
-		fragmentPromise = $.Deferred().resolve( fragment ).promise();
-	}
-
-	data = ve.extendObject( { dir: dir }, data, { $returnFocusTo: $noFocus } );
-
+	data = ve.extendObject( { dir: dir }, data, { fragment: fragment } );
 	if ( windowType === 'toolbar' || windowType === 'inspector' ) {
 		data = ve.extendObject( data, { surface: surface } );
 		// Auto-close the current window if it is different to the one we are
@@ -104,49 +71,34 @@ ve.ui.WindowAction.prototype.open = function ( name, data, action ) {
 
 	// If we're opening a dialog, close all inspectors first
 	if ( windowType === 'dialog' ) {
-		inspectorWindowManager = windowAction.getWindowManager( 'inspector' );
+		inspectorWindowManager = this.getWindowManager( 'inspector' );
 		currentInspector = inspectorWindowManager.getCurrentWindow();
 		if ( currentInspector ) {
 			autoClosePromises.push( inspectorWindowManager.closeWindow( currentInspector ) );
 		}
 	}
 
-	fragmentPromise.then( function ( fragment ) {
-		ve.extendObject( data, { fragment: fragment } );
+	$.when.apply( $, autoClosePromises ).always( function () {
+		windowManager.getWindow( name ).then( function ( win ) {
+			var opening = windowManager.openWindow( win, data );
 
-		$.when.apply( $, autoClosePromises ).always( function () {
-			windowManager.getWindow( name ).then( function ( win ) {
-				var opening = windowManager.openWindow( win, data );
+			if ( !win.constructor.static.activeSurface ) {
+				surface.getView().deactivate();
+			}
 
-				if ( !win.constructor.static.activeSurface ) {
-					surface.getView().deactivate();
-				}
-
-				opening.then( function ( closing ) {
-					if ( sourceMode ) {
-						// HACK: previousSelection is assumed to be in the visible surface
-						win.previousSelection = null;
+			opening.then( function ( closing ) {
+				closing.then( function ( closed ) {
+					if ( !win.constructor.static.activeSurface ) {
+						surface.getView().activate();
 					}
-					closing.then( function ( closed ) {
-						if ( !win.constructor.static.activeSurface ) {
-							surface.getView().activate();
-						}
-						closed.then( function ( closedData ) {
-							// Sequence-triggered window closed without action, undo
-							if ( data.strippedSequence && !( closedData && closedData.action ) ) {
-								surface.getModel().undo();
-							}
-							if ( sourceMode && fragment.getSurface().hasBeenModified() ) {
-								originalFragment.insertDocument( fragment.getDocument() );
-							}
-							surface.getView().emit( 'position' );
-						} );
+					closed.then( function () {
+						surface.getView().emit( 'position' );
 					} );
-				} ).always( function () {
-					if ( action ) {
-						win.executeAction( action );
-					}
 				} );
+			} ).always( function () {
+				if ( action ) {
+					win.executeAction( action );
+				}
 			} );
 		} );
 	} );

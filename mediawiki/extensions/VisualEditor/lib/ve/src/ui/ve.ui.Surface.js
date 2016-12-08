@@ -14,11 +14,9 @@
  * @constructor
  * @param {HTMLDocument|Array|ve.dm.LinearData|ve.dm.Document} dataOrDoc Document data to edit
  * @param {Object} [config] Configuration options
- * @cfg {boolean} [mode] Editing mode
  * @cfg {jQuery} [$scrollContainer] The scroll container of the surface
  * @cfg {ve.ui.CommandRegistry} [commandRegistry] Command registry to use
  * @cfg {ve.ui.SequenceRegistry} [sequenceRegistry] Sequence registry to use
- * @cfg {ve.ui.DataTransferHandlerFactory} [dataTransferHandlerFactory] Data transfer handler factory to use
  * @cfg {string[]|null} [includeCommands] List of commands to include, null for all registered commands
  * @cfg {string[]} [excludeCommands] List of commands to exclude
  * @cfg {Object} [importRules] Import rules
@@ -36,7 +34,6 @@ ve.ui.Surface = function VeUiSurface( dataOrDoc, config ) {
 	// Properties
 	this.$scrollContainer = config.$scrollContainer || $( this.getElementWindow() );
 	this.inDialog = config.inDialog || '';
-	this.mode = config.mode;
 	this.globalOverlay = new ve.ui.Overlay( { classes: [ 've-ui-overlay-global' ] } );
 	this.localOverlay = new ve.ui.Overlay( { classes: [ 've-ui-overlay-local' ] } );
 	this.$selections = $( '<div>' );
@@ -44,9 +41,8 @@ ve.ui.Surface = function VeUiSurface( dataOrDoc, config ) {
 	this.$controls = $( '<div>' );
 	this.$menus = $( '<div>' );
 	this.$placeholder = $( '<div>' ).addClass( 've-ui-surface-placeholder' );
-	this.commandRegistry = config.commandRegistry || ve.ui.commandRegistry;
-	this.sequenceRegistry = config.sequenceRegistry || ve.ui.sequenceRegistry;
-	this.dataTransferHandlerFactory = config.dataTransferHandlerFactory || ve.ui.dataTransferHandlerFactory;
+	this.commandRegistry = config.commandRegistry || ve.init.target.commandRegistry;
+	this.sequenceRegistry = config.sequenceRegistry || ve.init.target.sequenceRegistry;
 	this.commands = OO.simpleArrayDifference(
 		config.includeCommands || this.commandRegistry.getNames(), config.excludeCommands || []
 	);
@@ -85,10 +81,7 @@ ve.ui.Surface = function VeUiSurface( dataOrDoc, config ) {
 	// Initialization
 	this.$menus.append( this.context.$element );
 	this.$element
-		// The following classes are used here:
-		// * ve-ui-surface-visual
-		// * ve-ui-surface-source
-		.addClass( 've-ui-surface ve-ui-surface-' + this.mode )
+		.addClass( 've-ui-surface' )
 		.append( this.view.$element );
 	this.view.$element.after( this.localOverlay.$element );
 	this.localOverlay.$element.append( this.$selections, this.$blockers, this.$controls, this.$menus );
@@ -125,8 +118,6 @@ OO.inheritClass( ve.ui.Surface, OO.ui.Widget );
 ve.ui.Surface.static.isMobile = false;
 
 /* Methods */
-
-/* eslint-disable valid-jsdoc */
 
 /**
  * Destroy the surface, releasing all memory and removing all DOM elements.
@@ -189,23 +180,6 @@ ve.ui.Surface.prototype.initialize = function () {
  * @return {HTMLDocument} HTML document
  */
 ve.ui.Surface.prototype.getDom = function () {
-	var i, l, text, data;
-
-	// Optimized converter for source mode, which contains only
-	// plain text or paragraphs.
-	if ( this.getMode() === 'source' ) {
-		text = '';
-		data = this.getModel().getDocument().data.data;
-		for ( i = 0, l = data.length; i < l; i++ ) {
-			if ( data[ i ].type === '/paragraph' && data[ i + 1 ].type === 'paragraph' ) {
-				text += '\n';
-			} else if ( !data[ i ].type ) {
-				text += data[ i ];
-			}
-		}
-
-		return text;
-	}
 	return ve.dm.converter.getDomFromModel( this.getModel().getDocument() );
 };
 
@@ -215,18 +189,7 @@ ve.ui.Surface.prototype.getDom = function () {
  * @return {string} HTML
  */
 ve.ui.Surface.prototype.getHtml = function () {
-	return this.getMode() === 'source' ?
-		this.getDom() :
-		ve.properInnerHtml( this.getDom().body );
-};
-
-/**
- * Get the surface's editing mode
- *
- * @return {string} Editing mode
- */
-ve.ui.Surface.prototype.getMode = function () {
-	return this.mode;
+	return ve.properInnerHtml( this.getDom().body );
 };
 
 /**
@@ -254,7 +217,7 @@ ve.ui.Surface.prototype.createDialogWindowManager = null;
  * @return {ve.dm.Surface} Surface model
  */
 ve.ui.Surface.prototype.createModel = function ( doc ) {
-	return new ve.dm.Surface( doc, { sourceMode: this.getMode() === 'source' } );
+	return new ve.dm.Surface( doc );
 };
 
 /**
@@ -281,7 +244,7 @@ ve.ui.Surface.prototype.isMobile = function () {
  */
 ve.ui.Surface.prototype.setupDebugBar = function () {
 	this.debugBar = new ve.ui.DebugBar( this );
-	this.$element.append( this.debugBar.$element );
+	this.debugBar.$element.insertAfter( this.$element );
 };
 
 /**
@@ -442,8 +405,6 @@ ve.ui.Surface.prototype.disable = function () {
 ve.ui.Surface.prototype.enable = function () {
 	return this.setDisabled( false );
 };
-
-/* eslint-enable valid-jsdoc */
 
 /**
  * Handle transact events from the document model
@@ -616,15 +577,13 @@ ve.ui.Surface.prototype.setToolbarHeight = function ( toolbarHeight ) {
  *
  * @param {jQuery.Promise} progressCompletePromise Promise which resolves when the progress action is complete
  * @param {jQuery|string|Function} label Progress bar label
- * @param {boolean} nonCancellable Progress item can't be cancelled
  * @return {jQuery.Promise} Promise which resolves with a progress bar widget and a promise which fails if cancelled
  */
-ve.ui.Surface.prototype.createProgress = function ( progressCompletePromise, label, nonCancellable ) {
+ve.ui.Surface.prototype.createProgress = function ( progressCompletePromise, label ) {
 	var progressBarDeferred = $.Deferred();
 
 	this.progresses.push( {
 		label: label,
-		cancellable: !nonCancellable,
 		progressCompletePromise: progressCompletePromise,
 		progressBarDeferred: progressBarDeferred
 	} );
@@ -636,11 +595,9 @@ ve.ui.Surface.prototype.createProgress = function ( progressCompletePromise, lab
 
 ve.ui.Surface.prototype.showProgress = function () {
 	var dialogs = this.dialogs,
-		progresses = this.progresses,
-		// HACK: Allow $returnFocusTo to take null upstream
-		$noFocus = [ { focus: function () {} } ];
+		progresses = this.progresses;
 
-	dialogs.openWindow( 'progress', { progresses: progresses, $returnFocusTo: $noFocus } );
+	dialogs.openWindow( 'progress', { progresses: progresses } );
 	this.progresses = [];
 };
 

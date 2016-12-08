@@ -17,12 +17,12 @@
  * @param {ve.dm.BranchNode} model Model to observe
  * @param {Object} [config] Configuration options
  */
-ve.ce.BranchNode = function VeCeBranchNode( model ) {
+ve.ce.BranchNode = function VeCeBranchNode( model, config ) {
 	// Mixin constructor
 	ve.BranchNode.call( this );
 
 	// Parent constructor
-	ve.ce.BranchNode.super.apply( this, arguments );
+	ve.ce.Node.call( this, model, config );
 
 	// DOM changes (keep in sync with #onSetup)
 	this.$element.addClass( 've-ce-branchNode' );
@@ -350,9 +350,7 @@ ve.ce.BranchNode.prototype.getSlugAtOffset = function ( offset ) {
  */
 ve.ce.BranchNode.prototype.setLive = function ( live ) {
 	var i;
-	// Parent method
-	ve.ce.BranchNode.super.prototype.setLive.apply( this, arguments );
-
+	ve.ce.Node.prototype.setLive.call( this, live );
 	for ( i = 0; i < this.children.length; i++ ) {
 		this.children[ i ].setLive( live );
 	}
@@ -367,6 +365,5 @@ ve.ce.BranchNode.prototype.destroy = function () {
 		this.children[ i ].destroy();
 	}
 
-	// Parent method
-	ve.ce.BranchNode.super.prototype.destroy.call( this );
+	ve.ce.Node.prototype.destroy.call( this );
 };

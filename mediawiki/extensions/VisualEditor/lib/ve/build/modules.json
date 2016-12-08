@@ -1,9 +1,4 @@
 {
-	"socket.io": {
-		"scripts": [
-			"lib/socket.io-client/socket.io.min.js"
-		]
-	},
 	"jquery": {
 		"scripts": [
 			"lib/jquery/jquery.js"
@@ -24,21 +19,6 @@
 		],
 		"styles": [
 			{ "file": "lib/jsdifflib/diffview.css", "test": true }
-		]
-	},
-	"treeDiffer": {
-		"scripts": [
-			"lib/treeDiffer/treeDiffer-dist.js"
-		]
-	},
-	"diffMatchPatch": {
-		"scripts": [
-			"lib/diff-match-patch/diff_match_patch_uncompressed.js"
-		]
-	},
-	"dompurify": {
-		"scripts": [
-			"lib/dompurify/purify.js"
 		]
 	},
 	"oojs": {
@@ -96,11 +76,6 @@
 	"rangefix": {
 		"scripts": [
 			"lib/rangefix/rangefix.js"
-		]
-	},
-	"spark-md5": {
-		"scripts": [
-			"lib/spark-md5/spark-md5.js"
 		]
 	},
 	"dom-classlist-shim": {
@@ -231,7 +206,6 @@
 			"visualEditor.supportCheck",
 			"unicodejs",
 			"rangefix",
-			"spark-md5",
 			"dom-classlist-shim"
 		]
 	},
@@ -280,11 +254,9 @@
 			"src/dm/ve.dm.TableMatrix.js",
 			"src/dm/ve.dm.TransactionProcessor.js",
 			"src/dm/ve.dm.Transaction.js",
-			"src/dm/ve.dm.TransactionBuilder.js",
 			"src/dm/ve.dm.Selection.js",
 			"src/dm/ve.dm.Surface.js",
 			"src/dm/ve.dm.SurfaceFragment.js",
-			"src/dm/ve.dm.SourceSurfaceFragment.js",
 			"src/dm/ve.dm.DataString.js",
 			"src/dm/ve.dm.Document.js",
 			"src/dm/ve.dm.DocumentSlice.js",
@@ -332,17 +304,14 @@
 			"src/dm/annotations/ve.dm.LinkAnnotation.js",
 			"src/dm/annotations/ve.dm.TextStyleAnnotation.js",
 			"src/dm/annotations/ve.dm.AbbreviationAnnotation.js",
-			"src/dm/annotations/ve.dm.BidiAnnotation.js",
 			"src/dm/annotations/ve.dm.BigAnnotation.js",
 			"src/dm/annotations/ve.dm.BoldAnnotation.js",
 			"src/dm/annotations/ve.dm.CodeSampleAnnotation.js",
 			"src/dm/annotations/ve.dm.CodeAnnotation.js",
 			"src/dm/annotations/ve.dm.DatetimeAnnotation.js",
 			"src/dm/annotations/ve.dm.DefinitionAnnotation.js",
-			"src/dm/annotations/ve.dm.DeleteAnnotation.js",
 			"src/dm/annotations/ve.dm.FontAnnotation.js",
 			"src/dm/annotations/ve.dm.HighlightAnnotation.js",
-			"src/dm/annotations/ve.dm.InsertAnnotation.js",
 			"src/dm/annotations/ve.dm.ItalicAnnotation.js",
 			"src/dm/annotations/ve.dm.QuotationAnnotation.js",
 			"src/dm/annotations/ve.dm.SmallAnnotation.js",
@@ -392,7 +361,6 @@
 			"src/ce/keydownhandlers/ve.ce.TableEnterKeyDownHandler.js",
 			"src/ce/keydownhandlers/ve.ce.LinearTabKeyDownHandler.js",
 			"src/ce/nodes/ve.ce.GeneratedContentNode.js",
-			"src/ce/nodes/ve.ce.ActiveNode.js",
 			"src/ce/nodes/ve.ce.AlienNode.js",
 			"src/ce/nodes/ve.ce.ArticleNode.js",
 			"src/ce/nodes/ve.ce.BlockquoteNode.js",
@@ -426,17 +394,14 @@
 			"src/ce/annotations/ve.ce.LinkAnnotation.js",
 			"src/ce/annotations/ve.ce.TextStyleAnnotation.js",
 			"src/ce/annotations/ve.ce.AbbreviationAnnotation.js",
-			"src/ce/annotations/ve.ce.BidiAnnotation.js",
 			"src/ce/annotations/ve.ce.BigAnnotation.js",
 			"src/ce/annotations/ve.ce.BoldAnnotation.js",
 			"src/ce/annotations/ve.ce.CodeAnnotation.js",
 			"src/ce/annotations/ve.ce.CodeSampleAnnotation.js",
 			"src/ce/annotations/ve.ce.DatetimeAnnotation.js",
 			"src/ce/annotations/ve.ce.DefinitionAnnotation.js",
-			"src/ce/annotations/ve.ce.DeleteAnnotation.js",
 			"src/ce/annotations/ve.ce.FontAnnotation.js",
 			"src/ce/annotations/ve.ce.HighlightAnnotation.js",
-			"src/ce/annotations/ve.ce.InsertAnnotation.js",
 			"src/ce/annotations/ve.ce.ItalicAnnotation.js",
 			"src/ce/annotations/ve.ce.QuotationAnnotation.js",
 			"src/ce/annotations/ve.ce.SmallAnnotation.js",
@@ -488,7 +453,6 @@
 			"src/ui/ve.ui.DataTransferItem.js",
 			"src/ui/ve.ui.WindowManager.js",
 			"src/ui/ve.ui.NodeWindow.js",
-			"src/ui/ve.ui.TabIndexScope.js",
 			"src/ui/windowmanagers/ve.ui.SurfaceWindowManager.js",
 			"src/ui/actions/ve.ui.AnnotationAction.js",
 			"src/ui/actions/ve.ui.ContentAction.js",
@@ -553,14 +517,12 @@
 		],
 		"styles": [
 			"src/ce/styles/nodes/ve.ce.FocusableNode.css",
-			"src/ce/styles/nodes/ve.ce.ActiveNode.css",
 			"src/ce/styles/nodes/ve.ce.AlienNode.css",
 			"src/ce/styles/nodes/ve.ce.BranchNode.css",
 			"src/ce/styles/nodes/ve.ce.ContentBranchNode.css",
 			"src/ce/styles/nodes/ve.ce.DocumentNode.css",
 			"src/ce/styles/nodes/ve.ce.GeneratedContentNode.css",
 			"src/ce/styles/nodes/ve.ce.HorizontalRuleNode.css",
-			"src/ce/styles/nodes/ve.ce.CommentNode.css",
 			"src/ce/styles/annotations/ve.ce.LanguageAnnotation.css",
 			"src/ce/styles/annotations/ve.ce.LinkAnnotation.css",
 			"src/ce/styles/nodes/ve.ce.ResizableNode.css",
@@ -603,40 +565,6 @@
 			"visualEditor.base.build"
 		]
 	},
-	"visualEditor.diffing": {
-		"scripts": [
-			"src/ve.DiffTreeNode.js",
-			"src/dm/ve.dm.VisualDiff.js",
-			"src/ui/dialogs/ve.ui.DiffDialog.js",
-			"src/ui/elements/ve.ui.DiffElement.js"
-		],
-		"styles": [
-			"src/ui/styles/elements/ve.ui.DiffElement.css"
-		],
-		"dependencies": [
-			"visualEditor.core.build",
-			"treeDiffer",
-			"diffMatchPatch"
-		]
-	},
-	"visualEditor.rebase": {
-		"scripts": [
-			"src/dm/ve.dm.Change.js",
-			"src/dm/ve.dm.RebaseServer.js",
-			"src/dm/ve.dm.RebaseClient.js",
-			"src/dm/ve.dm.SurfaceSynchronizer.js"
-		],
-		"dependencies": [
-			"dompurify",
-			"socket.io"
-		]
-	},
-	"visualEditor.rebase.build": {
-		"dependencies": [
-			"visualEditor.build",
-			"visualEditor.rebase"
-		]
-	},
 	"visualEditor.test": {
 		"scripts": [
 			"tests/ve.qunit.js",
@@ -664,9 +592,6 @@
 			"tests/dm/ve.dm.InternalList.test.js",
 			"tests/dm/ve.dm.LinearData.test.js",
 			"tests/dm/ve.dm.Transaction.test.js",
-			"tests/dm/ve.dm.TransactionBuilder.test.js",
-			"tests/dm/ve.dm.Change.test.js",
-			"tests/dm/ve.dm.RebaseServer.test.js",
 			"tests/dm/ve.dm.TransactionProcessor.test.js",
 			"tests/dm/ve.dm.APIResultsQueue.test.js",
 			"tests/dm/ve.dm.Surface.test.js",
@@ -696,7 +621,6 @@
 			"tests/init/ve.init.sa.Platform.test.js",
 			"tests/ui/ve.ui.DataTransferHandlerFactory.test.js",
 			"tests/ui/ve.ui.Trigger.test.js",
-			"tests/ui/ve.ui.DiffElement.test.js",
 			"tests/ui/actions/ve.ui.AnnotationAction.test.js",
 			"tests/ui/actions/ve.ui.ContentAction.test.js",
 			"tests/ui/actions/ve.ui.FormatAction.test.js",
@@ -748,8 +672,7 @@
 		"dependencies": [
 			"jsdifflib",
 			"qunit",
-			"visualEditor.desktop.standalone",
-			"visualEditor.rebase"
+			"visualEditor.desktop.standalone"
 		]
 	},
 	"visualEditor.theme.apex": {
@@ -769,8 +692,7 @@
 			"oojs-ui-apex",
 			"visualEditor.core",
 			"visualEditor.desktop.build",
-			"visualEditor.theme.apex",
-			"visualEditor.diffing"
+			"visualEditor.theme.apex"
 		]
 	},
 	"visualEditor.desktop.build": {
@@ -791,8 +713,7 @@
 			"oojs-ui-mediawiki",
 			"visualEditor.core",
 			"visualEditor.mobile.build",
-			"visualEditor.theme.mediawiki",
-			"visualEditor.diffing"
+			"visualEditor.theme.mediawiki"
 		]
 	},
 	"visualEditor.mobile.build": {
@@ -903,22 +824,6 @@
 		],
 		"styles": [
 			"demos/ve/demo.minimal.css"
-		]
-	},
-	"rebaser.build": {
-		"scripts": [
-			"src/dm/ve.dm.IndexValueStore.js",
-			"src/dm/ve.dm.Transaction.js",
-			"src/dm/ve.dm.Change.js",
-			"src/dm/ve.dm.RebaseServer.js",
-			"src/ve.Range.js",
-			"src/dm/ve.dm.Selection.js",
-			"src/dm/selections/ve.dm.NullSelection.js",
-			"src/dm/selections/ve.dm.LinearSelection.js",
-			"src/dm/selections/ve.dm.TableSelection.js"
-		],
-		"dependencies": [
-			"oojs"
 		]
 	},
 	"visualEditor.build": {

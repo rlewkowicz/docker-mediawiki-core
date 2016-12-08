@@ -4,7 +4,7 @@
  * @copyright 2011-2016 VisualEditor Team and others; see http://ve.mit-license.org
  */
 
-/* global difflib,diffview */
+/*global difflib,diffview */
 
 ( function ( QUnit ) {
 	/**
@@ -104,17 +104,17 @@
 	 */
 	function unescapeText( s ) {
 		return s.replace( /&(#039|quot|lt|gt|amp);/g, function ( match, seq ) {
-			switch ( seq ) {
-				case '#039':
-					return '\'';
-				case 'quot':
-					return '"';
-				case 'lt':
-					return '<';
-				case 'gt':
-					return '>';
-				case 'amp':
-					return '&';
+			switch ( seq )  {
+			case '#039':
+				return '\'';
+			case 'quot':
+				return '"';
+			case 'lt':
+				return '<';
+			case 'gt':
+				return '>';
+			case 'amp':
+				return '&';
 			}
 		} );
 	}
@@ -129,10 +129,6 @@
 	 *
 	 * @method
 	 * @static
-	 * @param {ve.Node} actual
-	 * @param {ve.Node} expected
-	 * @param {boolean} shallow
-	 * @param {string} message
 	 */
 	QUnit.assert.equalNodeTree = function ( actual, expected, shallow, message ) {
 		var actualSummary, expectedSummary;
@@ -150,9 +146,6 @@
 	/**
 	 * @method
 	 * @static
-	 * @param {Object[]} actual
-	 * @param {Object[]} expected
-	 * @param {string} message
 	 */
 	QUnit.assert.equalNodeSelection = function ( actual, expected, message ) {
 		var i,
@@ -175,9 +168,6 @@
 	/**
 	 * @method
 	 * @static
-	 * @param {HTMLElement} actual
-	 * @param {HTMLElement} expected
-	 * @param {string} message
 	 */
 	QUnit.assert.equalDomElement = function ( actual, expected, message ) {
 		var actualSummary = ve.getDomElementSummary( actual ),
@@ -191,47 +181,37 @@
 	};
 
 	QUnit.assert.equalLinearData = function ( actual, expected, message ) {
-		function removeOriginalDomElements( val ) {
-			if ( val && val.originalDomElementsIndex !== undefined ) {
-				delete val.originalDomElementsIndex;
-			}
-			if ( val && val.originalDomElements !== undefined ) {
-				delete val.originalDomElements;
-			}
-		}
-
-		actual = ve.copy( actual );
-		expected = ve.copy( expected );
-		actual = ve.copy( actual, null, removeOriginalDomElements );
-		expected = ve.copy( expected, null, removeOriginalDomElements );
-
-		QUnit.push( QUnit.equiv( actual, expected ), actual, expected, message );
-	};
-
-	QUnit.assert.equalLinearDataWithDom = function ( store, actual, expected, message ) {
-		function addOriginalDomElements( val ) {
-			if ( val && val.originalDomElementsIndex !== undefined ) {
-				val.originalDomElements = store.value( val.originalDomElementsIndex );
-				delete val.originalDomElementsIndex;
+		function removeOriginalDomElements( arr ) {
+			var i = 0,
+				len = arr.length;
+			for ( ; i < len; i++ ) {
+				if ( arr[ i ].originalDomElements ) {
+					delete arr[ i ].originalDomElements;
+				}
 			}
 		}
 
-		actual = ve.copy( actual );
-		expected = ve.copy( expected );
-		actual = ve.copy( actual, ve.convertDomElements, addOriginalDomElements );
-		expected = ve.copy( expected, ve.convertDomElements, addOriginalDomElements );
+		if ( Array.isArray( actual ) ) {
+			actual = actual.slice();
+			removeOriginalDomElements( actual );
+		}
+		if ( Array.isArray( expected ) ) {
+			expected = expected.slice();
+			removeOriginalDomElements( expected );
+		}
+
+		// FIXME domElements handling here shouldn't be necessary, but it is because of AlienNode
+		actual = ve.copy( actual, ve.convertDomElements );
+		expected = ve.copy( expected, ve.convertDomElements );
 
 		QUnit.push( QUnit.equiv( actual, expected ), actual, expected, message );
 	};
 
 	/**
-	 * Assert that two objects which may contain DOM elements are equal.
+	 * Assert that two objects which may contain dom elements are equal.
 	 *
 	 * @method
 	 * @static
-	 * @param {Object} actual
-	 * @param {Object} expected
-	 * @param {string} message
 	 */
 	QUnit.assert.deepEqualWithDomElements = function ( actual, expected, message ) {
 		// Recursively copy objects or arrays, converting any dom elements found to comparable summaries
@@ -246,9 +226,6 @@
 	 *
 	 * @method
 	 * @static
-	 * @param {Object} actual
-	 * @param {Object} expected
-	 * @param {string} message
 	 */
 	QUnit.assert.deepEqualWithNodeTree = function ( actual, expected, message ) {
 		// Recursively copy objects or arrays, converting any dom elements found to comparable summaries
@@ -282,7 +259,7 @@
 		var oLines = difflib.stringAsLines( unescapeText( o ) ),
 			nLines = difflib.stringAsLines( unescapeText( n ) ),
 			sm = new difflib.SequenceMatcher( oLines, nLines ),
-			// jscs:disable requireCamelCaseOrUpperCaseIdentifiers (awaiting eslint replacement; T149261)
+			// jscs:disable requireCamelCaseOrUpperCaseIdentifiers
 			opcodes = sm.get_opcodes(),
 			// jscs:enable requireCamelCaseOrUpperCaseIdentifiers
 			$div = $( '<div>' );

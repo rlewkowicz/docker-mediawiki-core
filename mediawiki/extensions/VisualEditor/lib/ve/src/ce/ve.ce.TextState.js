@@ -69,6 +69,7 @@ ve.ce.TextState.static.getChunks = function ( element ) {
 		// If appropriate, step into first child and loop
 		// If no next sibling, step out until there is (breaking if we leave element)
 		// Step to next sibling and loop
+		// jscs:disable disallowEmptyBlocks
 		if ( node.nodeType === Node.TEXT_NODE ) {
 			add( node.data.replace( /\u00A0/g, ' ' ) );
 		} else if (
@@ -212,11 +213,7 @@ ve.ce.TextState.prototype.getChangeTransaction = function ( prev, modelDoc, mode
 	// During typical typing, there is a single changed chunk with matching start/end chars.
 	textStart = 0;
 	textEnd = 0;
-	if ( change.start + change.end < Math.min( oldChunks.length, newChunks.length ) ) {
-		// Both oldChunks and newChunks include a changed chunk. Therefore the first changed
-		// chunk of oldChunks and newChunks is respectively oldChunks[ change.start ] and
-		// newChunks[ change.start ] . If they have matching annotations, then matching
-		// characters at their start are also part of the unchanged start region.
+	if ( change.start < Math.min( oldChunks.length, newChunks.length ) ) {
 		if ( oldChunks[ change.start ].hasEqualElements( newChunks[ change.start ] ) ) {
 			oldChunk = oldChunks[ change.start ];
 			newChunk = newChunks[ change.start ];
@@ -229,22 +226,19 @@ ve.ce.TextState.prototype.getChangeTransaction = function ( prev, modelDoc, mode
 			textStart = i;
 		}
 
-		// Likewise, the last changed chunk of oldChunks and newChunks is respectively
-		// oldChunks[ oldChunks.length - 1 - change.end ] and
-		// newChunks[ newChunks.length - 1 - change.end ] , and if they have matching
-		// annotations, then matching characters at their end potentially form part of
-		// the unchanged end region.
-		if ( oldChunks[ oldChunks.length - 1 - change.end ].hasEqualElements(
+		if (
+			change.end < Math.min( oldChunks.length, newChunks.length ) &&
+			oldChunks[ oldChunks.length - 1 - change.end ].hasEqualElements(
 				newChunks[ newChunks.length - 1 - change.end ]
-		) ) {
+			)
+		) {
 			oldChunk = oldChunks[ oldChunks.length - 1 - change.end ];
 			newChunk = newChunks[ newChunks.length - 1 - change.end ];
-			// However, if only one chunk has changed in oldChunks/newChunks, then
-			// oldChunk/newChunk is also the *first* changed chunk, in which case
-			// textStart has already eaten into that chunk; so take care not to
-			// overlap it. (For example, for 'ana'->'anna', textStart will be 2 so
-			// we want to limit textEnd to 1, else the 'n' of 'ana' will be counted
-			// twice).
+			// For oldChunks/newChunks/both, it's possible that only one chunk
+			// changed, in which case textStart has already eaten into that chunk;
+			// so take care not to overlap it. (For example, for 'ana'->'anna',
+			// textStart will be 2 so we want to limit textEnd to 1, else the 'n'
+			// of 'ana' will be counted twice).
 			iLen = Math.min(
 				oldChunk.text.length -
 				( change.start + change.end === oldChunks.length - 1 ? textStart : 0 ),
@@ -397,13 +391,13 @@ ve.ce.TextState.prototype.getChangeTransaction = function ( prev, modelDoc, mode
 					modelClass = ve.dm.modelRegistry.lookup(
 						ve.dm.modelRegistry.matchElement( element )
 					);
-					if ( !( modelClass.prototype instanceof ve.dm.Annotation ) ) {
+					ann = ve.dm.annotationFactory.createFromElement(
+						ve.dm.converter.createDataElements( modelClass, [ element ] )[ 0 ]
+					);
+					if ( !( ann instanceof ve.dm.Annotation ) ) {
 						// Erroneous element; nothing we can do with it
 						continue;
 					}
-					ann = ve.dm.annotationFactory.createFromElement(
-						modelClass.static.toDataElement( [ element ], ve.dm.converter )
-					);
 					oldAnn = oldAnnotations.getComparable( ann );
 					if ( oldAnn ) {
 						ann = oldAnn;
@@ -419,5 +413,5 @@ ve.ce.TextState.prototype.getChangeTransaction = function ( prev, modelDoc, mode
 		ve.batchPush( newData, data );
 	}
 
-	return ve.dm.TransactionBuilder.static.newFromReplacement( modelDoc, removeRange, newData );
+	return ve.dm.Transaction.newFromReplacement( modelDoc, removeRange, newData );
 };

@@ -109,11 +109,7 @@ ve.ce.ResizableNode.prototype.getResizableOffset = function () {
 	return this.resizableOffset;
 };
 
-/**
- * Set the original dimensions of the scalable object
- *
- * @param {Object} dimensions Dimensions
- */
+/** */
 ve.ce.ResizableNode.prototype.setOriginalDimensions = function ( dimensions ) {
 	var scalable;
 
@@ -421,7 +417,7 @@ ve.ce.ResizableNode.prototype.onResizeHandlesCornerMouseDown = function ( e ) {
 	} );
 	this.emit( 'resizeStart' );
 
-	e.preventDefault();
+	return false;
 };
 
 /**
@@ -557,8 +553,12 @@ ve.ce.ResizableNode.prototype.onDocumentMouseMove = function ( e ) {
  */
 ve.ce.ResizableNode.prototype.onDocumentMouseUp = function () {
 	var attrChanges,
+		offset = this.model.getOffset(),
 		width = this.$resizeHandles.outerWidth(),
-		height = this.$resizeHandles.outerHeight();
+		height = this.$resizeHandles.outerHeight(),
+		surfaceModel = this.resizableSurface.getModel(),
+		documentModel = surfaceModel.getDocument(),
+		selection = surfaceModel.getSelection();
 
 	this.$resizeHandles.removeClass( 've-ce-resizableNode-handles-resizing' );
 	$( this.getElementDocument() ).off( '.ve-ce-resizableNode' );
@@ -569,7 +569,10 @@ ve.ce.ResizableNode.prototype.onDocumentMouseUp = function () {
 	// Apply changes to the model
 	attrChanges = this.getAttributeChanges( width, height );
 	if ( !ve.isEmptyObject( attrChanges ) ) {
-		this.resizableSurface.getModel().getFragment().changeAttributes( attrChanges );
+		surfaceModel.change(
+			ve.dm.Transaction.newFromAttributeChanges( documentModel, offset, attrChanges ),
+			selection
+		);
 	}
 
 	// Update the context menu. This usually happens with the redraw, but not if the

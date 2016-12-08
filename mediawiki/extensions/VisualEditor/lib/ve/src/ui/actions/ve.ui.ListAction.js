@@ -12,9 +12,9 @@
  * @constructor
  * @param {ve.ui.Surface} surface Surface to act on
  */
-ve.ui.ListAction = function VeUiListAction() {
+ve.ui.ListAction = function VeUiListAction( surface ) {
 	// Parent constructor
-	ve.ui.ListAction.super.apply( this, arguments );
+	ve.ui.Action.call( this, surface );
 };
 
 /* Inheritance */
@@ -99,9 +99,8 @@ ve.ui.ListAction.prototype.wrapOnce = function ( style, noBreakpoints ) {
  * @return {boolean} Action was executed
  */
 ve.ui.ListAction.prototype.wrap = function ( style, noBreakpoints ) {
-	var i, previousList, groupRange, group, range,
+	var tx, i, previousList, groupRange, group, range,
 		surfaceModel = this.surface.getModel(),
-		fragment = surfaceModel.getFragment( null, true ),
 		documentModel = surfaceModel.getDocument(),
 		selection = surfaceModel.getSelection(),
 		groups;
@@ -125,41 +124,67 @@ ve.ui.ListAction.prototype.wrap = function ( style, noBreakpoints ) {
 		documentModel.hasSlugAtOffset( range.to )
 	) {
 		// Inside block level slug
-		fragment = fragment
-			.insertContent( [
-				{ type: 'paragraph' },
-				{ type: '/paragraph' }
-			] )
-			.collapseToStart()
-			.adjustLinearSelection( 1, 1 )
-			.select();
-		range = fragment.getSelection().getRange();
-	}
+		surfaceModel.change(
+			ve.dm.Transaction.newFromInsertion(
+				documentModel,
+				range.from,
+				[
+					{ type: 'list', attributes: { style: style } },
+					{ type: 'listItem' },
+					{ type: 'paragraph' },
+					{ type: '/paragraph' },
+					{ type: '/listItem' },
+					{ type: '/list' }
 
-	groups = documentModel.getCoveredSiblingGroups( range );
-	for ( i = 0; i < groups.length; i++ ) {
-		group = groups[ i ];
-		if ( group.grandparent && group.grandparent.getType() === 'list' ) {
-			if ( group.grandparent !== previousList ) {
-				surfaceModel.getLinearFragment( group.grandparent.getOuterRange(), true )
+				]
+			),
+			new ve.dm.LinearSelection( documentModel, new ve.Range( range.to + 3 ) )
+		);
+	} else {
+		groups = documentModel.getCoveredSiblingGroups( range );
+		for ( i = 0; i < groups.length; i++ ) {
+			group = groups[ i ];
+			if ( group.grandparent && group.grandparent.getType() === 'list' ) {
+				if ( group.grandparent !== previousList ) {
 					// Change the list style
-					.changeAttributes( { style: style } );
-				previousList = group.grandparent;
-			}
-		} else {
-			// Get a range that covers the whole group
-			groupRange = new ve.Range(
-				group.nodes[ 0 ].getOuterRange().start,
-				group.nodes[ group.nodes.length - 1 ].getOuterRange().end
-			);
-			surfaceModel.getLinearFragment( groupRange, true )
+					surfaceModel.change(
+						ve.dm.Transaction.newFromAttributeChanges(
+							documentModel, group.grandparent.getOffset(), { style: style }
+						),
+						selection
+					);
+					// Skip this one next time
+					previousList = group.grandparent;
+				}
+			} else {
+				// Get a range that covers the whole group
+				groupRange = new ve.Range(
+					group.nodes[ 0 ].getOuterRange().start,
+					group.nodes[ group.nodes.length - 1 ].getOuterRange().end
+				);
 				// Convert everything to paragraphs first
-				.convertNodes( 'paragraph' )
+				surfaceModel.change(
+					ve.dm.Transaction.newFromContentBranchConversion(
+						documentModel, groupRange, 'paragraph'
+					),
+					selection
+				);
 				// Wrap everything in a list and each content branch in a listItem
-				.wrapAllNodes( { type: 'list', attributes: { style: style } }, { type: 'listItem' } );
+				tx = ve.dm.Transaction.newFromWrap(
+					documentModel,
+					groupRange,
+					[],
+					[ { type: 'list', attributes: { style: style } } ],
+					[],
+					[ { type: 'listItem' } ]
+				);
+				surfaceModel.change(
+					tx,
+					new ve.dm.LinearSelection( documentModel, tx.translateRange( range ) )
+				);
+			}
 		}
 	}
-
 	if ( !noBreakpoints ) {
 		surfaceModel.breakpoint();
 	}

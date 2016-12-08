@@ -18,7 +18,7 @@
  */
 ve.ui.PreviewElement = function VeUiPreviewElement( model, config ) {
 	// Parent constructor
-	ve.ui.PreviewElement.super.call( this, config );
+	OO.ui.Element.call( this, config );
 
 	// Mixin constructor
 	OO.EventEmitter.call( this );
@@ -60,41 +60,31 @@ ve.ui.PreviewElement.prototype.setModel = function ( model ) {
 /**
  * Replace the content of the body with the model DOM
  *
- * Doesn't use jQuery to avoid document switching performance bug
- *
  * @fires render
  */
 ve.ui.PreviewElement.prototype.replaceWithModelDom = function () {
 	var htmlDocument = ve.dm.converter.getDomFromNode( this.model, true ),
-		body = htmlDocument.body,
-		element = this.$element[ 0 ];
+		$preview = $( htmlDocument.body );
 
 	// Resolve attributes
 	ve.resolveAttributes(
-		body,
+		$preview,
 		this.model.getDocument().getHtmlDocument(),
 		ve.dm.Converter.static.computedAttributes
 	);
 
 	// Make all links open in a new window (sync view)
-	Array.prototype.forEach.call( body.querySelectorAll( 'a[href]' ), function ( el ) {
-		el.setAttribute( 'target', '_blank' );
-	} );
+	$preview.find( 'a' ).attr( 'target', '_blank' );
 
-	// Move content to element
-	element.innerHTML = '';
-	while ( body.childNodes.length ) {
-		element.appendChild(
-			element.ownerDocument.adoptNode( body.childNodes[ 0 ] )
-		);
-	}
+	// Replace content
+	this.$element.empty().append( $preview.contents() );
+
+	// Event
+	this.emit( 'render' );
 
 	// Cleanup
 	this.view.destroy();
 	this.view = null;
-
-	// Event
-	this.emit( 'render' );
 };
 
 /**
@@ -120,7 +110,7 @@ ve.ui.PreviewElement.prototype.updatePreview = function () {
 
 	// Traverse children to see when they are all rerendered
 	if ( this.view instanceof ve.ce.BranchNode ) {
-		this.view.traverse( queueNode );
+		ve.BranchNode.static.traverse( this.view, queueNode );
 	} else {
 		queueNode( this.view );
 	}
@@ -141,5 +131,5 @@ ve.ui.PreviewElement.prototype.updatePreview = function () {
  * @return {boolean} Still generating
  */
 ve.ui.PreviewElement.prototype.isGenerating = function () {
-	return !!this.view;
+	return !!( this.view && this.view.isGenerating && this.view.isGenerating() );
 };

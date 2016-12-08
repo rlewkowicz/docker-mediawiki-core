@@ -41,10 +41,8 @@ ve.ce.TableCellNode = function VeCeTableCellNode() {
 		this.$element.attr( 'colspan', colspan );
 	}
 
-	this.$element
-		// Add tooltip
-		.attr( 'title', ve.msg( 'visualeditor-tablecell-tooltip' ) )
-		.prop( 'spellcheck', true );
+	// Add tooltip
+	this.$element.attr( 'title', ve.msg( 'visualeditor-tablecell-tooltip' ) );
 
 	// Events
 	this.model.connect( this, {
@@ -131,10 +129,6 @@ ve.ce.TableCellNode.prototype.onSetup = function () {
 
 /**
  * Handle attribute changes to keep the live HTML element updated.
- *
- * @param {string} key Attribute name
- * @param {Mixed} from Old value
- * @param {Mixed} to Old value
  */
 ve.ce.TableCellNode.prototype.onAttributeChange = function ( key, from, to ) {
 	switch ( key ) {

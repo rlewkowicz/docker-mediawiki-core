@@ -13,9 +13,9 @@
  * @param {OO.ui.ToolGroup} toolGroup
  * @param {Object} [config] Configuration options
  */
-ve.ui.ClearAnnotationTool = function VeUiClearAnnotationTool() {
+ve.ui.ClearAnnotationTool = function VeUiClearAnnotationTool( toolGroup, config ) {
 	// Parent constructor
-	ve.ui.ClearAnnotationTool.super.apply( this, arguments );
+	ve.ui.Tool.call( this, toolGroup, config );
 
 	// Initialization
 	this.setDisabled( true );

@@ -44,7 +44,8 @@ QUnit.test( 'Converter tests', function ( assert ) {
 // TODO: getDirectionFromRange
 
 QUnit.test( 'getNodeAndOffset', function ( assert ) {
-	var tests, i, iLen, test, parts, view, data, ceDoc, rootNode, offsetCount, offset, j, jLen, node;
+	var tests, i, iLen, test, parts, view, data, ceDoc, rootNode, offsetCount, offset, position,
+		j, jLen, node;
 
 	// Each test below has the following:
 	// html: an input document
@@ -53,7 +54,7 @@ QUnit.test( 'getNodeAndOffset', function ( assert ) {
 	// characters on a modified HTML representation in which text nodes are wrapped in
 	// <#text>...</#text> tags (and most attributes are omitted)
 	// dies (optional): a list of DM offsets where getNodeAndOffset is expected to die
-	/* eslint-disable quotes */
+	/*jscs:disable validateQuoteMarks */
 	tests = [
 		{
 			title: 'Simple para',
@@ -98,21 +99,10 @@ QUnit.test( 'getNodeAndOffset', function ( assert ) {
 			html: '<p><a href="A"><b>A<img></b></a></p>',
 			data: [ '<paragraph>', 'A', '<inlineImage>', '</inlineImage>', '</paragraph>' ],
 			positions: "<div class='ve-ce-branchNode ve-ce-documentNode'>|<p class='ve-ce-branchNode ve-ce-contentBranchNode ve-ce-paragraphNode'>|<img class='ve-ce-nail ve-ce-nail-pre-open'></img><a class='ve-ce-linkAnnotation'><img class='ve-ce-nail ve-ce-nail-post-open'></img><b class='ve-ce-textStyleAnnotation ve-ce-boldAnnotation'><#text>A|</#text><img class='ve-ce-leafNode ve-ce-focusableNode ve-ce-imageNode ve-ce-inlineImageNode'></img></b><img class='ve-ce-nail ve-ce-nail-pre-close'></img></a><img class='ve-ce-nail ve-ce-nail-post-close'></img>||<span class='ve-ce-branchNode-slug ve-ce-branchNode-inlineSlug'></span></p></div>"
-		},
-		{
-			title: 'About grouped aliens',
-			html: "<p><span rel='ve:Alien' about='x'>Foo</span><span rel='ve:Alien' about='x'>Bar</span></p>",
-			data: [ '<paragraph>', '<alienInline>', '</alienInline>', '</paragraph>' ],
-			positions: "<div class='ve-ce-branchNode ve-ce-documentNode'>|<p class='ve-ce-branchNode ve-ce-contentBranchNode ve-ce-paragraphNode'>|<span class='ve-ce-branchNode-slug ve-ce-branchNode-inlineSlug'></span><span class='ve-ce-focusableNode ve-ce-leafNode'><#text>|Foo</#text></span><span class='ve-ce-focusableNode ve-ce-leafNode'><#text>Bar</#text></span>|<span class='ve-ce-branchNode-slug ve-ce-branchNode-inlineSlug'></span></p></div>"
-		},
-		{
-			title: 'Non-about grouped aliens',
-			html: "<p><span rel='ve:Alien' about='x'>Foo</span><span rel='ve:Alien' about='y'>Bar</span></p>",
-			data: [ '<paragraph>', '<alienInline>', '</alienInline>', '<alienInline>', '</alienInline>', '</paragraph>' ],
-			positions: "<div class='ve-ce-branchNode ve-ce-documentNode'>|<p class='ve-ce-branchNode ve-ce-contentBranchNode ve-ce-paragraphNode'>|<span class='ve-ce-branchNode-slug ve-ce-branchNode-inlineSlug'></span><span class='ve-ce-focusableNode ve-ce-leafNode'><#text>|Foo</#text></span>|<span class='ve-ce-branchNode-slug ve-ce-branchNode-inlineSlug'></span><span class='ve-ce-focusableNode ve-ce-leafNode'><#text>|Bar</#text></span>|<span class='ve-ce-branchNode-slug ve-ce-branchNode-inlineSlug'></span></p></div>"
 		}
 	];
-	/* eslint-enable quotes */
+
+	/*jscs:enable validateQuoteMarks */
 
 	QUnit.expect( tests.reduce( function ( total, test ) {
 		return total + test.positions.replace( /[^|]/g, '' ).length + 2;
@@ -161,6 +151,7 @@ QUnit.test( 'getNodeAndOffset', function ( assert ) {
 
 		for ( offset = 0; offset < offsetCount; offset++ ) {
 			try {
+				position = ceDoc.getNodeAndOffset( offset, test.outsideNails );
 				if ( test.dies && test.dies.indexOf( offset ) !== -1 ) {
 					assert.ok( false, test.title + ' (' + offset + ') does not die' );
 					continue;
@@ -173,6 +164,7 @@ QUnit.test( 'getNodeAndOffset', function ( assert ) {
 				continue;
 			}
 
+			position = ceDoc.getNodeAndOffset( offset, test.outsideNails );
 			assert.strictEqual(
 				ve.test.utils.serializePosition(
 					rootNode,

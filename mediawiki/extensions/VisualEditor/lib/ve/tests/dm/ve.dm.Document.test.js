@@ -64,10 +64,10 @@ QUnit.test( 'constructor', 12, function ( assert ) {
 	assert.strictEqual( doc.data, data, 'ElementLinearData is stored by reference' );
 
 	doc = ve.dm.example.createExampleDocument( 'withMeta' );
-	assert.equalLinearDataWithDom( doc.getStore(), doc.getData(), ve.dm.example.withMetaPlainData,
+	assert.deepEqualWithDomElements( doc.getData(), ve.dm.example.withMetaPlainData,
 		'metadata is stripped out of the linear model'
 	);
-	assert.equalLinearDataWithDom( doc.getStore(), doc.getMetadata(), ve.dm.example.withMetaMetaData,
+	assert.deepEqualWithDomElements( doc.getMetadata(), ve.dm.example.withMetaMetaData,
 		'metadata is put in the meta-linmod'
 	);
 	assert.equalNodeTree(
@@ -83,23 +83,17 @@ QUnit.test( 'constructor', 12, function ( assert ) {
 QUnit.test( 'getData', 1, function ( assert ) {
 	var doc = ve.dm.example.createExampleDocument(),
 		expectedData = ve.dm.example.preprocessAnnotations( ve.copy( ve.dm.example.data ) );
-	assert.equalLinearDataWithDom( doc.getStore(), doc.getData(), expectedData.getData() );
+	assert.deepEqualWithDomElements( doc.getData(), expectedData.getData() );
 } );
 
 QUnit.test( 'getFullData', 1, function ( assert ) {
 	var doc = ve.dm.example.createExampleDocument( 'withMeta' );
-	assert.equalLinearDataWithDom( doc.getStore(), doc.getFullData(), ve.dm.example.withMeta );
+	assert.deepEqualWithDomElements( doc.getFullData(), ve.dm.example.withMeta );
 } );
 
 QUnit.test( 'cloneFromRange', function ( assert ) {
 	var i, doc2, doc = ve.dm.example.createExampleDocument( 'internalData' ),
 		cases = [
-			{
-				msg: 'range undefined',
-				doc: 'internalData',
-				range: undefined,
-				expectedData: doc.data.slice()
-			},
 			{
 				msg: 'first internal item',
 				doc: 'internalData',
@@ -637,53 +631,24 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 	var i, expectedData, slice, range, doc,
 		cases = [
 			{
-				msg: 'no range',
-				range: undefined,
-				expected: ve.copy( ve.dm.example.data.slice( 0, -2 ) )
-			},
-			{
-				msg: 'collapsed range',
+				msg: 'empty range',
 				range: new ve.Range( 2 ),
-				expected: [
-					{ type: 'paragraph', internal: { generated: 'empty' } },
-					{ type: 'paragraph' }
-				],
-				originalRange: new ve.Range( 1 ),
-				balancedRange: new ve.Range( 1 )
-			},
-			{
-				doc: 'alienWithEmptyData',
-				msg: 'collapsed range in empty paragraph',
-				range: new ve.Range( 1 ),
-				expected: [
-					{ type: 'paragraph', internal: { generated: 'empty' } },
-					{ type: 'paragraph' }
-				],
-				originalRange: new ve.Range( 1 ),
-				balancedRange: new ve.Range( 1 )
+				expected: []
 			},
 			{
 				msg: 'range with one character',
 				range: new ve.Range( 2, 3 ),
 				expected: [
-					{ type: 'heading', attributes: { level: 1 }, internal: { generated: 'wrapper' } },
-					[ 'b', [ ve.dm.example.bold ] ],
-					{ type: '/heading' }
-				],
-				originalRange: new ve.Range( 1, 2 ),
-				balancedRange: new ve.Range( 1, 2 )
+					[ 'b', [ ve.dm.example.bold ] ]
+				]
 			},
 			{
 				msg: 'range with two characters',
 				range: new ve.Range( 2, 4 ),
 				expected: [
-					{ type: 'heading', attributes: { level: 1 }, internal: { generated: 'wrapper' } },
 					[ 'b', [ ve.dm.example.bold ] ],
-					[ 'c', [ ve.dm.example.italic ] ],
-					{ type: '/heading' }
-				],
-				originalRange: new ve.Range( 1, 3 ),
-				balancedRange: new ve.Range( 1, 3 )
+					[ 'c', [ ve.dm.example.italic ] ]
+				]
 			},
 			{
 				msg: 'range with two characters and a header closing',
@@ -827,54 +792,46 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 				msg: 'inline node at start',
 				range: new ve.Range( 1, 3 ),
 				expected: [
-					{ type: 'paragraph', internal: { generated: 'wrapper' } },
 					ve.dm.example.image.data,
-					{ type: '/inlineImage' },
-					{ type: '/paragraph' }
+					{ type: '/inlineImage' }
 				],
-				originalRange: new ve.Range( 1, 3 ),
-				balancedRange: new ve.Range( 1, 3 )
+				originalRange: new ve.Range( 0, 2 ),
+				balancedRange: new ve.Range( 0, 2 )
 			},
 			{
 				doc: 'inlineAtEdges',
 				msg: 'inline node at end',
 				range: new ve.Range( 6, 8 ),
 				expected: [
-					{ type: 'paragraph', internal: { generated: 'wrapper' } },
 					{ type: 'alienInline', originalDomElements: $( '<foobar />' ).toArray() },
-					{ type: '/alienInline' },
-					{ type: '/paragraph' }
+					{ type: '/alienInline' }
 				],
-				originalRange: new ve.Range( 1, 3 ),
-				balancedRange: new ve.Range( 1, 3 )
+				originalRange: new ve.Range( 0, 2 ),
+				balancedRange: new ve.Range( 0, 2 )
 			},
 			{
 				doc: 'inlineAtEdges',
 				msg: 'inline node at start with text',
 				range: new ve.Range( 1, 5 ),
 				expected: [
-					{ type: 'paragraph', internal: { generated: 'wrapper' } },
 					ve.dm.example.image.data,
 					{ type: '/inlineImage' },
-					'F', 'o',
-					{ type: '/paragraph' }
+					'F', 'o'
 				],
-				originalRange: new ve.Range( 1, 5 ),
-				balancedRange: new ve.Range( 1, 5 )
+				originalRange: new ve.Range( 0, 4 ),
+				balancedRange: new ve.Range( 0, 4 )
 			},
 			{
 				doc: 'inlineAtEdges',
 				msg: 'inline node at end with text',
 				range: new ve.Range( 4, 8 ),
 				expected: [
-					{ type: 'paragraph', internal: { generated: 'wrapper' } },
 					'o', 'o',
 					{ type: 'alienInline', originalDomElements: $( '<foobar />' ).toArray() },
-					{ type: '/alienInline' },
-					{ type: '/paragraph' }
+					{ type: '/alienInline' }
 				],
-				originalRange: new ve.Range( 1, 5 ),
-				balancedRange: new ve.Range( 1, 5 )
+				originalRange: new ve.Range( 0, 4 ),
+				balancedRange: new ve.Range( 0, 4 )
 			}
 		];
 	QUnit.expect( 3 * cases.length );
@@ -887,8 +844,7 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 			{ type: '/internalList' }
 		] );
 		slice = doc.shallowCloneFromRange( cases[ i ].range );
-		assert.equalLinearDataWithDom(
-			doc.getStore(),
+		assert.deepEqualWithDomElements(
 			slice.getData(),
 			expectedData,
 			cases[ i ].msg + ': data'
@@ -908,13 +864,13 @@ QUnit.test( 'shallowCloneFromRange', function ( assert ) {
 
 QUnit.test( 'protection against double application of transactions', 1, function ( assert ) {
 	var testDocument = ve.dm.example.createExampleDocument(),
-		txBuilder = new ve.dm.TransactionBuilder();
-	txBuilder.pushRetain( 1 );
-	txBuilder.pushReplace( testDocument, 1, 0, [ 'H', 'e', 'l', 'l', 'o' ] );
-	testDocument.commit( txBuilder.getTransaction() );
+		tx = new ve.dm.Transaction( testDocument );
+	tx.pushRetain( 1 );
+	tx.pushReplace( testDocument, 1, 0, [ 'H', 'e', 'l', 'l', 'o' ] );
+	testDocument.commit( tx );
 	assert.throws(
 		function () {
-			testDocument.commit( txBuilder.getTransaction() );
+			testDocument.commit( tx );
 		},
 		Error,
 		'exception thrown when trying to commit an already-committed transaction'
@@ -957,57 +913,6 @@ QUnit.test( 'getNearestCursorOffset', function ( assert ) {
 				expected[ dir ][ i ],
 				'Direction: ' + dir + ' Offset: ' + i
 			);
-		}
-	}
-} );
-
-QUnit.test( 'Selection equality', function ( assert ) {
-	var selections, i, iLen, j, jLen, iSel, jSel, doc;
-	doc = new ve.dm.Document( [
-		{ type: 'paragraph' }, 'h', 'i', { type: '/paragraph' },
-		{ type: 'table' },
-		{ type: 'tableSection' },
-		{ type: 'tableRow' },
-		{ type: 'tableCell', attributes: { colspan: 2, rowspan: 2 } },
-		{ type: '/tableCell' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: '/tableRow' },
-		{ type: 'tableRow' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: '/tableRow' },
-		{ type: 'tableRow' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: 'tableCell', attributes: {} },
-		{ type: '/tableCell' },
-		{ type: '/tableRow' },
-		{ type: '/tableSection' },
-		{ type: '/table' }
-	] );
-	selections = [
-		new ve.dm.LinearSelection( doc, new ve.Range( 1, 1 ) ),
-		new ve.dm.LinearSelection( doc, new ve.Range( 1, 3 ) ),
-		new ve.dm.LinearSelection( doc, new ve.Range( 3, 1 ) ),
-		new ve.dm.TableSelection( doc, new ve.Range( 4, 25 ), 0, 1, 2, 2, true ),
-		new ve.dm.NullSelection( doc ),
-		undefined,
-		null,
-		'foo'
-	];
-	QUnit.expect( selections.length * ( selections.length - 3 ) );
-	for ( i = 0, iLen = selections.length; i < iLen; i++ ) {
-		iSel = selections[ i ];
-		if ( !( iSel instanceof ve.dm.Selection ) ) {
-			continue;
-		}
-		iSel = iSel.clone();
-		for ( j = 0, jLen = selections.length; j < jLen; j++ ) {
-			jSel = selections[ j ];
-			assert.strictEqual( iSel.equals( jSel ), i === j, 'Selections ' + i + ' and ' + j );
 		}
 	}
 } );

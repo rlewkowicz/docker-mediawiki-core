@@ -14,9 +14,9 @@
  * @constructor
  * @param {Object} [config] Configuration options
  */
-ve.ui.AnnotationInspector = function VeUiAnnotationInspector() {
+ve.ui.AnnotationInspector = function VeUiAnnotationInspector( config ) {
 	// Parent constructor
-	ve.ui.AnnotationInspector.super.apply( this, arguments );
+	ve.ui.FragmentInspector.call( this, config );
 
 	// Properties
 	this.initialSelection = null;
@@ -158,7 +158,6 @@ ve.ui.AnnotationInspector.prototype.getMode = function () {
  * @method
  * @param {Object} [data] Inspector opening data
  * @param {boolean} [data.noExpand] Don't expand the selection when opening
- * @return {OO.ui.Process}
  */
 ve.ui.AnnotationInspector.prototype.getSetupProcess = function ( data ) {
 	return ve.ui.AnnotationInspector.super.prototype.getSetupProcess.call( this, data )
@@ -272,9 +271,6 @@ ve.ui.AnnotationInspector.prototype.getTeardownProcess = function ( data ) {
 			if ( !remove ) {
 				if ( data.action !== 'done' ) {
 					surfaceModel.popStaging();
-					if ( this.previousSelection ) {
-						surfaceModel.setSelection( this.previousSelection );
-					}
 					return;
 				}
 				if ( this.initialSelection.isCollapsed() ) {

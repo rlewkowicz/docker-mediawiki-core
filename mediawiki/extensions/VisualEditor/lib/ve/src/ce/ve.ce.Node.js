@@ -15,12 +15,15 @@
  * @param {ve.dm.Node} model Model to observe
  * @param {Object} [config] Configuration options
  */
-ve.ce.Node = function VeCeNode() {
+ve.ce.Node = function VeCeNode( model, config ) {
 	// Parent constructor
-	ve.ce.Node.super.apply( this, arguments );
+	ve.ce.View.call( this, model, config );
 
 	// Mixin constructor
 	ve.Node.call( this );
+
+	// Properties
+	this.parent = null;
 };
 
 /* Inheritance */
@@ -224,14 +227,10 @@ ve.ce.Node.prototype.destroy = function () {
 	this.doc = null;
 
 	// Parent method
-	ve.ce.Node.super.prototype.destroy.call( this );
+	ve.ce.View.prototype.destroy.call( this );
 };
 
-/**
- * Get the model's HTML document
- *
- * @return {HTMLDocument} Model document
- */
+/** */
 ve.ce.Node.prototype.getModelHtmlDocument = function () {
 	return this.model.getDocument() && this.model.getDocument().getHtmlDocument();
 };

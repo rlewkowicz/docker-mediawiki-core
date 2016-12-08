@@ -10,13 +10,12 @@ QUnit.module( 've.dm.TransactionProcessor' );
 
 QUnit.test( 'commit', function ( assert ) {
 	var i, originalData, originalDoc,
-		msg, testDoc, txBuilder, tx, expectedData, expectedDoc,
+		msg, testDoc, tx, expectedData, expectedDoc,
 		n = 0,
 		store = ve.dm.example.createExampleDocument().getStore(),
 		bold = ve.dm.example.createAnnotation( ve.dm.example.bold ),
 		italic = ve.dm.example.createAnnotation( ve.dm.example.italic ),
 		underline = ve.dm.example.createAnnotation( ve.dm.example.underline ),
-		link = ve.dm.example.createAnnotation( ve.dm.example.link( 'x' ) ),
 		metaElementInsert = {
 			type: 'alienMeta',
 			attributes: {
@@ -331,32 +330,6 @@ QUnit.test( 'commit', function ( assert ) {
 					data.splice( 3, 1 );
 				}
 			},
-			'applying a link across an existing annotation boundary': {
-				data: [
-					{ type: 'paragraph' },
-					[ 'f', store.indexes( [ bold, italic ] ) ],
-					[ 'o', store.indexes( [ bold, italic ] ) ],
-					[ 'o', store.indexes( [ bold, italic ] ) ],
-					[ 'b', store.indexes( [ bold ] ) ],
-					[ 'a', store.indexes( [ bold ] ) ],
-					[ 'r', store.indexes( [ bold ] ) ],
-					{ type: '/paragraph' }
-				],
-				calls: [
-					[ 'pushRetain', 1 ],
-					[ 'pushStartAnnotating', 'set', store.index( link ) ],
-					[ 'pushRetain', 6 ],
-					[ 'pushStopAnnotating', 'set', store.index( link ) ],
-					[ 'pushRetain', 1 ]
-				],
-				expected: function ( data ) {
-					var i, annotations;
-					for ( i = 1; i <= 6; i++ ) {
-						annotations = data[ i ][ 1 ];
-						annotations.splice( 1, 0, store.index( link ) );
-					}
-				}
-			},
 			'inserting text after alien node at the end': {
 				data: [
 					{ type: 'paragraph' },
@@ -597,8 +570,8 @@ QUnit.test( 'commit', function ( assert ) {
 					data.splice( 32, 1 ); // remove '/listItem'
 					data.splice( 20, 1 ); // remove 'listItem'
 					data.splice( 17, 1 ); // remove '/listItem'
-					data.splice( 5, 1 ); // remove 'listItem'
-					data.splice( 2, 1 ); // remove 'list'
+					data.splice(  5, 1 ); // remove 'listItem'
+					data.splice(  2, 1 ); // remove 'list'
 				}
 			},
 			'inserting trailing metadata (1)': {
@@ -683,8 +656,7 @@ QUnit.test( 'commit', function ( assert ) {
 		);
 		testDoc.buildNodeTree();
 
-		txBuilder = new ve.dm.TransactionBuilder();
-		tx = null;
+		tx = new ve.dm.Transaction( testDoc );
 		for ( i = 0; i < cases[ msg ].calls.length; i++ ) {
 			// some calls need the document as its first argument
 			if ( /^(pushReplace$|new)/.test( cases[ msg ].calls[ i ][ 0 ] ) ) {
@@ -692,13 +664,10 @@ QUnit.test( 'commit', function ( assert ) {
 			}
 			// special case static methods of Transaction
 			if ( /^new/.test( cases[ msg ].calls[ i ][ 0 ] ) ) {
-				tx = ve.dm.TransactionBuilder.static[ cases[ msg ].calls[ i ][ 0 ] ].apply( null, cases[ msg ].calls[ i ].slice( 1 ) );
+				tx = ve.dm.Transaction[ cases[ msg ].calls[ i ][ 0 ] ].apply( null, cases[ msg ].calls[ i ].slice( 1 ) );
 				break;
 			}
-			txBuilder[ cases[ msg ].calls[ i ][ 0 ] ].apply( txBuilder, cases[ msg ].calls[ i ].slice( 1 ) );
-		}
-		if ( tx === null ) {
-			tx = txBuilder.getTransaction();
+			tx[ cases[ msg ].calls[ i ][ 0 ] ].apply( tx, cases[ msg ].calls[ i ].slice( 1 ) );
 		}
 
 		if ( 'expected' in cases[ msg ] ) {
@@ -711,7 +680,7 @@ QUnit.test( 'commit', function ( assert ) {
 			expectedDoc.buildNodeTree();
 			// Commit
 			testDoc.commit( tx );
-			assert.equalLinearDataWithDom( testDoc.getStore(), testDoc.getFullData(), expectedDoc.getFullData(), 'commit (data): ' + msg );
+			assert.deepEqualWithDomElements( testDoc.getFullData(), expectedDoc.getFullData(), 'commit (data): ' + msg );
 			assert.equalNodeTree(
 				testDoc.getDocumentNode(),
 				expectedDoc.getDocumentNode(),
@@ -719,22 +688,22 @@ QUnit.test( 'commit', function ( assert ) {
 			);
 			// Rollback
 			testDoc.commit( tx.reversed() );
-			assert.equalLinearDataWithDom( testDoc.getStore(), testDoc.getFullData(), originalDoc.getFullData(), 'rollback (data): ' + msg );
+			assert.deepEqualWithDomElements( testDoc.getFullData(), originalDoc.getFullData(), 'rollback (data): ' + msg );
 			assert.equalNodeTree(
 				testDoc.getDocumentNode(),
 				originalDoc.getDocumentNode(),
 				'rollback (tree): ' + msg
 			);
 		} else if ( 'exception' in cases[ msg ] ) {
+			/*jshint loopfunc:true */
 			assert.throws(
-				// eslint-disable-next-line no-loop-func
 				function () {
 					testDoc.commit( tx );
 				},
 				cases[ msg ].exception,
 				'exception thrown: ' + msg
 			);
-			assert.equalLinearDataWithDom( testDoc.getStore(), testDoc.getFullData(), originalDoc.getFullData(), 'data unmodified: ' + msg );
+			assert.deepEqualWithDomElements( testDoc.getFullData(), originalDoc.getFullData(), 'data unmodified: ' + msg );
 			assert.equalNodeTree(
 				testDoc.getDocumentNode(),
 				originalDoc.getDocumentNode(),

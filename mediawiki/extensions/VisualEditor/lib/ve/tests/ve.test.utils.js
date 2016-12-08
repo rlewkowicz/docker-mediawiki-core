@@ -5,11 +5,13 @@
  */
 
 ( function () {
+	/*jshint browser:true */
+
 	// Create a standalone platform and target so ve.init.platform/target are available
-	/* eslint-disable no-new */
+	/*jshint nonew:false */
 	new ve.init.sa.Platform();
 	new ve.init.sa.Target();
-	/* eslint-enable no-new */
+	/*jshint nonew:true */
 
 	// Disable scroll animatinos
 	ve.scrollIntoView = function () {};
@@ -52,10 +54,10 @@
 	ve.test = { utils: {} };
 
 	ve.test.utils.runIsolateTest = function ( assert, type, range, expected, label ) {
-		var data,
-			doc = ve.dm.example.createExampleDocument( 'isolationData' ),
+		var doc = ve.dm.example.createExampleDocument( 'isolationData' ),
 			surface = new ve.dm.Surface( doc ),
-			fragment = surface.getLinearFragment( range );
+			fragment = surface.getLinearFragment( range ),
+			data;
 
 		data = ve.copy( doc.getFullData() );
 		fragment.isolateAndUnwrap( type );
@@ -84,71 +86,16 @@
 		assert.equalRange( surface.getModel().getSelection().getRange(), range, msg + ' (undo): ranges match' );
 	};
 
-	ve.test.utils.countActionTests = function ( cases ) {
-		var i, expected = 0;
-		for ( i = 0; i < cases.length; i++ ) {
-			expected += cases[ i ].undo ? 2 : 1;
-			if ( cases[ i ].expectedRangeOrSelection ) {
-				expected += cases[ i ].undo ? 2 : 1;
-			}
-		}
-		return expected;
-	};
-
-	ve.test.utils.runActionTest = function ( actionName, assert, html, createView, method, args, rangeOrSelection, msg, options ) {
-		var actualData, originalData, expectedOriginalRangeOrSelection,
-			surface = createView ?
-				ve.test.utils.createViewOnlySurfaceFromHtml( html || ve.dm.example.html ) :
-				ve.test.utils.createModelOnlySurfaceFromHtml( html || ve.dm.example.html ),
-			action = ve.ui.actionFactory.create( actionName, surface ),
-			data = ve.copy( surface.getModel().getDocument().getFullData() ),
-			documentModel = surface.getModel().getDocument(),
-			selection = ve.test.utils.selectionFromRangeOrSelection( documentModel, rangeOrSelection ),
-			expectedSelection = options.expectedRangeOrSelection && ve.test.utils.selectionFromRangeOrSelection( documentModel, options.expectedRangeOrSelection );
-
-		if ( options.undo ) {
-			originalData = ve.copy( data );
-		}
-
-		ve.dm.example.postprocessAnnotations( data, surface.getModel().getDocument().getStore() );
-
-		if ( options.expectedData ) {
-			options.expectedData( data, action );
-		}
-
-		surface.getModel().setSelection( selection );
-		action[ method ].apply( action, args || [] );
-
-		actualData = surface.getModel().getDocument().getFullData();
-		ve.dm.example.postprocessAnnotations( actualData, surface.getModel().getDocument().getStore() );
-		assert.equalLinearData( actualData, data, msg + ': data models match' );
-		if ( expectedSelection ) {
-			assert.equalHash( surface.getModel().getSelection(), expectedSelection, msg + ': selections match' );
-		}
-
-		if ( options.undo ) {
-			if ( options.expectedOriginalData ) {
-				options.expectedOriginalData( originalData, action );
-			}
-
-			surface.getModel().undo();
-
-			assert.equalLinearData( surface.getModel().getDocument().getFullData(), originalData, msg + ' (undo): data models match' );
-			if ( expectedSelection ) {
-				expectedOriginalRangeOrSelection = options.expectedOriginalRangeOrSelection &&
-					ve.test.utils.selectionFromRangeOrSelection( documentModel, options.expectedOriginalRangeOrSelection );
-				assert.equalHash( surface.getModel().getSelection(), expectedOriginalRangeOrSelection || selection, msg + ' (undo): selections match' );
-			}
-		}
-	};
-
 	ve.test.utils.countGetModelFromDomTests = function ( cases ) {
 		var msg, n = 0;
 		for ( msg in cases ) {
 			if ( cases[ msg ].head !== undefined || cases[ msg ].body !== undefined ) {
 				n += 3;
+				if ( cases[ msg ].storeLength ) {
+					n += 1;
+				}
 				if ( cases[ msg ].storeItems ) {
-					n += Object.keys( cases[ msg ].storeItems ).length;
+					n += cases[ msg ].storeItems.length;
 				}
 			}
 		}
@@ -156,7 +103,7 @@
 	};
 
 	ve.test.utils.runGetModelFromDomTest = function ( assert, caseItem, msg ) {
-		var model, hash, html, htmlDoc, actualData, actualRtDoc, expectedRtDoc,
+		var model, i, length, hash, html, htmlDoc, actualData, actualRtDoc, expectedRtDoc,
 			// Make sure we've always got a <base> tag
 			defaultHead = '<base href="' + ve.dm.example.baseUri + '">';
 
@@ -176,13 +123,17 @@
 			ve.dm.example.postprocessAnnotations( actualData, model.getStore(), caseItem.preserveAnnotationDomElements );
 			assert.equalLinearData( actualData, caseItem.data, msg + ': data' );
 			assert.deepEqual( model.getInnerWhitespace(), caseItem.innerWhitespace || new Array( 2 ), msg + ': inner whitespace' );
+			if ( caseItem.storeLength !== undefined ) {
+				assert.strictEqual( model.getStore().valueStore.length, caseItem.storeLength, msg + ': store length matches' );
+			}
 			// check storeItems have been added to store
 			if ( caseItem.storeItems ) {
-				for ( hash in caseItem.storeItems ) {
+				for ( i = 0, length = caseItem.storeItems.length; i < length; i++ ) {
+					hash = caseItem.storeItems[ i ].hash || OO.getHash( caseItem.storeItems[ i ].value );
 					assert.deepEqualWithDomElements(
-						model.getStore().value( hash ) || {},
-						caseItem.storeItems[ hash ],
-						msg + ': store item ' + hash + ' found'
+						model.getStore().value( model.getStore().indexOfHash( hash ) ) || {},
+						caseItem.storeItems[ i ].value,
+						msg + ': store item ' + i + ' found'
 					);
 				}
 			}
@@ -195,13 +146,13 @@
 	};
 
 	ve.test.utils.getModelFromTestCase = function ( caseItem ) {
-		var hash, model,
+		var i, length, model,
 			store = new ve.dm.IndexValueStore();
 
 		// Load storeItems into store
 		if ( caseItem.storeItems ) {
-			for ( hash in caseItem.storeItems ) {
-				store.hashStore[ hash ] = ve.copy( caseItem.storeItems[ hash ] );
+			for ( i = 0, length = caseItem.storeItems.length; i < length; i++ ) {
+				store.index( caseItem.storeItems[ i ].value, caseItem.storeItems[ i ].hash );
 			}
 		}
 		model = new ve.dm.Document( ve.dm.example.preprocessAnnotations( caseItem.data, store ) );
@@ -243,9 +194,7 @@
 	 * @return {ve.ui.Surface} UI surface
 	 */
 	ve.test.utils.createSurfaceFromHtml = function ( html ) {
-		return this.createSurfaceFromDocument(
-			ve.dm.converter.getModelFromDom( ve.createDocumentFromHtml( html ) )
-		);
+		return this.createSurfaceFromDocument( ve.createDocumentFromHtml( html ) );
 	};
 
 	/**
@@ -282,8 +231,7 @@
 	 * @return {ve.ce.Surface} CE surface
 	 */
 	ve.test.utils.createSurfaceViewFromDocument = function ( doc ) {
-		var model, view,
-			mockSurface = {
+		var mockSurface = {
 				$blockers: $( '<div>' ),
 				$selections: $( '<div>' ),
 				$element: $( '<div>' ),
@@ -303,12 +251,11 @@
 					return view;
 				},
 				commandRegistry: ve.ui.commandRegistry,
-				sequenceRegistry: ve.ui.sequenceRegistry,
-				dataTransferHandlerFactory: ve.ui.dataTransferHandlerFactory
-			};
-
-		model = new ve.dm.Surface( doc );
-		view = new ve.ce.Surface( model, mockSurface );
+				sequenceRegistry: ve.ui.sequenceRegistry
+			},
+			/* jshint -W003 */
+			model = new ve.dm.Surface( doc ),
+			view = new ve.ce.Surface( model, mockSurface ); /* jshint +W003 */
 
 		view.surface = mockSurface;
 		mockSurface.$element.append( view.$element );
@@ -458,43 +405,5 @@
 		}
 		add( rootNode );
 		return html.join( '' );
-	};
-
-	/**
-	 * Take control of EventSequencer timeouts
-	 *
-	 * Modifies an EventSequencer object in-place to allow setTimeout behaviour to be
-	 * simulated by test code. Replaces `postpone` and `cancelPostponed` with methods that
-	 * queue/unqueue to an array, and adds an `endLoop` method to unqueue and run every
-	 * queued call.
-	 *
-	 * @param {ve.EventSequencer} eventSequencer The EventSequencer to hijack
-	 */
-	ve.test.utils.hijackEventSequencerTimeouts = function ( eventSequencer ) {
-		eventSequencer.postponedCalls = [];
-
-		eventSequencer.postpone = function ( f ) {
-			this.postponedCalls.push( f );
-			return this.postponedCalls.length - 1;
-		};
-
-		eventSequencer.cancelPostponed = function ( callId ) {
-			this.postponedCalls[ callId ] = null;
-		};
-
-		eventSequencer.endLoop = function () {
-			var i, f;
-			// Run every postponed call in order of postponement. Do not cache
-			// list length, because postponed calls may add more postponed calls
-			for ( i = 0; i < this.postponedCalls.length; i++ ) {
-				f = this.postponedCalls[ i ];
-				if ( f ) {
-					// Exceptions thrown here will leave the postponed calls
-					// list in an inconsistent state
-					f();
-				}
-			}
-			this.postponedCalls.length = 0;
-		};
 	};
 }() );

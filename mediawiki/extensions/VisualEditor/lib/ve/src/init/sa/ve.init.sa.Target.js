@@ -35,9 +35,7 @@ ve.init.sa.Target = function VeInitSaTarget( config ) {
 	// Parent constructor
 	ve.init.sa.Target.super.call( this, config );
 
-	this.$element
-		.addClass( 've-init-sa-target' )
-		.attr( 'lang', ve.init.platform.getUserLanguages()[ 0 ] );
+	this.$element.addClass( 've-init-sa-target' );
 };
 
 /* Inheritance */
@@ -61,9 +59,7 @@ ve.init.sa.Target.static.actionGroups = [
  * @inheritdoc
  */
 ve.init.sa.Target.prototype.addSurface = function () {
-	// Parent method
 	var surface = ve.init.sa.Target.super.prototype.addSurface.apply( this, arguments );
-
 	this.$element.append( $( '<div>' ).addClass( 've-init-sa-target-surfaceWrapper' ).append( surface.$element ) );
 	if ( !this.getSurface() ) {
 		this.setSurface( surface );

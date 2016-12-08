@@ -125,7 +125,7 @@ ve.ce.GeneratedContentNode.prototype.getRenderedDomElements = function ( domElem
 
 	// Render the computed values of some attributes
 	ve.resolveAttributes(
-		$rendering.toArray(),
+		$rendering,
 		domElements[ 0 ].ownerDocument,
 		ve.dm.Converter.static.computedAttributes
 	);
@@ -210,9 +210,9 @@ ve.ce.GeneratedContentNode.prototype.validateGeneratedContents = function () {
  */
 ve.ce.GeneratedContentNode.prototype.update = function ( config, staged ) {
 	var store = this.model.doc.getStore(),
-		contents = store.value( store.indexOfValue( null, OO.getHash( [ this.model.getHashObjectForRendering(), config ] ) ) );
-	if ( contents ) {
-		this.render( contents, staged );
+		index = store.indexOfHash( OO.getHash( [ this.model.getHashObjectForRendering(), config ] ) );
+	if ( index !== null ) {
+		this.render( store.value( index ), staged );
 	} else {
 		this.forceUpdate( config, staged );
 	}
