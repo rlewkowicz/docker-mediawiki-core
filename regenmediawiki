@@ -57,7 +57,7 @@ pruneExtentions (){
 }
 
 mergeSkinsAndExtentions (){
-  cd $DIR/VisualEditor/ && git submodule update --init && cd ..
+	cd $DIR/VisualEditor/ && git submodule update --init
 	mv $DIR/VisualEditor $DIR/mediawiki-extensions
 	mv $DIR/mediawiki-skins-Vector $DIR/mediawiki/skins/Vector
 	rm -rf $DIR/mediawiki/extensions && mv $DIR/mediawiki-extensions $DIR/mediawiki/extensions
