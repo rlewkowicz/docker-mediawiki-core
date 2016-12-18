@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit6d15b89824fff2c03043934deae0af59
+class ComposerStaticInited387f6a34f5f2d91341f83be1e1cdd8
 {
     public static $files = array (
         'a24b5daa493ecb5e767c7d1592a8da36' => __DIR__ . '/..' . '/mediawiki/at-ease/src/Functions.php',
@@ -271,11 +271,11 @@ class ComposerStaticInit6d15b89824fff2c03043934deae0af59
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit6d15b89824fff2c03043934deae0af59::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit6d15b89824fff2c03043934deae0af59::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit6d15b89824fff2c03043934deae0af59::$prefixesPsr0;
-            $loader->fallbackDirsPsr0 = ComposerStaticInit6d15b89824fff2c03043934deae0af59::$fallbackDirsPsr0;
-            $loader->classMap = ComposerStaticInit6d15b89824fff2c03043934deae0af59::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInited387f6a34f5f2d91341f83be1e1cdd8::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInited387f6a34f5f2d91341f83be1e1cdd8::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInited387f6a34f5f2d91341f83be1e1cdd8::$prefixesPsr0;
+            $loader->fallbackDirsPsr0 = ComposerStaticInited387f6a34f5f2d91341f83be1e1cdd8::$fallbackDirsPsr0;
+            $loader->classMap = ComposerStaticInited387f6a34f5f2d91341f83be1e1cdd8::$classMap;
 
         }, null, ClassLoader::class);
     }
