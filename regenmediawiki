@@ -74,6 +74,7 @@ pushToGit (){
 	cd $DIR/mediawiki
 	for i in `find $(pwd) -name '\.git*'`; do rm -rf $i; done
 	cd $DIR
+	git remote add git@github.com:rlewkowicz/docker-mediawiki-core.git
 	git remote set-url origin git@github.com:rlewkowicz/docker-mediawiki-core.git
 	git add -A
 	git commit . -m "$(date)"
