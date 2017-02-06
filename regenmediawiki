@@ -81,7 +81,7 @@ pushToGit (){
 	git branch --set-upstream-to=origin/REL1_28 REL1_28
 	git fetch origin
 	git pull git@github.com:rlewkowicz/docker-mediawiki-core.git REL1_28 --rebase -X ours
-	git push --force
+	git push -u origin/REL1_28 REL1_28 --force
 }
 
 #Set Base directory
