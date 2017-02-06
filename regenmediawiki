@@ -79,7 +79,7 @@ pushToGit (){
 	git commit . -m "$(date)"
 	git branch --set-upstream-to=origin/REL1_28 REL1_28
 	git pull git@github.com:rlewkowicz/docker-mediawiki-core.git REL1_28 --rebase -X ours
-	git push origin docker-mediawiki-core.git:REL1_28 --force
+	git push --force
 }
 
 #Set Base directory
