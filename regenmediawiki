@@ -74,13 +74,12 @@ pushToGit (){
 	cd $DIR/mediawiki
 	for i in `find $(pwd) -name '\.git*'`; do rm -rf $i; done
 	cd $DIR
-	git remote add git@github.com:rlewkowicz/docker-mediawiki-core.git
 	git remote set-url origin git@github.com:rlewkowicz/docker-mediawiki-core.git
 	git add -A
 	git commit . -m "$(date)"
 	git branch --set-upstream-to=origin/REL1_28 REL1_28
 	git pull git@github.com:rlewkowicz/docker-mediawiki-core.git REL1_28 --rebase -X ours
-	git push --set-upstream origin REL1_28 --force
+	git push origin docker-mediawiki-core.git:REL1_28 --force
 }
 
 #Set Base directory
