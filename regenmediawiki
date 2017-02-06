@@ -75,6 +75,7 @@ pushToGit (){
 	for i in `find $(pwd) -name '\.git*'`; do rm -rf $i; done
 	cd $DIR
 	git remote set-url origin git@github.com:rlewkowicz/docker-mediawiki-core.git
+	git checkout -b REL1_28
 	git add -A
 	git commit . -m "$(date)"
 	git branch --set-upstream-to=origin/REL1_28 REL1_28
