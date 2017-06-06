@@ -73,10 +73,12 @@ class SyntaxHighlight_GeSHi {
 			return $lexer;
 		}
 
+		$geshi2pygments = SyntaxHighlightGeSHiCompat::getGeSHiToPygmentsMap();
+
 		// Check if this is a GeSHi lexer name for which there exists
 		// a compatible Pygments lexer with a different name.
-		if ( isset( GeSHi::$compatibleLexers[$lexer] ) ) {
-			$lexer = GeSHi::$compatibleLexers[$lexer];
+		if ( isset( $geshi2pygments[$lexer] ) ) {
+			$lexer = $geshi2pygments[$lexer];
 			if ( in_array( $lexer, $lexers ) ) {
 				return $lexer;
 			}
@@ -263,8 +265,8 @@ class SyntaxHighlight_GeSHi {
 		}
 
 		// Starting line number
-		if ( isset( $args['start'] ) ) {
-			$options['linenostart'] = $args['start'];
+		if ( isset( $args['start'] ) && ctype_digit( $args['start'] ) ) {
+			$options['linenostart'] = (int)$args['start'];
 		}
 
 		if ( $inline ) {
@@ -494,6 +496,50 @@ class SyntaxHighlight_GeSHi {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Conditionally register resource loader modules that depends on the
+	 * VisualEditor MediaWiki extension.
+	 *
+	 * @param $resourceLoader
+	 * @return true
+	 */
+	public static function onResourceLoaderRegisterModules( &$resourceLoader ) {
+		if ( ! ExtensionRegistry::getInstance()->isLoaded( 'VisualEditor' ) ) {
+			return;
+		}
+
+		$resourceLoader->register( 'ext.geshi.visualEditor', [
+			'class' => 'ResourceLoaderGeSHiVisualEditorModule',
+			'localBasePath' => __DIR__ . DIRECTORY_SEPARATOR . 'modules',
+			'remoteExtPath' => 'SyntaxHighlight_GeSHi/modules',
+			'scripts' => [
+				've-syntaxhighlight/ve.dm.MWSyntaxHighlightNode.js',
+				've-syntaxhighlight/ve.ce.MWSyntaxHighlightNode.js',
+				've-syntaxhighlight/ve.ui.MWSyntaxHighlightWindow.js',
+				've-syntaxhighlight/ve.ui.MWSyntaxHighlightDialog.js',
+				've-syntaxhighlight/ve.ui.MWSyntaxHighlightDialogTool.js',
+				've-syntaxhighlight/ve.ui.MWSyntaxHighlightInspector.js',
+				've-syntaxhighlight/ve.ui.MWSyntaxHighlightInspectorTool.js',
+			],
+			'styles' => [
+				've-syntaxhighlight/ve.ce.MWSyntaxHighlightNode.css',
+				've-syntaxhighlight/ve.ui.MWSyntaxHighlightDialog.css',
+				've-syntaxhighlight/ve.ui.MWSyntaxHighlightInspector.css',
+			],
+			'dependencies' => [
+				'ext.visualEditor.mwcore',
+			],
+			'messages' => [
+				'syntaxhighlight-visualeditor-mwsyntaxhighlightinspector-code',
+				'syntaxhighlight-visualeditor-mwsyntaxhighlightinspector-language',
+				'syntaxhighlight-visualeditor-mwsyntaxhighlightinspector-none',
+				'syntaxhighlight-visualeditor-mwsyntaxhighlightinspector-showlines',
+				'syntaxhighlight-visualeditor-mwsyntaxhighlightinspector-title',
+			],
+			'targets' => [ 'desktop', 'mobile' ],
+		] );
 	}
 
 	/** Backward-compatibility shim for extensions.  */
